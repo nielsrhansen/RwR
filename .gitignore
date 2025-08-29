@@ -3,3 +3,5 @@
 /_publish.yml
 /.quarto
 /.quarto/
+/*_cache
+/*_files
