@@ -13,7 +13,7 @@ contains data used in the book.
 ## Recreating the R environment used for the book
 
 This repository uses [renv](https://rstudio.github.io/renv/index.html). If you clone the 
-repository to a local directory and runs R from there, renv will automatically install 
+repository to a local directory and run R from there, renv will automatically install 
 and you can run `renv::restore()` to recreate the R environment. This includes installing 
 all packages used in the book. 
 
@@ -28,7 +28,7 @@ renv::activate()
 Restart R as requested and run
 
 ```
-renv::restore(lockfile = "https://raw.githubusercontent.com/nielsrhansen/RwR/refs/heads/main/renv.lock")
+renv::restore(lockfile = "https://raw.githubusercontent.com/nielsrhansen/RwR/refs/heads/main/renv.lock", prompt = FALSE)
 renv::snapshot()
 ```
 
