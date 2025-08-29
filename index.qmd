@@ -1,0 +1,37 @@
+# Preface {.unnumbered}
+
+::: {.callout-important}
+The book is undergoing conversion from an older version and format.
+It is currently incomplete and subject to change without notice.
+
+The state of individual chapters is marked at the top of the chapter.
+:::
+
+This book was written as the textbook material for a graduate statistics course
+in regression analysis. The prerequisites include univariate linear regression,
+$t$-tests and constructions of standard confidence intervals, and knowledge of
+standard distributions such as the normal, the binomial and the Poisson
+distribution. The reader will also benefit from introductory statistics courses
+covering likelihood methods, one- and two-sided analysis of variance, and
+aspects of asymptotic theory. In addition, a solid knowledge of linear algebra
+is assumed.
+
+The exposition is mathematical, but the emphasis is on data modeling as well as
+theory. Mathematics is used to make model descriptions and assumptions precise,
+and to give precise results relevant for the practical analysis of data and the
+computations required for carrying out data analysis.
+
+The book attempts to be complete and thorough on the topics covered, yet to be
+practical and relevant for the applied statistician. The means for achieving the
+latter is by larger case studies using R. The R code included is complete and
+covers most aspects of the data analysis from reading data into R, cleaning and
+plotting data to data analysis, data modeling and model diagnostics.
+
+The book is accompanied by the R package RwR containing datasets used in the book.
+
+::: {.callout-important}
+The book is undergoing conversion from an older version and format.
+It is currently incomplete and subject to change without notice.
+
+The state of individual chapters is marked at the top of the chapter.
+:::

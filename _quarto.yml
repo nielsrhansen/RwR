@@ -1,0 +1,34 @@
+project:
+  type: book
+
+book:
+  title: "Regression with R"
+  author: "Niels Richard Hansen"
+  date: "8/25/2025"
+  
+  chapters:
+    - index.qmd
+    - 1_introduction.qmd
+    - 2_linear.qmd
+    - 3_birth.qmd
+    - references.qmd
+  
+reference-location: margin
+citation-location: margin
+bibliography: regression.bib
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+    code-block-bg: "#FCFCFC"
+    code-fold: true
+
+  pdf:
+    documentclass: scrreprt
+
+execute:
+  cache: true
+
+

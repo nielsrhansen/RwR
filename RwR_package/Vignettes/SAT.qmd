@@ -1,0 +1,91 @@
+---
+title: "Regression and report generation"
+author: "Niels Richard Hansen"
+vignette: >
+  %\VignetteIndexEntry{Regression and report generation}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+# A practical exercise on using knitr
+
+Solve this exercise using Markdown and knitr. Use 
+[the code](https://nielsrhansen.github.io/courses/regression2016/Exercises/SAT.Rmd)
+that generated this document as a template. 
+
+From RStudio just click on 'Knit HTML' to get the result. Alternatively, you can 
+run the following code. 
+
+
+```{r knit, eval=FALSE}
+library(knitr)
+library(markdown)
+knit("SAT.Rmd")   ### Creates the Markdown file
+markdownToHTML("SAT.md", "SAT.html") ### Creates the html file
+browseURL(paste('file://', file.path(getwd(), 'SAT.html'), sep='')) 
+```
+
+You can also read more about [using R and Markdown with RStudio](http://rmarkdown.rstudio.com).
+
+The data set to consider in this exercise consists of mean verbal SAT scores for each of the 50 US states 
+together with the percentage of students taking the test. 
+
+To help you get started we read in the data and construct a plot. 
+
+
+```{r readingData}
+data(sat, package = "RwR")
+```
+
+
+```{r scatterPlot, fig.width=6, fig.height=6, warning=FALSE}
+library(ggplot2)
+theme_set(theme_bw()) ## My choice of theme over the default. 
+ggplot(data = sat, aes(percent, verbalScore)) + 
+  geom_point()
+```
+
+## Question 1
+
+
+Fit a linear regression model with an intercept of the state SAT score as a function of percentage 
+of students. Add the fitted line to the plot.
+
+
+## Question 2
+
+Fit a piecewise affine function with the "bend" at 50% of the 
+students taking the test. How can you formally test the linearity assumption in Question 1 
+within this larger model?
+
+Hint: What you want to achieve in this question is to fit a linear model 
+$$
+  \mathbf{Y} = \mathbf{X} \beta + \varepsilon
+$$
+where $\mathbf{X}$ is a matrix with 3 columns representing an intercept and 
+two piecewise linear functions. You can, for instance, generate a basis using an
+`ifelse()` construction. Try different bases. Is there anyone particularly suitable for 
+testing the linearity assumption?
+
+
+## Question 3
+
+Fit a natural cubic spline model with 4 knots. Use the `ns` function to generate a B-spline basis.
+How should you choose the placements of the knots?
+How can you formally test the linearity assumption within this larger model?
+
+
+## Changing the output format
+
+The default is to get an HTML file, which can be viewed in a browser. Occasionally, 
+you might want to turn the result into pdf. This can be achieved in RStudio by selecting 
+to knit to pdf. If you really want a nice report in pdf, it is 
+better to integrate R with LaTeX instead of markdown.
+
+
+
+
+
+
+
+

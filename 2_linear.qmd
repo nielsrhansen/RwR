@@ -1,0 +1,2000 @@
+```{r}
+#| echo: false
+#| cache: false
+source("_common.R")
+```
+
+# The linear model {#sec-linear}
+
+::: {.callout-warning}
+This chapter is still a draft and minor changes are made without notice.
+:::
+
+The linear model is the classical workhorse of regression modeling. It is a
+tractable model with many desirable practical and theoretical properties. In
+combination with nonlinear variable transformations and basis expansions it can
+be surprisingly flexible, and even if it is not the optimal model choice in
+a given situation, it can work well as a benchmark or fallback model whenever
+more sophisticated models are considered. 
+
+## Outline and prerequisites 
+
+This chapter introduces the linear model as well as aspects of the general regression modeling 
+framework and terminology used throughout book. An example on fire insurance claim size modeling 
+is introduced in @sec-claim-sizes and used throughout the chapter to illustrate the theory. 
+@sec-estimation-theory covers how the linear model is fitted to data,
+and @sec-sampling-distributions gives results on the sampling distributions of
+parameter estimators and test statistics that are used in relation to the linear
+model. @sec-model-assessment and @sec-claim-size-models treat model 
+assessment and comparison using the claim size models to illustrate the theory. 
+The chapter concludes in @sec-nonlinear-expansions by introducing basis expansion 
+techniques to capture nonlinear relations within the framework of the linear model.
+The techniques are illustrated by a spline basis expansion of the relation 
+between claim size and insurance sum in the fire insurance example.   
+
+The chapter primarily relies on the following four R packages. 
+
+```{r}
+#| label: setup
+#| cache: false
+#| code-fold: false
+library(ggplot2)
+library(tibble)
+library(broom)
+library(splines)
+```
+
+A few functions from additional packages are used, but in those cases the package is made explicit
+via the `::` operator.
+
+## Claim sizes {#sec-claim-sizes}
+
+In this section we take a first look at a dataset from a Danish insurance
+company with the purpose of studying the relation between the insurance sum and
+the claim size for commercial fire claims. The data is included as the `claims`
+dataset in the RwR package.
+
+```{r}
+#| label: claims-data
+#| code-fold: false
+data(claims, package = "RwR")
+```
+
+We will use this dataset to build simple linear regression models that can 
+predict potential claim sizes given knowledge of the insurance sums. More
+refined predictions as well as the possibility to differentiate policy prices
+can also be achieved by breaking down such a relation according to other
+variables.
+
+```{r}
+#| label: head
+#| column: margin
+#| code-fold: false
+#| tbl-cap-location: bottom
+#| tbl-cap: "First six rows of the claims data."
+tibble(claims) |> head()
+```
+
+To inspect the data we can print out a small part of
+the dataset using the `head()` function. There is a similar `tail()` function that 
+prints the last part of the dataset.
+
+The first column printed shows the row names (in this case just the row numbers). 
+The other columns show the values of the variables in the date set. 
+In this case the dataset contains the following three variables:
+
+-  `claims` -- the claim size in Danish kroners (DKK)
+-  `sum` -- the insurance sum in Danish kroners (DKK)
+-  `grp` -- the trade group of the business
+
+
+The `claims` and `sum` variables are the numeric, while 
+the `grp` variable is a categorical trade group. It is
+represented using integers but encoded and stored as a factor.
+The trade group encoding is: 
+
+- 1 = residences
+- 2 = ordinary industry
+- 3 = hotel and restaurant
+- 4 = production industry
+
+```{r}
+#| label: fig-claims-histograms
+#| opts.label: smallfigure
+#| fig-cap: "Histograms of claim size and insurance sum on log-scale."
+#| column: margin
+#| echo: false
+p1 <- ggplot(claims, aes(claims)) + 
+    geom_histogram(bins = 40) + 
+    scale_x_log10()
+p2 <- ggplot(claims, aes(sum)) +
+    geom_histogram(bins = 40) + 
+    scale_x_log10()
+gridExtra::grid.arrange(p1, p2, ncol = 1)
+```
+
+The marginal distributions of claim size and insurance sum are both highly skewed and span
+several orders of magnitude -- as is revealed by the histograms in @fig-claims-histograms. 
+For this reason we will log-transform both
+variables in the subsequent figures. In this section this is purely for the
+purpose of better visualization. In later sections we will consider regression
+models for the log-transformed variables as well. Skewness of the marginal
+distributions does not automatically imply that the variables should be
+log-transformed for the regression model, and we will return to this discussion
+later.
+
+Throughout we will avoid constructing new variables in the dataset that
+represent transformations of other variables. We will instead use the
+functionalities in R for changing the scale in a plot or for transforming one or
+more variables directly when fitting a model. The scatter plot in 
+@fig-claims-scatter of claim size against insurance sum on a log-log-scale
+was constructed using `ggplot()` from the R package ggplot2.
+
+```{r}
+#| label: fig-claims-scatter
+#| message: false
+#| fig-cap: "Scatter plot of claim size against insurance sum. Note the log-log axes."
+#| cap-location: margin
+p0 <- ggplot(
+        data = claims, 
+        aes(sum, claims), 
+        alpha = I(0.2)
+    ) + 
+    scale_x_log10(
+        "Insurance sum (DKK)", 
+        breaks = 10^c(6, 7, 8), 
+        labels = c("1M", "10M", "100M")
+        ) +
+    scale_y_log10(
+        "Claim size (DKK)", 
+        breaks = 10^c(2, 4, 6, 8), 
+        labels = c("100", "10K", "1M", "100M")
+    ) +
+    geom_point()
+
+p <- p0 + 
+    geom_smooth(
+        method = "lm", 
+        linewidth = 1, 
+        se = FALSE
+    ) 
+p
+```
+
+The code used to generate the plot shows that the plot is first
+stored as an R object named `p` and then plotted by
+"printing" `p` (the line just containing `p`). This is useful
+for later reuse of the same plot with some modifications as will be illustrated
+below. Note that the regression line was added to the plot using the
+`geom_smooth()` function with `method = "lm"`.
+
+From @fig-claims-scatter it appears that there is a positive
+correlation between the insurance sum and the claim size -- the larger the
+insurance sum is, the larger is the claim size. Note the "line-up" of the
+extreme claim sizes, which (approximately) fall on the line with slope 1 and
+intercept 0. These claims are capped at the insurance sum, and we should pay
+some attention to the effect of these extremes in subsequent modeling steps.
+
+The questions that we will focus on in this chapter are whether the trade group
+should be included into the model and whether a linear relation (on the
+log-log-scale) between the claim size and insurance sum is appropriate. As a
+first attempt to address the first question we stratify the scatter plot
+according to the trade group.
+
+```{r}
+#| label: fig-claims-scatter-strat 
+#| message: false
+#| fig-cap: "Scatter plots of claim size against insurance sum stratified according to trade group. A regression line is added to the plots for each group."
+#| opts.label: widefigure4
+#| column: page
+p + facet_wrap(~ grp, ncol = 4)
+```
+
+@fig-claims-scatter-strat shows that there might be some differences,
+but it is difficult to tell from the figure alone if these differences are due
+to random variation or if they actually represent real differences between
+the groups.
+
+The following sections will introduce the mathematical framework for fitting
+linear regression models and for investigating the models. Based on 
+this theory we can tell if the model is an adequate model of the data
+and answer the questions put forward.
+
+## The linear model assumptions
+
+This section briefly introduces the linear model and the 
+typical assumptions made. This settles notation for the case study 
+in the following section. In a first reading it can be read quickly and
+returned to later to better digest the model assumptions and
+their implications.  
+
+[The entries of $X$ go by many other names: explanatory 
+variables, covariates, independent variables, regressors, inputs or features. 
+Similarly, $Y$ is also called the outcome or dependent variable.]{.aside}
+The linear model relates a continuous *response*
+variable $Y$ to a $p$-dimensional vector $X$ of *predictors* via the identity
+$$ 
+    E(Y \mid X) = X^T \beta.
+$$ {#eq-linreg}
+Here 
+$$
+    X^T \beta = X_1 \beta_1 + \ldots +  X_p \beta_p
+$$
+is a linear combination of the predictors weighted by the
+$\beta$-parameters and $E(Y \mid X)$ denotes the conditional 
+expectation of $Y$ given $X$. Thus the 
+linear\sidenote[][-1cm]{The linearity that matters for statistics is the linearity 
+ in the unknown parameter vector $\beta$.} model is a model of the conditional
+expectation of the response variable given the predictors.
+
+An *intercept* parameter, $\beta_0$, is often added,
+$$
+    E(Y \mid X) = \beta_0 + X^T \beta.
+$$
+It is notationally convenient to assume that the intercept 
+parameter is included among the other parameters. This can
+be achieved by joining the predictor $X_0 = 1$ to $X$, thereby
+increasing the dimension to $p + 1$. In the general presentation we will not 
+pay particular attention to the intercept. We will assume that if an
+intercept is needed, it is appropriately included among the other parameters, 
+and we will index the predictors from $1$ to $p$. Other choices of index set, e.g., from $0$ to $p$, may
+be convenient in specific cases. 
+
+In addition to the fundamental linearity expressed by @eq-linreg we will 
+for various reasons need additional model assumptions. For later reference we collect 
+three standard model assumptions here.
+
+\index{assumptions!A1--A3}
+
+**A1.**
+    The conditional expectation of $Y$ given $X$ is
+    $$E(Y \mid X) = X^T \beta.$$
+[Assumption A2 is known as *homoskedasticity*, which is derived from the Greek 
+words "homo" (same) and "skedastios" (dispersion). The opposite is
+*heteroskedasticity*.]{.aside}
+
+**A2.**
+    The conditional variance of $Y$ given $X$ does not 
+    depend upon $X$,
+    $$V(Y \mid X) = \sigma^2.$$
+
+**A3.**
+    The conditional distribution of $Y$ given $X$ is a normal
+    distribution, \index{distribution!normal}
+    $$Y \mid X \sim \mathcal{N}(X^T\beta, \sigma^2).$$
+
+It is, of course, implicit in A1 and A2 that $Y$ has finite expectation and variance, respectively.
+It may not be obvious why Assumption A2 is needed, but it is at least conceivable that A2 makes it easier to estimate the
+variance, since it doesn't depend upon $X$. The assumption has, furthermore, several 
+consequences for the more technical aspect of the statistical analysis as well as the
+interpretation of the resulting model and the assessment of the 
+accuracy of model predictions. 
+
+Assumption A3 is a strong distributional assumption, which is unnecessarily
+restrictive for many purposes. Often A2 is sufficient, but whether A3 holds 
+can be important when using the model to make probabilistic predictions, e.g., 
+when computing prediction intervals. It is, in addition, only under 
+Assumption A3 that an exact statistical theory can be developed for finite 
+sample sizes. Some results used in practice are formally derived under this 
+assumption, and they must be regarded as approximations when A3 is violated.
+
+There exists a bewildering amount of terminology related to the linear
+model in the literature. Notation and terminology has been developed
+differently for different submodels of the linear model. 
+If the $X$-vector only represents continuous
+variables, the model is often referred to as the linear *regression*
+model. Since any categorical variable can be encoded via $k$ binary dummy variables 
+(also known as a one-hot encoding),
+the linear model includes
+all ANalysis Of VAriance (ANOVA) models. 
+[**Dummy variable encoding:** A categorical variable on $k$ levels is encoded as a $k$-dimensional 
+binary vector, whose $j$-th dummy variable equals $1$ if 
+the value of the categorical variable equals the $j$-th level and $0$ otherwise.]{.aside}
+Combinations, known 
+in parts of the literature as ANalysis of COVAriance (ANCOVA), are of 
+course also possible. 
+
+Treating each special case separately and using special terminology
+is unnecessary and confusing -- and most likely a consequence of 
+historically different needs in different areas of
+applications. We give a unified treatment of the linear model.
+It is a fairly simple model with a rather complete theoretical basis. That said, many 
+modeling questions still have to be settled for any specific real data
+analysis, which makes applications of even the simple linear model
+non-trivial. 
+
+For statistical applications we have a sample of $n$ observations and 
+to develop the statistical theory we need additional distributional assumptions 
+regarding their joint distribution. Letting  $Y_1, \ldots, Y_n$ 
+denote the $n$ observations of the response with corresponding
+predictors $X_1, \ldots, X_n$, we collect the responses into a column vector $\mathbf{Y}$, and 
+we collect the predictors into an $n \times p$ matrix $\mathbf{X}$ called the *model matrix*. 
+The $i$-th row of $\mathbf{X}$ is $X_i^T$. The additional assumptions are:
+
+\index{assumptions!A4 and A5}
+
+**A4:**
+The conditional distribution of $Y_i$ given $\mathbf{X}$ depends upon $X_i$ only,
+and $Y_i$ and $Y_j$ are conditionally *uncorrelated* given $\mathbf{X}$,
+$$\text{cov}(Y_i, Y_j \mid \mathbf{X}) = 0.$$
+
+**A5:**
+The conditional distribution of $Y_i$ given $\mathbf{X}$ depends upon $X_i$ only,
+and $Y_1, \ldots, Y_n$ are conditionally *independent* given $\mathbf{X}.$
+
+**A6:**
+The pairs $(X_1, Y_1), \ldots, (X_n, Y_n)$ are i.i.d.
+
+There is a hierarchy among these three assumptions with A6 implying A5 and 
+A5 implying A4. Thus A4 is the weakest distributional assumption about the 
+joint distribution of the observations.
+
+Assumption A4 implies together with A1 and A2 that 
+$$
+    E(\mathbf{Y} \mid \mathbf{X}) = \mathbf{X} \beta,
+$$ {#eq-condmean}
+and that 
+$$
+V(\mathbf{Y} \mid \mathbf{X}) = \sigma^2 \mathbf{I}
+$$ {#eq-condvar}
+where $\mathbf{I}$ denotes the $n \times n$ identity matrix. 
+
+\begin{marginfigure}[-1cm]
+\begin{tikzpicture}[description/.style={fill=white,inner sep=2pt}] 
+\matrix (m) [matrix of math nodes, row sep=2em, column sep=0.5em, text height=1.5ex, text depth=0.25ex] {
+ &  & \mathbf{X} &  &  \\ 
+X_1 & X_2 & \ldots & X_{p-1} & X_p \\ 
+Y_1 & Y_2 & \ldots & Y_{p-1} & Y_p \\}; 
+\path[-] 
+(m-1-3) edge (m-2-1)
+(m-1-3) edge (m-2-2)
+(m-1-3) edge (m-2-4)
+(m-1-3) edge (m-2-4)
+(m-1-3) edge (m-2-5)
+(m-2-1) edge (m-3-1)
+(m-2-2) edge (m-3-2)
+(m-2-4) edge (m-3-4)
+(m-2-5) edge (m-3-5);
+\end{tikzpicture}
+\caption{Graphical illustration of the assumptions on the joint distribution. The $Y_i$ depends on $\mathbf{X}$ through $X_i$ only, and the $Y_i$-s are independent given $\mathbf{X}$. }
+\end{marginfigure}
+
+Assumptions A5 and A3 imply that 
+$$
+    \mathbf{Y} \mid \mathbf{X} \sim \mathcal{N}(\mathbf{X}\beta, \sigma^2 \mathbf{I}).
+$$ {#eq-conddis}
+In summary, there are essentially two sets of distributional assumptions. The weak set A1, A2 and
+A4, which imply the moment identities ([-@eq-condmean]) and
+([-@eq-condvar]), and the strong set A3 and A5, which, in addition, imply the
+distributional identity ([-@eq-conddis]). Occasionally, A6 combined with A1 and A2
+is used to justify certain resampling based procedures, such as bootstrapping,
+or to give asymptotic justifications of inference methodologies. 
+
+The linear regression model and the different assumptions related to it can also 
+be phrased in terms of an additive error. The equation 
+$$Y_i = X_i^T \beta + \epsilon_i.$$
+defines $\epsilon_i$  -- known as the \marginnote[-1cm]{The additive error.}*error* or 
+*noise* term. In terms of $\epsilon_i$ the model assumptions are as follows: 
+
+*   A1 is equivalent to $E(\epsilon_i \mid X_i) = 0$
+*   A2 is equivalent to $V(\epsilon_i \mid X) = \sigma^2$
+*   A3 is equivalent to $\epsilon_i \mid X_i \sim \mathcal{N}(0, \sigma^2)$. 
+
+Note that under Assumption A3, the conditional distribution of $\epsilon_i$ given 
+$X_i$ does not depend upon $X_i$, thus A3 implies that $\epsilon_i$ and $X_i$ are independent. 
+
+It is important to realize that the model assumptions cannot
+be justified prior to the data analysis. There are no magic arguments or
+simple statistical summaries that imply that the assumptions are fulfilled. 
+A histogram of the marginal distribution of the responses can, 
+for instance, not be used as an argument for or against Assumption A3 on the 
+conditional normal distribution of $Y$. Justifications and investigations of 
+model assumptions are done *after* a model has been fitted to data. This is called 
+*model diagnostics*. 
+
+## Linear models of claim sizes
+
+Returning to the insurance claim sizes, a regression model of
+log claim size, $\log(Y_i)$, for insured $i$ using log insurance sum,
+$\log(X_{i, \texttt{sum}})$, as predictor can be fitted to data using the
+R function `lm()`. The theory behind the computations is treated in
+the subsequent section.
+
+```{r}
+#| label: claims-lm
+#| code-fold: show
+claims_lm <- lm(
+    log(claims) ~ log(sum), 
+    data = claims
+)
+coefficients(claims_lm)
+```
+
+This model is the linear model
+$$E(\log(Y_i) \mid X_{i, \texttt{sum}}) = \beta_0 + \beta_{\texttt{sum}} \log(X_{i, \texttt{sum}}).$$
+In the R terminology the parameter $\beta_0$ is the `(Intercept)` coefficient
+and $\beta_{\texttt{sum}}$ is the `log(sum)` coefficient. The model
+corresponds to the regression line shown in @fig-claims-scatter.
+
+Note that in concrete cases we will not write the conditioning variable explicitly as
+$\log(X_{i, \texttt{sum}})$. As long as the right hand side is a linear combination
+of transformations of the conditioning variables (and an intercept) this is a linear model.
+It would be bothersome to write out explicitly the vector of transformations on the
+left hand side. These are, however, computed explicitly by \texttt{lm} and stored in the
+model matrix $\mathbf{X}$.
+
+\marginnote[1cm]{The rows in the model matrix shown were chosen to illustrate certain
+differences in subsequent examples.}
+```{r}
+#| label: claims-model-matrix
+#| code-fold: show
+model.matrix(claims_lm)[781:784, ]
+```
+
+In the general treatment of the linear model it is notationally beneficial to
+always condition explicitly on the model matrix or a row in the model matrix. Thus to
+have a smooth notation in the general theory as well as in the concrete examples
+we will have to live with this slight discrepancy  in notation. This will usually not be a
+source of confusion once the nature of this discrepancy is understood clearly. The models
+treated below illustrate this point further.
+
+We can condition on the trade group, $\texttt{grp}_i$, as well and thus consider
+the model
+\marginnote{The dummy variable encoding is $$X_{i,\texttt{grp}k} = 1(\texttt{grp}_i = k).$$}
+$$
+\begin{aligned}
+E(\log(Y_i) \mid X_{i, \texttt{sum}}, \texttt{grp}_i) & = \beta_0 + \beta_{\texttt{sum}} \log(X_{i, \texttt{sum}}) \\
+& \hskip -1cm  + \beta_{\texttt{grp2}} X_{i, \texttt{grp2}} +
+\beta_{\texttt{grp3}} X_{i, \texttt{grp3}}  + \beta_{\texttt{grp4}} X_{i, \texttt{grp4}}.
+\end{aligned}
+$$
+This model is
+known as the additive model. The dummy variable encoding of the categorical
+trade group is used, and since the
+model includes an intercept the dummy variable corresponding to the first group is
+removed.
+Otherwise the model would be overparametrized. The consequence is that the first group
+acts as a baseline, and that the parameters $\beta_{\texttt{grp2}}$, $\beta_{\texttt{grp3}}$ 
+and $\beta_{\texttt{grp4}}$ are
+the differences from the baseline. These differences are also known
+as *contrasts*. \index{contrasts} We see, for example, that
+$$
+    E(\log(Y_i) \mid X_{i, \texttt{sum}} = x, \texttt{grp}_i = 1) = \beta_0 +
+    \beta_{\texttt{sum}} \log(x)
+$$
+and
+$$
+    E(\log(Y_i) \mid  X_{i, \texttt{sum}} = x, \texttt{grp} = 2) = \beta_0 +
+    \beta_{\texttt{sum}} \log(x) + \beta_{\texttt{grp2}},
+$$
+thus the difference from the baseline trade group 1 to trade group 2 is
+$\beta_{\texttt{grp2}}$.
+
+We can again fit this model using `lm()` in R, which automatically
+determines the model parametrization (using defaults) and computes the
+model matrix.
+
+```{r}
+#| label: claims-lm-add
+#| code-fold: show
+claims_lm_add <- lm(
+    log(claims) ~ log(sum) + grp,
+    data = claims
+)
+coefficients(claims_lm_add)
+model.matrix(claims_lm_add)[781:784, ]
+```
+
+Alternative parametrizations can be specified using the `contrasts`
+argument.
+
+```{r}
+#| label: claimsLmAdd2
+#| code-fold: show
+claims_lm_add <- lm(
+    log(claims) ~ log(sum) + grp, 
+    data = claims,
+    contrasts = list(grp = "contr.sum")
+)
+coefficients(claims_lm_add)
+model.matrix(claims_lm_add)[781:784, ]
+```
+
+The `contr.sum` contrast gives the parametrization
+$$
+\begin{aligned}
+E(\log(Y_i) \mid X_{i, \texttt{sum}}, \texttt{grp}_i) & = \beta_0 + \beta_{\texttt{sum}} \log(X_{i, \texttt{sum}}) \\
+& + \beta_{\texttt{grp1}} X_{i, \texttt{grp1}} + \beta_{\texttt{grp2}} X_{i, \texttt{grp2}} \\
+& + \beta_{\texttt{grp3}} X_{i, \texttt{grp3}}  + \beta_{\texttt{grp4}} X_{i, \texttt{grp4}}.
+\end{aligned}
+$$
+with the constraint $\beta_{\texttt{grp1}} + \beta_{\texttt{grp2}} + \beta_{\texttt{grp3}} + \beta_{\texttt{grp4}} = 0$. Only the parameters $\beta_{\texttt{grp1}}$, $\beta_{\texttt{grp2}}$ and $\beta_{\texttt{grp3}}$ are reported, and $\beta_{\texttt{grp4}} = - \beta_{\texttt{grp1}} - \beta_{\texttt{grp2}} - \beta_{\texttt{grp3}}$ as can also be seen from the model matrix. This latter parametrization can be
+more convenient if we want to compare trade groups to the overall intercept instead of
+to one specific baseline group. 
+
+The additive model gives a different intercept for each trade group but the
+slope is kept the same for all trade groups. Within the framework of linear
+models we can capture differences in slope as an *interaction* \index{interaction}
+between the insurance sum and the trade group. Using the parametrization with trade group
+1 as baseline this model is
+$$
+\begin{aligned}
+E(\log(Y_i) \mid X_{i, \texttt{sum}}, \texttt{grp}_i) & = \beta_0 + \beta_{\texttt{sum}} \log(X_{i, \texttt{sum}}) \\
+& + (\beta_{\texttt{grp2}} + \beta_{\texttt{sum}, \texttt{grp2}} \log(X_{i, \texttt{sum}}))X_{i, \texttt{grp2}} \\
+& + (\beta_{\texttt{grp3}} + \beta_{\texttt{sum}, \texttt{grp3}} \log(X_{i, \texttt{sum}}))X_{i, \texttt{grp3}} \\
+& + (\beta_{\texttt{grp4}} + \beta_{\texttt{sum}, \texttt{grp4}} \log(X_{i, \texttt{sum}}))X_{i, \texttt{grp4}}.
+\end{aligned}
+$$
+
+The parameter estimates and model matrix are:
+
+```{r echo=-c(1, 5)}
+#| label: claims-lm-int
+#| column: page-right
+claims_lm_int <- lm(
+    log(claims) ~ log(sum) * grp, 
+    data = claims
+)
+coefficients(claims_lm_int) |> print(width = 120)
+model.matrix(claims_lm_int)[781:784, ] |> print(width = 120)
+```
+
+This model corresponds to the regression lines shown in
+@fig-claims-scatter-strat. This example illustrates why we do not want to
+write out the eight dimensional vector explicity in the condition when in fact
+it is just a transformation of $X_{i, \texttt{sum}}$ and $\texttt{grp}_i$. On the other
+hand, it would be equally bothersome to drag an abstract transformation around
+in the general notation.
+
+Three linear models were considered in this section, and subsequent sections
+and chapters will treat different ways of comparing models and for drawing
+inference about model parameters and hypotheses. It must be emphasized that
+the purpose of developing the theory and the corresponding statistical
+methods is **not** to be able to deduce from data what the "true model"
+is. There are several reasons for that. For once, all models should be 
+considered as approximations only.
+[*All models are wrong but some are useful.* George Box, 1978]{.aside}
+We can try to find an adequate model approximation
+that captures essential aspects of the data, and we may be able to justify
+that a model is adequate, but we will never be able to justify that a model
+is "true". 
+
+Several models may also be valid and yet
+appear contradictory, and it may then depend on the purpose of the modeling
+which to use. It is, for instance, important to formulate precisely which
+predictors that we condition on. Suppose that the conditional expectation
+$E(\log(Y_i) \mid X_{i, \texttt{sum}}, \texttt{grp}_i)$ is given by the additive
+model, say, then it follows from the tower property of conditional expectations that
+$$
+\begin{aligned}
+E(\log(Y_i) \mid X_{i, \texttt{sum}}) & = \beta_0
++ \beta_{\texttt{sum}} \log(X_{i, \texttt{sum}}) \\
+& + \beta_{\texttt{grp2}} P(\texttt{grp}_i = 2 \mid X_{i, \texttt{sum}})  \\
+& + \beta_{\texttt{grp3}} P(\texttt{grp}_i = 3 \mid X_{i, \texttt{sum}}) \\
+& + \beta_{\texttt{grp4}} P(\texttt{grp}_i = 4 \mid X_{i, \texttt{sum}}).
+\end{aligned}
+$$
+
+Now if [The approximation can be justified locally using Taylor's theorem
+if the probability depends smoothly on the predictor.]{.aside}
+$$ 
+    P(\texttt{grp}_i = k \mid X_{i, \texttt{sum}}) \approx \delta_k + \gamma_k \log(X_{i, \texttt{sum}})
+$$
+for $k = 2,3, 4$ then the linear model
+$$
+    E(\log(Y_i) \mid X_{i, \texttt{sum}}) = \beta_0
++ \beta_{\texttt{sum}} \log(X_{i, \texttt{sum}})
+$$
+will be an approximately valid model as well. However, the intercept and slope for this
+model may differ from the model where we condition also on the group. This depends
+on whether or not the $\beta_{\texttt{grp}k}$, $\delta_k$ and
+$\gamma_k$ parameters are 0.  If the $\beta_{\texttt{grp}k}$ parameters were all 0 it would not matter if group is included in the conditioning. If group and insurance sum were independent then
+$\gamma_k = 0$, and both models would be equally valid models of the conditional
+expectation of the log claim size. The slope would then be the same in both
+models but the intercept would differ. If group and insurance sum were dependent then the slope would depend on
+whether we condition on insurance sum only or whether we condition on insurance sum
+as well as group. 
+
+The key take-home message is that a predictor variable may be excluded
+from the model even if it has a non-zero coefficient without necessarily invalidating
+the model. Another take-home message is that there is no such thing as an unqualified "effect"
+of a predictor variable. Effect sizes, as quantified by the $\beta$ coefficients, are
+always depending upon the precise choice of conditioning variables, whether this is
+made explicit by the modeling or is implicit by the data sampling process.
+
+In the light of George Box's famous aphorism above it is only appropriate to give another
+Box quote: *Since all models are wrong the scientist must be alert to what is
+importantly wrong* [@Box:1976]. One place to start is to investigate the assumptions
+A1, A2 and A3. These are investigated after the model has been fitted to data
+typically via the *residuals*
+$$
+    \hat{\epsilon}_i = Y_i - X_i^T \hat{\beta}
+$$ {#eq-resid-def} \index{residual!linear model}
+that are approximations of the errors $\epsilon_i$. \index{residual!plot}
+
+```{r} 
+#| label: fig-claims-diag
+#| message: false
+#| fig-cap: "Diagnostic plots based on residuals for the regression model conditioning on insurance sum only. The residual plot (left) and the histogram (middle) use the raw residuals. The qq-plot (right) uses standardized residuals."
+#| opts.label: widefigure3
+#| cap-location: margin
+claims_diag <- augment(claims_lm) ## Residuals etc.
+gridExtra::grid.arrange(
+  ggplot(claims_diag, aes(.fitted, .resid), alpha = I(0.2)) + geom_point() + geom_smooth(),
+  ggplot(claims_diag, aes(.resid)) + geom_histogram(bins = 40),
+  ggplot(claims_diag, aes(sample = .std.resid)) + geom_qq() + geom_abline(),
+  ncol = 3
+)
+```
+
+@fig-claims-diag shows three typical diagnostic plots. The residuals plotted
+against the fitted values, $X_i^T \hat{\beta}$, can be used to detect if the mean value
+specification is adequate and if the variance is approximately constant as a function of
+the fitted values. The scatter plot smoother added to the residual plot bends up in the
+ends indicating that the mean is not spot on. There is no clear indication of variance
+inhomogeneity. The histogram of the residuals and the qq-plot of the standardized\sidenote[]{Standardized
+so as to make the residuals have unit variance under the model assumptions.} residuals
+can be used for comparing the residual distribution with the normal distribution. In
+this case the residuals have a slightly right skewed distribution when compared
+to the normal distribution. Of course we also note the pattern of the most extreme
+positive residuals that correspond to the capped claims. In this section we will not
+pursue the effect of those.
+
+
+```{r} 
+#| label: fig-claims-diag-int
+#| message: false
+#| fig-cap: "Diagnostic plots based on residuals for the regression model with an interaction of trade group and insurance sum. The residual plot (left) and the histogram (middle) use the raw residuals. The qq-plot (right) uses standardized residuals."
+#| opts.label: widefigure3
+#| cap-location: margin
+claims_diag_int <- augment(claims_lm_int) ## Residuals etc.
+gridExtra::grid.arrange(
+  ggplot(claims_diag_int, aes(.fitted, .resid), alpha = I(0.2)) + geom_point() + geom_smooth(),
+  ggplot(claims_diag_int, aes(.resid)) + geom_histogram(bins = 40),
+  ggplot(claims_diag_int, aes(sample = .std.resid)) + geom_qq() + geom_abline(),
+  ncol = 3
+)
+```
+
+@fig-claims-diag-int shows diagnostic plots for the more complicated interaction
+model. The conclusion is the same as for the simpler model. The mean value model is
+not spot on and the residual distribution is slightly skewed. This is not a bad
+model fit but it leaves room for improvements.
+
+## Estimation theory {#sec-estimation-theory}
+
+The theory that we will cover in this section is on the estimation of the 
+unknown parameter $\beta$ using least squares methods. We give theoretical results on the existence 
+and uniqueness, and we provide characterizations of the least squares estimator. We 
+also discuss how the estimator is computed in practice. 
+
+### Weighted linear least squares estimation
+\index{weighted least squares}
+
+We will consider the generalization of linear least squares that 
+among other things allows for weights on the individual cases. Allowing for weights
+can be of interest in itself, but serves, in particular, as a preparation for the 
+methods we will consider in @chap-glm.
+
+We introduce the *weighted squared error loss*
+[With $\mathbf{W} = \mathbf{I}$ this loss is proportional to 
+the negative log-likelihood loss under assumptions A3 and A5 as derived in @chap-glm.]{.aside}
+\index{loss!squared error} \index{weighted squared loss} as 
+$$ 
+\ell(\beta) = (\mathbf{Y} - \mathbf{X}\beta)^T\mathbf{W}(\mathbf{Y}
+- \mathbf{X}\beta)
+$$ {#eq-wsel}
+where $\mathbf{W}$ is a positive definite matrix. An $n \times n$ matrix is positive definite if 
+it is symmetric and
+$$\mathbf{y}^T \mathbf{W} \mathbf{y} > 0$$ 
+for all $\mathbf{y} \in \mathbb{R}^n$ with $\mathbf{y} \neq 0$. A
+special type of positive definite weight matrix is a diagonal matrix with positive
+entries in the diagonal. With  
+$$
+    \mathbf{W} = \left(\begin{array}{cccc} 
+    w_1 & 0 & \ldots & 0 \\
+    0 & w_2 & \ldots & 0 \\
+    \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & \ldots & w_n \end{array}\right)
+$$
+we find that the weighted squared error loss becomes
+$$
+    \ell(\beta) =  \sum_{i} w_i (Y_i - X_i^T \beta)^2.
+$$
+That is, the $i$-th case receives the weight $w_i$. 
+\index{weight matrix} \index{penalty matrix}
+
+We will estimate the parameter $\beta$ via minimization of $\ell$ -- or via 
+minimization of $\ell$ plus a penalty term. With $\boldsymbol{\Omega}$ 
+a positive semidefinite $p \times p$ matrix we will seek to minimize the function  
+$$ 
+\ell_{\boldsymbol{\Omega}}(\beta) := \ell(\beta) + \beta^T \boldsymbol{\Omega} \beta.
+$$ {#eq-penll}
+The penalty term, $\beta^T \boldsymbol{\Omega} \beta$, introduces a form of control on the 
+minimization problem, and thus the estimator, by shrinking the minimizer toward 0. This can have 
+beneficial numerical as well as statistical consequences. The purpose of introducing a penalty will be elaborated upon in subsequent sections, where some concrete examples will be given.   
+
+\index{normal equation}
+[@eq-normal is called the *normal* equation.]{.aside}
+
+::: {#thm-normal} 
+A solution to the equation \index{normal equation}
+$$
+\left(\mathbf{X}^T \mathbf{W} \mathbf{X} + \boldsymbol{\Omega}\right) \beta = 
+\mathbf{X}^T \mathbf{W} \mathbf{Y}
+$$ {#eq-normal}
+is a minimizer of the quadratic loss function ([-@eq-penll]). There is a unique minimizer if either 
+$\mathbf{X}$ has full column rank $p$ or if $\boldsymbol{\Omega}$ is positive definite. 
+::: 
+
+::: {.proof} 
+The derivative of $\ell_{\boldsymbol{\Omega}}$ is 
+$$
+    D_{\beta} \ell_{\boldsymbol{\Omega}}(\beta) = -2(\mathbf{Y} - \mathbf{X}\beta)^T \mathbf{W} \mathbf{X} + 2 \beta^T \boldsymbol{\Omega}.
+$$
+
+To compute this derivative, it may be useful to think of $\ell$ as a
+composition. The function 
+$a(\beta) = (\mathbf{Y} - \mathbf{X}\beta)$ from $\mathbb{R}^{p}$ to $\mathbb{R}^n$ has
+derivative $D_{\beta}a(\beta) = -\mathbf{X}$, and $\ell$ is a composition of $a$
+with the function $b(z) = z^T \mathbf{W} z$ from $\mathbb{R}^n$ to $\mathbb{R}$ with derivative 
+$D_z b(z) = 2 z^T \mathbf{W}$. By the chain rule
+$$ 
+    D_{\beta} \ell(\beta) = D_zb(a(\beta)))D_{\beta}a(\beta) = -2(\mathbf{Y} - \mathbf{X}\beta)^T \mathbf{W} \mathbf{X}.
+$$
+
+The derivative of $\beta \mapsto \beta^T \boldsymbol{\Omega} \beta$ is found in the same way 
+as the derivative of $b$. Note that the derivative is a *row vector*.[^column-gradient] 
+
+We note that @eq-normal is equivalent to 
+$D_{\beta} \ell_{\boldsymbol{\Omega}}(\beta) = 0$, 
+hence a solution of @eq-normal is a stationary point of $\ell_{\boldsymbol{\Omega}}$.
+
+The second derivative of $\ell_{\boldsymbol{\Omega}}$ is 
+$$
+    D_{\beta}^2 \ell_{\boldsymbol{\Omega}}(\beta) = 
+    2 \left(\mathbf{X}^T \mathbf{W} \mathbf{X} + \boldsymbol{\Omega}\right).
+$$
+This matrix is (globally) positive semidefinite, hence the function is convex and 
+any stationary point is a global minimum. 
+
+If $\mathbf{X}$ has rank $p$ or if $\boldsymbol{\Omega}$ is positive definite, 
+$D_{\beta}^2 \ell_{\boldsymbol{\Omega}}(\beta)$ is positive definite and the minimizer of 
+$\ell_{\boldsymbol{\Omega}}$ is the unique solution of @eq-normal.
+:::
+
+[^column-gradient]: The *gradient*, $$\nabla_{\beta}  \ell(\beta) = D_{\beta} \ell(\beta)^T,$$ is a column vector.
+
+
+When the solution to @eq-normal is unique it can, of course, be written as 
+$$
+    \hat{\beta} = (\mathbf{X}^T \mathbf{W} \mathbf{X} + {\boldsymbol{\Omega}})^{-1}
+    \mathbf{X}^T \mathbf{W} \mathbf{Y}.
+$$ 
+This can be a theoretically convenient formula for the estimator, but as 
+we discuss below, the practical computation of $\hat{\beta}$ does typically 
+not rely on explicit matrix inversion. 
+
+[In the rest of this section we only consider the case with ${\boldsymbol{\Omega}} = 0$.]{.aside}
+A geometric interpretation of the weighted least squares estimator 
+without penalization provides additional insights. The inner product induced by $\mathbf{W}$
+on $\mathbb{R}^n$ is given by $\mathbf{y}^T \mathbf{W} \mathbf{x}$, and the 
+corresponding norm is denoted $\|\cdot\|_{\mathbf{W}}$. With this notation 
+we see that 
+$$
+    \ell(\beta) = \|\mathbf{Y} - \mathbf{X}\beta\|^2_{\mathbf{W}}.
+$$ 
+If $L = \{\mathbf{X}\beta  \mid \beta \in \mathbb{R}^p\}$ denotes the column
+space of $\mathbf{X}$, $\ell$ is minimized whenever $\mathbf{X}\beta$ is the 
+orthogonal projection of $\mathbf{Y}$ onto $L$ in the inner product given by
+$\mathbf{W}$.
+[$\|\mathbf{y}\|_{\mathbf{W}}^2 = \mathbf{y}^T \mathbf{W} \mathbf{y}$ specifies a norm if and only if $\mathbf{W}$ is positive definite.]{.aside}
+
+::: {#lem-proj}
+The orthogonal projection onto $L$ is 
+$$
+    P = \mathbf{X} (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} \mathbf{X}^T \mathbf{W} 
+$$
+provided that $\mathbf{X}$ has full column rank $p$. 
+:::
+
+::: {.proof}
+We verify that $P$ is the orthogonal projection onto $L$ by verifying three
+characterizing properties: 
+$$
+    \begin{align*}
+        P \mathbf{X} \beta & = \mathbf{X} \beta \quad (P \text{ is the identity on } L) \\
+        P^2 & = \mathbf{X} (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} 
+        \mathbf{X}^T \mathbf{W}  \mathbf{X} 
+        (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} \mathbf{X}^T
+        \mathbf{W} \\
+        & = \mathbf{X}
+        (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} \mathbf{X}^T \mathbf{W} = P \\
+        P^T \mathbf{W}  
+        & = (\mathbf{X} (\mathbf{X}^T \mathbf{W}
+        \mathbf{X})^{-1} \mathbf{X}^T \mathbf{W} )^T \mathbf{W} \\
+        & =
+        \mathbf{W} \mathbf{X} (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} \mathbf{X}^T
+        \mathbf{W} = \mathbf{W} P.
+    \end{align*}
+$$
+
+The last property is self-adjointness w.r.t. the inner product given
+by $\mathbf{W}$.
+:::
+
+
+Note that for $\boldsymbol{\Omega} = 0$, @thm-normal is a consequence of @lem-proj.
+This follows from the identity $P\mathbf{Y} = \mathbf{X} \hat{\beta}$, 
+since the equation $P\mathbf{Y} = \mathbf{X} \beta$ has a unique solution
+when the columns of $\mathbf{X}$ are linearly independent.
+
+If $\mathbf{X}$ does not have rank $p$ the projection is still
+well defined, and it can be written as 
+$$
+    P = \mathbf{X} (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-} \mathbf{X}^T \mathbf{W}
+$$
+where $(\mathbf{X}^T \mathbf{W} \mathbf{X})^{-}$ denotes a generalized inverse.
+[A generalized inverse of a matrix $A$ is any matrix $A^{-}$ with the property that $$AA^{-}A = A.$$]{.aside} 
+This is seen by verifying the same three conditions as in the proof
+above. The solution to $P\mathbf{Y} = \mathbf{X} \beta$ is, however, no longer unique, and the 
+solution 
+$$
+    \hat{\beta} = (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-} \mathbf{X}^T \mathbf{W} \mathbf{Y}
+$$
+is just one possible solution.
+
+%% Moore-Penrose pseudoinverse and norm-minimal solutions. 
+
+### Algorithms
+
+The actual computation of the solution to the normal equation is 
+typically based on a QR decomposition of $\mathbf{X}$ 
+and not on a matrix inversion or a direct solution of the linear equation.
+[The normal equation can be solved by Gaussian elimination, \index{Gaussian elimination} which corresponds to an LU decomposition of $$\mathbf{X}^T \mathbf{W} \mathbf{X} + \boldsymbol{\Omega}.$$
+The algorithm was named after Carl Friedrich Gauss, though he did not invent it. However, he promoted it 
+for efficient computation of the solution of least squares problems.]{.aside}
+The R function `lm()` -- 
+or rather the underlying R functions 
+`lm.fit()` and `lm.wfit()` -- are based on the QR decomposition. We first 
+treat the case $\mathbf{W} = \mathbf{I}$ and  $\boldsymbol{\Omega} = 0$ and then subsequently the 
+more general cases. 
+
+\index{QR decomposition}
+The QR decomposition of $\mathbf{X}$ is the factorization 
+$$
+    \mathbf{X} = \mathbf{Q} \mathbf{R},
+$$
+where $\mathbf{Q}$ is an orthogonal matrix and $\mathbf{R}$ is an upper triangular matrix. 
+Since 
+$$
+    \mathbf{X}^T \mathbf{X}  = \mathbf{R}^T \underbrace{\mathbf{Q}^T \mathbf{Q}}_{\mathbf{I}} \mathbf{R} = \mathbf{R}^T \mathbf{R},
+$$ {#eq-cholviaqr}
+the normal equation becomes
+$$
+    \mathbf{R}^T \mathbf{R} \beta = \mathbf{X}^T \mathbf{Y}.
+$$
+This equation can be solved efficiently and in a numerically stable way in a two-step pass 
+by exploiting first that $\mathbf{R}^T$ is lower triangular and then that $\mathbf{R}$
+is upper triangular. Moreover, the QR decomposition can be implemented in a rank revealing 
+way. This is useful when $\mathbf{X}$ does not have rank $p$, in which case the 
+QR decomposition effectively reparametrizes the model as if some columns were removed from 
+$\mathbf{X}$. Such a version of the QR decomposition is used by 
+`lm.fit()` and `lm.wfit()` in R, and one will obtain parameter estimates 
+with the value `NA` when $\mathbf{X}$ has (numerical) rank strictly less than $p$.
+\index{Cholesky decomposition}
+
+For a general weight matrix we write
+[This could be the Cholesky decomposition with $\mathbf{L}$ lower triangular, or $\mathbf{L}$ could be the symmetric square root of $\mathbf{W}$. For a diagonal $\mathbf{W}$, $\mathbf{L}$ is diagonal and trivial to compute by taking square roots. For unstructured $\mathbf{W}$ the computation of the Cholesky decomposition scales as $n^3$.]{.aside}
+$\mathbf{W} = \mathbf{L} \mathbf{L}^T$, in which 
+case the normal equation can be rewritten as 
+$$ 
+    (\mathbf{L}^T \mathbf{X})^T \mathbf{L}^T \mathbf{X} \beta = (\mathbf{L}^T \mathbf{X})^T \mathbf{L}^T \mathbf{Y}
+$$
+Thus by replacing $\mathbf{X}$ with $\mathbf{L}^T \mathbf{X}$ and $\mathbf{Y}$ with 
+$\mathbf{L}^T \mathbf{Y}$ we can proceed as above and solve the normal equation via a 
+QR decomposition of $\mathbf{L}^T\mathbf{X}$.
+
+The computations based on the QR decomposition don't involve the computation 
+of the *cross product* \index{cross product} $\mathbf{X}^T \mathbf{X}$ (or more generally, $\mathbf{X}^T \mathbf{W} \mathbf{X}$). The factorization ([-@eq-cholviaqr]) of the 
+positive semidefinite matrix $\mathbf{X}^T \mathbf{X}$ as a lower and upper triangular matrix 
+is called the Cholesky decomposition, and as outlined above it can be computed via the 
+QR decomposition of $\mathbf{X}$. An alternative is to 
+compute $\mathbf{X}^T \mathbf{X}$ directly and then compute its Cholesky 
+decomposition. The QR decomposition is usually preferred for numerical stability. Computing
+$\mathbf{X}^T \mathbf{X}$ is essentially a squaring operation, and precision can 
+be lost. However, if $n$ is large compared to $p$ it will be faster to compute 
+the Cholesky decomposition from the cross product. 
+
+If $\boldsymbol{\Omega} \neq 0$ the normal equation can be solved by computing 
+the Cholesky decomposition 
+$$
+    \mathbf{X}^T \mathbf{W} \mathbf{X} + \boldsymbol{\Omega} = \mathbf{R}^T \mathbf{R}
+$$
+directly and then proceed as above. 
+
+To use the QR decomposition we write
+[The computations could again be done via the Cholesky decomposition of $\boldsymbol{\Omega}$, 
+or $\mathbf{D}$ could be computed as the symmetric square root of $\boldsymbol{\Omega}$.]{.aside} 
+$\boldsymbol{\Omega} = \mathbf{D} \mathbf{D}^T$. Then the normal equation can be written as 
+$$
+    \left(\begin{array}{cc}  \mathbf{X}^T \mathbf{L} & \mathbf{D} \end{array} \right) \left(\begin{array}{c} \mathbf{L}^T \mathbf{X} \\ \mathbf{D}^T \end{array} \right) \beta = 
+\left(\begin{array}{cc}  \mathbf{X}^T\mathbf{L} & \mathbf{D} \end{array} \right)
+\left(\begin{array}{c} \mathbf{L}^T \mathbf{Y} \\ 0 \end{array} \right).
+$$
+By replacing $\mathbf{X}$ with
+$$
+    \left(\begin{array}{c} \mathbf{L}^T \mathbf{X} \\ \mathbf{D}^T \end{array} \right)
+$$
+and $\mathbf{Y}$ with
+$$
+    \left(\begin{array}{c} \mathbf{L}^T \mathbf{Y} \\ 0 \end{array} \right)
+$$
+we can solve the normal equation via the QR decomposition as above. 
+
+## Sampling distributions {#sec-sampling-distributions}
+
+In this section we give results on the distribution of the estimator, $\hat{\beta}$, 
+and test statistics of linear hypotheses under the weak assumptions A1, A2 and A4
+and under the strong assumptions A3 and A5. Under the weak assumptions we 
+can only obtain results on moments, while the strong distributional 
+assumptions give exact sampling distributions. Throughout we restrict attention to the 
+case where $\mathbf{W} = \mathbf{I}$ and $\boldsymbol{\Omega} = 0$.
+
+### Moments
+
+Some results involve the unknown variance parameter $\sigma^2$
+(see Assumption A2) and some involve a specific estimator $\hat{\sigma}^2$. This 
+estimator of $\sigma^2$ is 
+\index{variance estimator!unbiased}
+$$ 
+    \hat{\sigma}^2 = \frac{1}{n-p} \sum_{i=1}^{n} (Y_i -
+    X_i^T\hat{\beta})^2 =  \frac{1}{n-p} \|\mathbf{Y} -
+    \mathbf{X}\hat{\beta}\|^2
+$$ {#eq-varest} 
+provided that $\mathbf{X}$ has full rank $p$. Recalling that the $i$-th residual is
+$$\hat{\epsilon}_i = Y_i - X_i^T\hat{\beta},$$
+the variance estimator equals the empirical variance of the residuals -- 
+up to division by $n-p$ and not $n$. Since the residual is a 
+natural estimator of the unobserved error $\epsilon_i$, the
+variance estimator $\hat{\sigma}^2$ is a natural estimator of 
+the error variance $\sigma^2$. The explanation of the denominator $n-p$ 
+is related to the fact that $\hat{\epsilon}_i$ is an estimator of $\epsilon_i$.
+A partial justification, as shown in the following theorem, is that division by $n-p$ 
+makes $\hat{\sigma}^2$ unbiased.
+
+::: {#thm-OLS-moments}
+Under the weak assumptions A1, A2 and A4, and assuming that $\mathbf{X}$ has full rank $p$,
+$$
+    \begin{align*}
+    E(\hat{\beta} \mid \mathbf{X}) & = \beta, \\
+    V(\hat{\beta} \mid \mathbf{X}) & = \sigma^2 (\mathbf{X}^T\mathbf{X})^{-1}, \\
+    E(\hat{\sigma}^2 \mid \mathbf{X}) &= \sigma^2.
+    \end{align*}
+$$
+:::
+
+::: {.proof}
+Using assumptions A1 and A4 we find that 
+$$
+    \begin{align*}
+    E(\hat{\beta} \mid \mathbf{X}) & = 
+    E((\mathbf{X}^T\mathbf{X})^{-1} \mathbf{X}^T \mathbf{Y} \mid \mathbf{X}) \\
+    & = (\mathbf{X}^T\mathbf{X})^{-1} \mathbf{X}^T E(\mathbf{Y} \mid \mathbf{X}) \\
+    & = (\mathbf{X}^T\mathbf{X})^{-1} \mathbf{X}^T \mathbf{X} \beta \\
+    & = \beta.
+    \end{align*}
+$$
+Using assumptions A2 and A4 it follows that 
+$$
+    \begin{align*}
+    V(\hat{\beta} \mid \mathbf{X}) & = (\mathbf{X}^T\mathbf{X})^{-1} \mathbf{X}^T V(\mathbf{Y} \mid \mathbf{X})  \mathbf{X} (\mathbf{X}^T\mathbf{X})^{-1} \\
+    & =  (\mathbf{X}^T\mathbf{X})^{-1} \mathbf{X}^T \sigma^2 \mathbf{I} \mathbf{X}
+    (\mathbf{X}^T\mathbf{X})^{-1} \\
+    & = \sigma^2 (\mathbf{X}^T\mathbf{X})^{-1}.
+ \end{align*}
+$$
+
+For the computation of the expectation of $\hat{\sigma}^2$, the geometric 
+interpretation of $\hat{\beta}$ is useful. Since $\mathbf{X} \hat{\beta} = P \mathbf{Y}$
+with $P$ the orthogonal projection onto the column space $L$ of $\mathbf{X}$, we find that 
+$$
+    \mathbf{Y} - \mathbf{X} \hat{\beta} = (\mathbf{I} - P) \mathbf{Y}.
+$$
+Because $E(\mathbf{Y} - \mathbf{X} \hat{\beta} \mid \mathbf{X}) = 0$ 
+$$
+    E(\|\mathbf{Y} - \mathbf{X} \hat{\beta}\|^2 \mid \mathbf{X}) = \sum_{i=1}^n V(\mathbf{Y} - \mathbf{X} \hat{\beta} \mid \mathbf{X})_{ii}
+$$
+and  
+$$
+    \begin{align*}
+    V(\mathbf{Y} - \mathbf{X} \hat{\beta} \mid \mathbf{X}) & = V((\mathbf{I} - P) \mathbf{Y} \mid \mathbf{X}) \\
+    & = (\mathbf{I} - P) V(\mathbf{Y} \mid \mathbf{X}) (\mathbf{I} - P)^T \\
+    & = (\mathbf{I} - P) \sigma^2 \mathbf{I} (\mathbf{I} - P) \\
+    & = \sigma^2 (\mathbf{I} - P).
+    \end{align*}
+$$
+The sum of the diagonal elements in $(\mathbf{I} - P)$ is the trace of this 
+orthogonal projection onto $L^{\perp}$ -- the orthogonal complement of $L$ --
+and is thus equal to the dimension of $L^{\perp}$, which is $n-p$. 
+:::
+
+### Tests and confidence intervals
+
+For the computation of exact distributional properties of test statistics and 
+confidence intervals we need the strong distributional assumptions A3 and A5. 
+
+\index{$Z$-score!linear model}
+
+::: {#thm-pardisnorm}
+Under the strong assumptions A3 and A5 it holds, conditionally on $\mathbf{X}$, that 
+$$
+    \hat{\beta} \sim \mathcal{N}(\beta,\sigma^2 (\mathbf{X}^T\mathbf{X})^{-1})
+$$
+and that
+$$
+    (n-p)\hat{\sigma}^2 \sim \sigma^2 \chi^2_{n-p}.
+$$
+Moreover, for the standardized $Z$-score 
+$$
+    Z_j = \frac{\hat{\beta}_j-\beta_j}{\hat{\sigma}\sqrt{(\mathbf{X}^T\mathbf{X})^{-1}_{jj}}} \sim t_{n-p},
+$$
+or more generally for any $a \in \mathbb{R}^{p}$ 
+$$
+    Z_a = \frac{a^T\hat{\beta} - a^T \beta}{\hat{\sigma} \sqrt{a^T(\mathbf{X}^T\mathbf{X})^{-1}a}} \sim t_{n-p}.
+$$
+:::
+
+[The $Z$-score statistics are in this setup also known as the $t$-test statistics. 
+Under the hypothesis $H_0: \beta_j = 0$ we see that $Z_j = \hat{\beta}_j / \hat{\mathrm{se}}_j$ 
+where $\hat{\mathrm{se}}_j$ is an estimate of the standard error, that is, the standard deviation
+of the estimator $\hat{\beta}_j$.]{.aside}
+
+::: {.proof} 
+See @Hansen:2012, Chapter 10.
+:::
+
+The standardized $Z$-scores are used to test hypotheses about a single 
+parameter or a single linear combination of the parameters. The $Z$-score is 
+computed under the hypothesis (with the hypothesized value of $\beta_j$
+or $a^T \beta$ plugged in), and compared to the $t_{n-p}$ distribution. The test is 
+two-sided. The $Z$-scores are also used to construct confidence intervals 
+for linear combinations of the parameters. A 95\% confidence interval for $a^T\beta$ is computed as 
+\index{confidence interval!linear model}
+$$ 
+    a^T\hat{\beta} \pm z_{n-p}  \hat{\sigma} \sqrt{a^T(\mathbf{X}^T\mathbf{X})^{-1}a}
+$$ {#eq-confint}
+where $\hat{\sigma} \sqrt{a^T(\mathbf{X}^T\mathbf{X})^{-1}a}$ is the
+estimated standard error of $a^T\hat{\beta}$ and $z_{n-p}$ is the
+$97.5\%$ quantile in the $t_{n-p}$-distribution. 
+
+For the computation of $a^T(\mathbf{X}^T\mathbf{X})^{-1}a$ we do not need to 
+compute the $(\mathbf{X}^T\mathbf{X})^{-1}$ 
+if we have already computed the QR-decomposition of $\mathbf{X}$ or the Cholesky decomposition of 
+$\mathbf{X}^T\mathbf{X}$. With 
+$\mathbf{X}^T\mathbf{X} = \mathbf{L} \mathbf{L}^T$ for a lower triangular[^QR-L]
+$p \times p$ matrix $\mathbf{L}$ we find that
+$$
+    \begin{align*}
+    a^T(\mathbf{X}^T\mathbf{X})^{-1}a & = a^T(\mathbf{L}\mathbf{L}^T)^{-1}a \\
+    & = (\mathbf{L}^{-1}a)^T \mathbf{L}^{-1}a \\
+    & = b^T b
+    \end{align*}
+$$
+where $b$ solves $\mathbf{L} b = a$. The solution of this lower triangular system of equations 
+is *faster* to compute than the matrix-vector product $(\mathbf{X}^T\mathbf{X})^{-1}a$, even
+if the inverse matrix is already computed and stored. This implies
+that the computation of $(\mathbf{X}^T\mathbf{X})^{-1}$ is never computationally beneficial. 
+Not even if we need to compute estimated standard errors for many different 
+choices of $a$.  
+
+[^QR-L]: If we have computed the QR-decomposition of $\mathbf{X}$ we take $\mathbf{L} = \mathbf{R}^T$.
+
+To test hypotheses involving more than a one-dimensional linear combination, we 
+need the $F$-tests. Let $p_0 < p$ and assume that $\mathbf{X}'$ is an $n \times p_0$-matrix whose 
+$p_0$ columns span a $p_0$-dimensional subspace of the column space of $\mathbf{X}$. With $\hat{\beta}'$
+the least squares estimator corresponding to $\mathbf{X}'$ the $F$-test statistic is
+defined as \index{$F$-test!linear models}
+$$
+    F = \frac{\| \mathbf{X} \hat{\beta} - \mathbf{X}' \hat{\beta}'\|^2 / (p - p_0)}{\| \mathbf{Y} - \mathbf{X} \hat{\beta}\|^2 / (n - p)}.
+$$ {#eq-F-test-statistic}
+Note that the denominator is just $\hat{\sigma}^2$. The $F$-test statistic is one-sided with 
+large values critical. 
+
+::: {#thm-F-test} 
+Under the hypothesis 
+$$H_0: \mathbf{Y} \mid \mathbf{X} \sim \mathcal{N}(\mathbf{X}' \beta_0', \sigma^2 \mathbf{I})$$
+the $F$-test statistic follows an $F$-distribution with $(p - p_0, n - p)$ degrees of freedom. 
+:::
+
+::: {.proof}
+ See @Hansen:2012, Chapter 10.
+::: 
+
+The terminology associated with the $F$-test and reported by the R function 
+`anova()` is as follows (R abbreviations in parentheses). The squared norm 
+$\|\mathbf{Y} - \mathbf{X} \hat{\beta}\|^2$
+is called the residual sum of squares (`RSS`) under the model, and $n-p$ is the residual degrees of freedom (`Res. Df`). 
+The squared norm $\|\mathbf{X} \hat{\beta} - \mathbf{X}' \hat{\beta}'\|^2$ is the sum of squares 
+(`Sum of Sq`), and $p - p_0$ is 
+the degrees of freedom (`Df`). 
+
+The squared norm $\|\mathbf{Y} - \mathbf{X}' \hat{\beta}'\|^2$ is 
+the residual 
+sum of squares under the hypothesis, and it follows from Pythagoras's theorem that 
+$$\|\mathbf{X} \hat{\beta} - \mathbf{X}' \hat{\beta}'\|^2 = \|\mathbf{Y} - \mathbf{X}' \hat{\beta}'\|^2 - \|\mathbf{Y} - \mathbf{X} \hat{\beta}\|^2.$$
+Thus the sum of squares is the difference between the residual sum of squares under the hypothesis and 
+under the model. The R function `anova()` computes and reports these numbers together with a 
+$p$-value for the null hypothesis derived from the appropriate $F$-distribution. 
+
+It is important for the validity of the $F$-test that the column space, $L'$, of $\mathbf{X}'$ 
+is a subspace of the column space, $L$, of $\mathbf{X}$. Otherwise the models are not 
+nested and a formal hypothesis test is meaningless even if $p_0 < p$. It may not 
+be obvious from the matrices if the models are nested. By definition, $L' \subseteq L$ if and only 
+if \index{nested models}
+$$
+    \mathbf{X}' = \mathbf{X} C 
+$$ {#eq-subspace}
+for a $p \times p_0$ matrix $C$ (of rank $p_0$), and we can verify that 
+$L' \subseteq L$ by finding a $C$ matrix such that ([-@eq-subspace]) holds. 
+The situation where the columns of $X'$ is a subset of the columns of $X$, which is 
+a hypothesis on the complementary set of parameters being $0$, 
+corresponds to $C$ having $0$-s or $1$-s appropriately placed 
+along the main diagonal and off-diagonal elements being $0$.
+[It is not necessary to compute the actual $C$ matrix 
+if theoretical arguments show that it exists.]{.aside} 
+
+In the ANOVA literature, where categorical predictors
+and their interactions are considered, a considerable amount of work 
+has been invested on choosing the $\mathbf{X}$ matrix, and thus the parametrization, 
+so that relevant scientific hypotheses can be formulated in terms of certain parameters being 
+$0$. Though this can ease communication in certain cases, it can also be quite confusing. Linear
+hypotheses considered within the linear model are not specific to a given choice of parametrization,
+and there is no requirement that a linear hypothesis is linked to certain 
+parameters being $0$. This will be illustrated in subsequent sections. 
+
+## Model assessment {#sec-model-assessment}
+
+This section introduces methods for investigating deviations from
+the model assumptions in the data and methods for assessing the descriptive 
+or predictive strength of the model. 
+
+\index{residual sum of squares}
+For the linear model the residual sum of squares 
+$$
+    \mathrm{RSS} = \|\mathbf{Y} - \mathbf{X} \hat{\beta}\|^2
+$$
+quantifies how well $X_i^T \hat{\beta}$ predicts $Y_i$ for $i = 1, \ldots, n$. 
+The absolute value of $\mathrm{RSS}$ is difficult to interpret. 
+The (in)famous $R^2$ is a first attempt to introduce an interpretable 
+index of predictive strength.
+
+\index{$R^2$} \index{coefficient of determination ($R^2$)}
+
+::: {#def-R-square}
+Let $\mathrm{RSS}_0$ be the residual sum of squares for the intercept only
+model and $\mathrm{RSS}$ the residual sum of squares for the model of interest
+(of dimension $p$). The coefficient of determination is 
+$$
+    R^2 = \frac{\mathrm{RSS}_0 - \mathrm{RSS}}{\mathrm{RSS}_0} = 1 - \frac{\mathrm{RSS}}{\mathrm{RSS}_0}.
+$$ {#eq-R-square-def}
+:::
+
+[The $R^2$ quantity has 
+surely been widely overused and over interpreted, but it is a sensible 
+quantity to consider, in particular for observational data. Note also the definition 
+of the adjusted $R^2$ below.]{.aside}
+
+Observe that the $F$-test statistic for the intercept only model is 
+$$
+    F  = \frac{n - p}{p-1} \frac{R^2}{1-R^2}
+$$
+Thus the coefficient of determination and the $F$-test are in one-to-one correspondence via a 
+monotonely increasing function. The closer $R^2$ is to 1, the larger is the $F$-test.
+With a single continuous predictor, $R^2$ is the *square of the Pearson
+  correlation* \index{Pearson correlation!and $R^2$}
+  between the response and the predictor. 
+For this reason, the square root of $R^2$ is called the *multiple correlation
+  coefficient*. \index{multiple correlation coefficient}
+
+For two non-nested models with the same complexity (same dimension $p$ in this case),
+  the one with the largest $R^2$ (smallest $\texttt{RSS}$) is the best predictor
+  on the dataset. But $R^2$ is monotonely increasing in $p$ for 
+nested models, which implies that among nested models the more complex model will always predict 
+better on the data. This does not reflect what will happen if we want to 
+make predictions on an independent observation $(Y^{\mathrm{new}}, X^{\mathrm{new}})$. 
+The average residual sum of squares, $\texttt{RSS}/n$, will generally underestimate the *prediction error*.
+$$
+    E\left((Y^{\mathrm{new}} - (X^{\mathrm{new}})^T \hat{\beta})^2 \mid  \hat{\beta} \right),
+$$
+ and the more complex the model is (the larger $p$ is), the more serious is the underestimation. 
+ It is quite possible that $\texttt{RSS} \approx 0$ ($R^2 \approx 1$) even though the prediction error 
+ is still considerable. 
+
+To (partly) remedy the optimism of $R^2$ we introduce the *adjusted* $R^2$.
+We can interpret $1 - R^2$ as a ratio of variance estimates,
+$$
+    1 - R^2 = \frac{\mathrm{RSS}/n}{\mathrm{RSS}_0/n} = \frac{\tilde{\sigma}^2}{\tilde{\sigma}_0^2}
+$$
+using *biased* estimates of the variance. The adjusted $R^2$ is defined as  
+\index{$R^2$!adjusted}
+$$
+    \overline{R}^2 = 1 - \frac{\mathrm{RSS}/(n-p)}{\mathrm{RSS}_0/(n-1)} = 1 - (1-R^2) \frac{n-1}{n-p},
+$$ {#eq-adj-R-square-def}
+where the variance ratio is based on *unbiased* estimates of the variance. 
+
+
+## Investigating and comparing claim size models {#sec-claim-size-models}
+
+The lm object `claims_lm` contains a substantial amount of information about the 
+fitted linear model -- in addition to the parameter estimates. The generic base 
+R function `summary()` can be used to print a summary of that information. 
+
+```{r}
+#| label: sum-claims
+#| code-fold: show
+summary(claims_lm)
+```
+
+From the summary of the model, including only log insurance sum as a 
+predictor, we find that the slope is different from 0 
+according to the $t$-test. However, $R^2$ (denoted `Multiple R-square` in the 
+R output) is only around 3\% and thus very small, which 
+shows that the insurance sum is a quite weak predictor of the claim 
+size. Note that for this regression model with only one continuous predictor,
+$R^2$ is the squared Pearson correlation between log claim size and log insurance sum,
+which we can verify directly.
+
+```{r}
+#| label: claims-cor
+#| code-fold: show
+cor(log(claims$claims), log(claims$sum))^2
+```
+
+Two alternatives to `summary()` are the functions `tidy()` and `glance()` from the broom 
+package. They also extract model information but in a more specific and useful way. 
+The `glance()` function gives a one-line summary of a range of model statistics, 
+including $R^2$, $\hat{\sigma}$ and degrees of freedom.
+
+```{r}
+#| label: tbl-claims-lm-glance
+#| column: page-right
+#| code-fold: show
+#| tbl-cap: "Summary statistics for the simple linear model of claim sizes"
+#| tbl-cap-location: bottom
+glance(claims_lm) |>
+    knitr::kable()
+```
+
+The `tidy()` function extracts parameter estimates, standard errors, 
+test statistics and $p$-values, just as `summary()` does, but returns 
+them as a tibble, which is useful for downstream computations. 
+This feature is used below to generate a slightly nicer table via 
+the `kable()` function from the knitr package.
+
+```{r}
+#| label: tbl-claims-lm-tidy
+#| code-fold: show
+#| tbl-cap: "Parameter estimates the simple linear model of claim sizes"
+#| tbl-cap-location: bottom
+tidy(claims_lm) |>
+    knitr::kable()
+```
+
+
+We can also consider the parameter estimates for the additive model. 
+Recall that we used the sum contrast for the (final version of the) model. 
+
+```{r}
+#| label: tbl-claims-add-tidy
+#| tbl-cap: "Parameter estimates the additive model of claim sizes"
+#| tbl-cap-location: bottom
+tidy(claims_lm_add) |>
+    knitr::kable()
+```
+
+The table shows directly that group 1 has a lower intercept 
+than the common intercept, while it can be inferred from the parametrization that 
+group 4 has a higher intercept. The effect of 
+including a trade group specific intercept is also an increased slope compared 
+to the previous model. 
+
+```{r}
+#| label: tbl-claims-add-glance
+#| column: page-right
+#| tbl-cap: "Summary statistics for the additive model of claim sizes"
+#| tbl-cap-location: bottom
+glance(claims_lm_add) |>
+    knitr::kable()
+```
+The $R^2$ has increased to around 6\% suggesting that 
+the additive model is better for predictions  than the model without trade group, 
+though it is still far from a strong prediction model. 
+
+```{r} 
+#| label: tbl-claims-int-glance
+#| column: page-right
+#| tbl-cap: "Summary statistics for the interaction model of claim sizes"
+#| tbl-cap-location: bottom
+glance(claims_lm_int) |>
+    knitr::kable()
+```
+
+For the interaction model (table above) the $R^2$ has increased a little compared to the additive model, but 
+3 additional parameters have also been added to the model. If we look at the adjusted $R^2$ 
+the increase is miniscule. 
+
+We can also compare the models by formally testing one model as a hypothesis within a
+larger model. This can be done in R with the `anova()` function, which uses the 
+$F$-test statistic and the distributional results derived in the 
+previous sections. 
+
+To compare the three models we investigate the two hypotheses 
+$$H_0: \beta_{\texttt{grp1}} = \beta_{\texttt{grp2}} = \beta_{\texttt{grp3}} = 0$$
+in the additive model, and 
+$$H_1: \beta_{\texttt{sum}, \texttt{grp2}} = \beta_{\texttt{sum}, \texttt{grp3}} = \beta_{\texttt{sum}, \texttt{grp4}} = 0$$
+in the interaction model. These two hypotheses correspond to nested subspaces, and 
+the $F$-tests can be computed by a single call of `anova()`.
+
+```{r}
+#| label: tbl-claims-test
+#| code-fold: show
+#| tbl-cap: "Analysis of variance table comparing the three linear models of claim sizes."
+#| tbl-cap-location: bottom
+anova(claims_lm, claims_lm_add, claims_lm_int) |> 
+    knitr::kable()
+```
+
+The conclusion is that we cannot reject $H_1$ while $H_0$ can be clearly rejected. Thus 
+data does not provide evidence that the slope should be different in the four 
+trade groups, but there is strong evidence that the intercept should. This is 
+in concordance with the observations made above based on the estimated parameters 
+and $R^2$. 
+
+## Nonlinear expansions {#sec-nonlinear-expansions}
+
+We found in the earlier analysis of the insurance claims data a lack of
+model fit. This could be due to a nonlinear relation between
+`log(claims)` and `log(sum)`. To handle nonlinear
+relations between the response and one or more predictors, the predictors
+(as well as the response) can be nonlinearly transformed before they enter
+into the linear model. Such pre-modeling transformations
+extend the scope of the linear model considerably. For the insurance data
+the original variables were already log-transformed, and
+it is not obvious which other transformation to use.
+
+
+```{r} 
+#| label: fig-poly
+#| fig-cap: "A basis of orthogonal polynomials."
+#| column: margin
+x <- seq(11, 21, 0.05)
+pol <- as_tibble(cbind(x, poly(x, degree = 5)))
+long_pol <- tidyr::pivot_longer(pol, cols = !x, names_to = "basis_fct")
+p <- ggplot(NULL, aes(x, value, colour = basis_fct)) +
+    scale_color_discrete(guide = "none") + xlab("") + ylab("")
+p + geom_line(data = long_pol, linewidth = 1)
+```
+
+
+An alternative to data transformations is to use a small but
+flexible class of *basis functions*, which
+can capture the nonlinearity. One possibility is to use low degree polynomials.
+This can be done by simply including powers of a predictor as additional
+predictors.
+[Due to the parsing of formulas in R,
+powers have to be wrapped into an `I()`}-call, e.g., `y ~ x + I(x2)`.]
+Depending on the scale and range of the predictor, this may
+work just fine. However, raw powers can result in numerical difficulties.
+An alternative is to use orthogonal polynomials, which are numerically more
+well behaved.
+\index{polynomials!orthogonal}
+
+@fig-poly shows an example of an orthogonal basis of
+degree 5 polynomials on the range 11--21. This corresponds approximately
+to the range of `log(sum)`, which is a target for basis
+expansion in the example. What should be noted in @fig-poly is
+that the behavior near the boundary is quite erratic. This is characteristic
+for polynomial bases. To achieve flexibility in the central part of the range,
+the polynomials become erratic close to the boundaries. Extrapolation
+beyond the boundaries cannot be trusted.
+
+\index{spline}
+An alternative to polynomials is splines. A spline[^splines]
+is piecewisely a polynomial, and the pieces are joined together in a sufficiently smooth
+way. The points where the polynomials are joined together are called
+*knots*. The flexibility of a spline is determined by the number
+and placement of the knots and the degree of the polynomials. A degree
+$k$ spline is required to be $k-1$ times continuously differentiable.
+A degree 3 spline, also known as a *cubic spline*, is a popular choice,
+which thus has a continuous (piecewise linear) second derivative.
+
+[^splines]: A spline is also a thin and flexible wood or metal strip used for smooth curve drawing.
+
+```{r}
+#| label: fig-b-spline
+#| fig-cap: "A basis of cubic $B$-splines computed using the `bs()` function with two internal knots at 14 and 18 in addition to two boundary knots at 11 and 21."
+#| column: margin
+b_spline <- as_tibble(cbind(x, splines::bs(x, knots = c(14, 18))))
+long_b_spline <- tidyr::pivot_longer(b_spline, cols = !x, names_to = "basis_fct")
+p + geom_line(data = long_b_spline, linewidth = 1) +
+    geom_rug(aes(x = c(11, 14, 18, 21), y = NULL, color = NULL), linewidth = 1)
+```
+
+\index{spline!cubic}
+@fig-b-spline shows a basis of 5 cubic spline functions.
+They are so-called $B$-splines \index{$B$-spline} (basis splines). Note that it is impossible
+to visually detect the knots where the second derivative is
+non-differentiable. The degree $k$ $B$-spline basis with $r$
+internal knots has $k + r$ basis functions. The constant function is not included
+then, and this is precisely what we want when the basis expansion is
+used in a regression model including an intercept. As seen in @fig-b-spline,
+the $B$-spline basis is also somewhat erratic close to the boundary. For a cubic
+spline, the  behavior close to the boundary can be controlled by requiring that the second and
+third derivatives are $0$ at the boundary knots. The result is known as a
+*natural cubic spline*. \index{natural cubic spline} The extrapolation (as a spline) of a
+natural cubic spline beyond the boundary knots is linear.
+
+Due to the restriction on the derivatives of a natural cubic spline,
+the basis with $r$ internal knots has $r + 1$ basis functions. Thus the basis for the
+natural cubic splines with $r + 2$ internal knots has the same number of
+basis functions as the raw cubic $B$-spline basis with $r$ internal knots. This means in
+practice that, compared to using raw $B$-splines with $r$ internal knots, we can add two
+internal knots, and thus increase the central flexibility of the model,
+while retaining its complexity in terms of $r + 3$ parameters.
+
+```{r}
+#| label: fig-n-spline
+#| fig-cap: "A $B$-spline basis for natural cubic splines computed using the `ns()` function with internal knots at 13, 15, 17 and 19 in addition to the two boundary knots at 11 and 21."
+#| column: margin
+n_spline <- as_tibble(cbind(x, splines::ns(x, knots = c(13, 15, 17, 19))))
+long_n_spline <- tidyr::pivot_longer(n_spline, cols = !x, names_to = "basis_fct")
+p + geom_line(data = long_n_spline, linewidth = 1) +
+    geom_rug(aes(x = c(11, 13, 15, 17, 19, 21), y = NULL, color = NULL), linewidth = 1)
+```
+
+It is possible to use orthogonal polynomial expansions as well as spline expansions
+in R together with the `lm()` function via the functions `poly()`,
+`bs()` and `ns()`. The latter two are
+in the splines package, which thus has to be loaded.
+
+We will illustrate the usage of basis expansions for claim size modeling using
+natural cubic splines. \index{spline expansion}
+
+```{r}
+#| label: claims-spline
+#| code-fold: show
+claims_lm_spline_add <- lm(
+  log(claims) ~ ns(log(sum), knots = c(13, 15, 17, 19)) + grp,
+  data = claims
+)
+claims_lm_spline_int <- lm(
+  log(claims) ~ ns(log(sum), knots = c(13, 15, 17, 19)) * grp,
+  data = claims
+)
+```
+
+When we fit a model using basis expansions the coefficients of individual
+basis functions are rarely interpretable or of interest. Thus reporting the
+summary including all the estimated coefficients is not particularly informative.
+Below we only extract the last lines from the summary to report the residual
+variance and the $R^2$ quantities.
+
+```{r, echo=2}
+#| label: tbl-claims-spline-sum1
+#| tbl-cap: "Summary statistics for the additive model based on a spline basis expansion."
+#| tbl-cap-location: bottom
+#| column: page-right
+options(digits = 5)
+glance(claims_lm_spline_add) |>
+    knitr::kable()
+options(digits = 7)
+```
+
+```{r, echo=2}
+#| label: tbl-claims-spline-sum2
+#| tbl-cap: "Summary statistics for the interaction model based on a spline basis expansion."
+#| tbl-cap-location: bottom
+#| column: page-right
+options(digits = 5)
+glance(claims_lm_spline_int) |>
+    knitr::kable()
+options(digits = 7)
+```
+
+Compared to the additive model without the basis expansion, $R^2$ (also the adjusted one)
+is increased a little by the basis expansion. A further increase is observed for the model
+that includes interactions as well as a basis expansion, and thus gives a unique nonlinear
+relation between insurance sum and claim size for each trade group. @fig-claims-diag-spline
+shows some diagnostic plots for the additive model, which show that the mean value model is
+now pretty good, while the residuals are still slightly right skewed. The lack of normality
+is not a problem for using the sampling distributions to draw inference. However, if we compute
+prediction intervals, say, then we must account for the skewness in the residual distribution.
+This can be done by using quantiles for the empirical distribution of the residuals instead of
+quantiles for the normal distribution.
+
+```{r}
+#| label: fig-claims-diag-spline
+#| message: false
+#| fig-cap: "Residual plot (left), histogram (middle) of the raw residuals and qq-plot (right) of the standardized residuals for the additive model with a basis expansion of log insurance sum."
+#| opts.label: widefigure3
+#| cap-location: margin
+claims_diag_spline <- augment(claims_lm_spline_add) ## Residuals etc.
+gridExtra::grid.arrange(
+  ggplot(claims_diag_spline, aes(.fitted, .resid), alpha = 0.2) + geom_point() + geom_smooth(),
+  ggplot(claims_diag_spline, aes(.resid)) + geom_histogram(bins = 40),
+  ggplot(claims_diag_spline, aes(sample = .std.resid)) + geom_qq() + geom_abline(),
+  ncol = 3
+)
+```
+
+Graphical comparisons are typically preferable over parameter comparisons when models involving nonlinear effects and basis expansions are compared. 
+
+```{r}
+#| label: fig-spline-fit
+#| fig-cap: "Scatter plots and fitted values for the claim size models using natural cubic splines including 95% pointwise confidence bands. The additive model (blue) gives translations of the same nonlinear relation for all four trade groups wheras the interaction model (red) gives a separate nonlinear relation for all four trade groups."
+#| opts.label: widefigure4
+#| column: page
+pred_add <- cbind(
+    claims, 
+    exp(predict(claims_lm_spline_add, interval = "confidence"))
+)
+pred_int <- cbind(
+    claims, 
+    exp(predict(claims_lm_spline_int, interval = "confidence"))
+)
+p0 <- p0 + facet_wrap(~ grp, ncol = 4) + coord_cartesian(ylim = c(100, 1e6))
+p0 + geom_line(aes(y = fit), pred_add, color = "blue", linewidth = 2) +
+  geom_ribbon(aes(ymax = upr, ymin = lwr), pred_add, fill = "blue", alpha = 0.2) +
+  geom_line(aes(y = fit), pred_int, color = "red", linewidth = 2) +
+  geom_ribbon(aes(ymax = upr, ymin = lwr), pred_int, fill = "red", alpha = 0.2)
+```
+
+@fig-spline-fit shows the fitted models
+stratified according to trade group. The fitted values were computed using the `predict()`
+function in R, which can also give upper and lower confidence bounds on the fitted
+ values. The fitted value for the $i$-th observation is $X_i^T \hat{\beta}$. By 
+@thm-pardisnorm a confidence interval for the fitted value can be
+computed using @eq-confint with $a = X_i$. The
+confidence intervals reported by `predict()` for lm objects are computed
+using this formula, and these are the pointwise confidence bands shown in
+@fig-spline-fit. From this figure any gain of the interaction model
+over the additive model is questionable. The increase of $R^2$, say, appears to be mostly
+driven by spurious fluctuations. For trade group 4 the capped
+claims seem overly influential, and because trade group 3 has relatively few observations
+the nonlinear fit is poorly determined for this group.
+
+```{r}
+#| label: tbl-claims-spline-anova
+#| code-fold: show
+#| tbl-cap: "Analysis of variance table comparing the two models based on spline expansions and the additive linear model."
+#| tbl-cap-location: bottom
+anova(claims_lm_add, claims_lm_spline_add, claims_lm_spline_int) |>
+    knitr::kable()
+```
+
+In the final comparison above using $F$-tests
+we first test the hypothesis that the relation is linear in the additive model, and then we
+test the additive hypothesis when the nonlinear relation is included.
+The tests formally reject both hypotheses, but the
+graphical summary in @fig-spline-fit suggests that the nonlinear additive model
+is preferable anyway.
+
+Introducing a penalty can dampen the spurious fluctuations the arose from
+the nonlinear basis expansion. We conclude the analysis of the insurance data by 
+illustrating how the penalized least squares fit can be computed, and what effect 
+the penalty has on the least squares solution. First recall that the 
+least squares estimator could have been computed by solving the normal equation 
+directly. 
+
+```{r}
+#| label: LU
+#| code-fold: show
+X <- model.matrix(claims_lm_spline_int)
+y <- model.response(model.frame(claims_lm_spline_int))
+XtX <- crossprod(X)     # Faster than but equivalent to t(X) %*% X
+Xty <- crossprod(X, y)  # Faster than but equivalent to t(X) %*% y
+coef_hat <- solve(XtX, Xty)
+# Comparison
+range(coef_hat - coefficients(claims_lm_spline_int))
+```
+
+The result obtained by solving the normal equation directly is up to numerical errors 
+identical to the solution computed using `lm()`. The R function `solve()` calls 
+the Fortran routine DGESV from the LAPACK library 
+for solution of linear equations using LU decomposition with partial pivoting (Gaussian 
+elimination with row permutations). 
+
+Likewise, we can compute the penalized estimator by solving the corresponding linear 
+equation. We will do so where we only add a penalty on the coefficients corresponding to
+the interaction terms in the nonlinear basis expansion. We will use penalty matrices of 
+the form $\lambda \boldsymbol{\Omega}$ for a fixed matrix $\boldsymbol{\Omega}$ so 
+that the amount of penalization is controlled by the parameter $\lambda > 0$. 
+
+```{r}
+#| label: penalize
+#| code-fold: show
+Omega <- diag(c(rep(0, 9), rep(1, 15)))
+coef_hat <- cbind(
+    solve(XtX + 0.1 * Omega, Xty),  # Small penalty
+    solve(XtX + Omega, Xty),        # Medium penalty
+    solve(XtX + 10 * Omega, Xty)    # Large penalty
+)  
+```
+
+@fig-penalized shows the resulting penalized model compared to the 
+unpenalized interaction model ($\lambda = 0$) and the additive model ($\lambda = \infty$). 
+A minimal penalization is enough to
+dampen the most pronounced spurious fluctuation for the fourth trade group 
+considerably. 
+
+```{r}
+#| label: fig-penalized
+#| fig-cap: "Scatter plots and fitted values for the claim size models where the nonlinear interaction terms have been penalized. The unpenalized interaction and additive model fits are also added."
+#| opts.label: widefigure4
+#| column: page
+tmp <- cbind(
+    coefficients(claims_lm_spline_int),
+    coef_hat, 
+    c(coefficients(claims_lm_spline_add), rep(0, 15))
+)
+pred <- cbind(claims[, c("sum", "grp")], exp(X %*% tmp)) 
+pred <- tidyr::pivot_longer(pred, cols = !c(grp, sum), names_to = "lambda")                                 
+p0 + geom_line(
+  aes(y = value, color = lambda), 
+  data = pred, 
+  linewidth = 1) +
+  theme(legend.position = "top") + 
+  scale_color_discrete(
+    expression(~lambda), 
+    labels = c(0, 0.1, 1, 10, expression(infinity~~~(additive~model)))
+  )     
+```
+
+The penalized least squares estimates can also be computed using the QR decomposition via
+the function `lm.fit()`. To achieve this we need to augment the model matrix and the 
+response data suitably. 
+
+```{r}
+#| label: fit-lamb
+#| code-fold: show
+fit_lamb1 <- lm.fit(rbind(X, sqrt(0.1) * Omega), c(y, rep(0, ncol(Omega))))
+fit_lamb2 <- lm.fit(rbind(X, sqrt(10) * Omega),  c(y, rep(0, ncol(Omega))))
+## Comparisons
+range(coef_hat[, 1] - coefficients(fit_lamb1))  
+range(coef_hat[, 3] - coefficients(fit_lamb2))  
+```
+
+The results are again (numerically) identical to using `solve()` above. 
+If several penalized estimates using matrices $\lambda \boldsymbol{\Omega}$ for different choices 
+of $\lambda$ are to be computed, a third option using a diagonalization of $\mathbf{X}^T \mathbf{X}$ is beneficial. 
+This is implemented in, e.g., the `lm.ridge()` function in the package MASS, which unfortunately 
+doesn't let you choose your own penalty matrix -- it only implements $\boldsymbol{\Omega} = I$. 
+
+In conclusion, we have found evidence in the data for an overall nonlinear
+relation between insurance sum and claim size plus an additive effect of trade group. For small insurance sums (less than DKK 1M) there is almost no relation, while for larger insurance
+sums there is roughly a linear relation on a log-log scale. The model fits the data
+well with a non-normal and slightly right skewed residual distribution, but as a
+predictive model it is weak, and insurance sum can together with
+trade group only explain 6-7\% of the variation in the (log) claim size distribution.
+
+## Exercises {.unnumbered}
+
+::: {#exr-formulas}
+This exercise covers the relation between the formula interface, used 
+to specify a linear model via the `lm()` function, and the model matrix
+$\mathbf{X}$ that a formula generates internally. The formula interface is convenient
+as it allows us to focus on variables instead of how they are encoded as columns in 
+$\mathbf{X}$. It is, however, useful to know precisely how R interprets the formulas
+and translates them into matrices. The `lm()` function calls the 
+function `model.matrix()` to create the model matrix from the formula
+and the data. We usually don't call this function ourselves, but understanding 
+how it works gives some insight on how exactly formulas are parsed. 
+
+We simulate an example dataset to work with. @fig-formula-sim-dataexample shows the 
+simulated data.
+```{r}
+#| label: formula-sim-data
+#| code-fold: show
+set.seed(04022016)
+c <- rep(c("A", "B", "C"), each = 50)
+formula_data <- tibble(
+    x =  rnorm(150, 0),
+    z = factor(sample(c)),
+    mu = (z == "A") + cos(x) + 0.5 * (z == "B") * sin(x),
+    y = rnorm(150, mu, 0.5)
+)
+```
+
+
+```{r}
+#| label: fig-formula-sim-dataexample
+#| opts.label: widefigure
+#| fig-cap: "The right figure shows a scatter plot of the `a` variable against the `b` variable. The left figure adds color coding according to the group as encoded by the `c` variable. The dashed curves are the true means within the three groups."
+#| cap-location: margin
+#| echo: false
+p1 <- ggplot(formula_data, aes(x, y)) + geom_point() +
+    theme(plot.margin = unit(c(44.5, 5.5, 5.5, 5.5), "points"))
+p2 <- ggplot(formula_data, aes(x, y, color = z)) + 
+    geom_point() + geom_line(aes(y = mu), linetype = 2, linewidth = 1) +
+    theme(legend.position = "top")
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+:::
+
+1.  Fit a linear regression model using `lm(y ~ x, formula_data)` where `y` is the response variable 
+    and `x` is the predictor variable. Investigate the residuals. Does the model fit the data?
+
+The formula `y ~ x` was used internally for the construction of a model matrix with two 
+columns. A column of ones representing
+the intercept, and a column with the observed values of the predictor variable.
+
+```{r}
+#| label: formula-matrix
+model.matrix(y ~ x, formula_data) |> 
+    head()
+```
+
+2. How do you get rid of the intercept via the formula specification?
+
+If we "add a factor" on the right hand side of the formula, e.g., 
+`y ~ x + z`, the factor's categorical levels will be represented 
+via dummy variable encodings. If it has $k$ levels the model matrix gets $k-1$ 
+additional columns. 
+
+```{r}
+#| label: formula-matrix-factor
+model.matrix(y ~ x + z, formula_data) |> 
+    head()
+```
+
+The precise encoding is controlled by the `contrasts.arg` argument to `model.matrix()` 
+(the `contrasts` argument to `lm()`) or by setting the contrasts associated with 
+a factor. We can change the base level of `z` to be level 3 (value `C`), say.
+
+```{r}
+#| label: formula-matrix-factor-contrast
+contrasts(formula_data$z) <- 
+    contr.treatment(levels(formula_data$z), base = 3)
+model.matrix(y ~ x + z, formula_data) |> 
+    head()
+```
+
+A change of the dummy variable encoding does not change the model (the column space) 
+only the parametrization. This may occasionally be useful for interpretation or for 
+testing certain hypotheses. 
+
+3.  How can you check (numerically) that the two model matrices above span
+    the same column space?
+
+In formulas, the arithmetic operators `*` and `^` together with 
+`:` have special meanings. 
+
+* Usage of `b * c` is equivalent to `b + c + b : c`.
+* Usage of `b : c` formulates an interaction.
+* Usage of `(a + b + c)^2` is equivalent to `(a + b + c) * (a + b + c)`, which is equivalent to `a + b + c + a : b + a : c + b : c`, etc. 
+
+The following two formulas generate two different model matrices.
+
+```{r}
+#| label: formula-interaction
+#| code-fold: show
+model.matrix(y ~ z + x : z, formula_data) |> 
+    head()
+model.matrix(y ~ x * z, formula_data) |>
+    head()
+```
+
+4. Are the two models above identical? That is, do the columns of the two 
+   model matrices span the same column space?
+
+Transformations of predictor variables can be achieved by formally 
+applying an R function to a variable in the formula specification. 
+Expansions can be achieved by applying an R function that returns a 
+matrix of basis function evaluations when applied to a vector of 
+predictor values. We consider a spline basis expansion.
+
+```{r}
+#| label: formula-expansions
+#| code-fold: show
+library(splines)
+model.matrix(y ~ ns(x, df = 4), formula_data) |>
+    head()
+```
+
+Before you run the R expression below, answer the following question on the 
+basis of what you have learned.
+
+5.  Determine the number of columns for the model matrix below and 
+    explain and interpret what the columns mean?
+
+```{r}
+#| label: formula-expansions2
+#| eval: false
+#| code-fold: show
+model.matrix(y ~ ns(x, df = 4) * z, formula_data) |>
+    head()
+```
+
+@fig-formula-linear-model was obtained by fitting the linear model using the model 
+matrix, or rather the formula, from above. The figure illustrates the model fit by 
+comparing the fitted model directly to the true means and via the residuals. 
+Fitted values and residuals were computed using the `augment()` function from the 
+broom package. 
+
+```{r}
+#| label: fig-formula-linear-model
+#| opts.label: widefigure
+#| echo: false
+#| message: false
+#| fig-cap: "Left: The fitted values plotted as lines together with the data. The dashed lines are the true means. Right: a residual plot."
+#| cap-location: margin
+y_lm <- lm(y ~ ns(x, df = 4) * z, formula_data)
+formula_data_aug <- broom::augment(y_lm, data = formula_data)
+p1 <- ggplot(formula_data_aug, aes(x, y, color = z)) + 
+    geom_point() + geom_line(aes(y = mu), linetype = 2) + 
+    geom_line(aes(y = .fitted)) + theme(legend.position = "top")
+p2 <- ggplot(formula_data_aug, aes(.fitted, .resid, color = z)) + 
+    geom_point() + theme(legend.position = "top", legend.box.background = element_rect(fill = NA, color = NA)) + 
+    geom_smooth(aes(color = NULL), color = NA) +
+    geom_smooth(aes(color = NULL), se = FALSE)
+gridExtra::grid.arrange(p1, p2, ncol = 2) 
+```
+
+6. Reproduce @fig-formula-linear-model and discuss the model fit.
+
+::: {#exr-sat}
+This exercise is based on a dataset relating the mean verbal SAT scores for each of the 50 US states 
+to the percentage of students taking the test. The data comes with the RwR package.
+
+```{r}
+#| label: sat-data
+#| code-fold: show
+library(RwR)
+data(sat, package = "RwR")
+```
+
+```{r}
+#| label: fig-sat
+#| echo: false
+#| opts.label: smallfigure
+#| column: margin
+#| fig-cap: "SAT scores for each US state against percentage of student taking the test."
+ggplot(sat, aes(percent, verbalScore)) + 
+    geom_point()
+```
+
+:::
+
+1.  Fit a linear regression model (with an intercept) of the state SAT score as a 
+    function of percentage of students. Add the fitted line to the plot.
+
+2.  Fit a piecewise affine function with the "bend" at 50% of the 
+    students taking the test. How can you formally test the linearity assumption in Question 1 
+    within this larger model?
+
+    *Hint: you want to fit a linear model with a model matrix $\mathbf{X}$ with
+    3 columns representing an intercept and 
+    two piecewise linear functions. You can, for instance, generate a basis using an
+    `ifelse()` construction in the formula. Try different bases. Is there anyone particularly suitable for 
+    testing the linearity assumption?*
+
+3.  Fit a natural cubic spline model with 4 knots. Use the `ns()` function to generate a B-spline basis.
+    How should you choose the placements of the knots?
+    How can you formally test the linearity assumption within this larger model?
+
+::: {#exr-column-space}
+Show that if ([-@eq-subspace]) holds then 
+$$C = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{X}'.$$
+Explain how this can be used to check if the column space of an 
+arbitrary $\mathbf{X}'$ is contained in the column space of $\mathbf{X}$.
+:::
+
+::: {#exr-column-space-bspline}
+Consider the following matrices
+
+```{r}
+#| code-fold: false
+X <- splines::bs(
+    seq(0, 1, 0.01), 
+    knots = c(0.3, 0.5, 0.7)
+)
+X_prime <- seq(0, 1, 0.01)
+```
+
+of $B$-spline basis functions evaluated on a grid in the interval $[0, 1]$. 
+Use the previous exercise to verify that `X_prime` is in the
+column space of `X`. You can use the formula from 
+the exercise to compute $C.$ Can you also use `lm.fit()`?
+:::
+
+::: {#exr-gauss-markov}
+Let $C$ be any $n \times p$ matrix and consider the *linear estimator* 
+$$
+    \tilde{\beta} = C^T \mathbf{Y}.
+$$
+:::
+1.  Show that $\tilde{\beta}$ is unbiased as an estimator of $\beta$ if A1 and A4 hold and if 
+   $$\beta = C^T \mathbf{X} \beta$$
+    for all $\beta$.
+2.  Show that if the estimator is unbiased and A1, A2 and A4 hold then 
+    $$V(\tilde{\beta} \mid \mathbf{X}) = \sigma^2 C^TC$$
+    and that 
+    $$V(\hat{\beta}- \tilde{\beta} \mid \mathbf{X}) = \sigma^2 (C^TC - (\mathbf{X}^T\mathbf{X})^{-1})$$
+    where $\hat{\beta}$ is the least squares estimator. 
+3.
+    Explain that this shows the Gauss-Markov theorem: Under the assumptions A1 + A2 + A4 the least squares estimator of $\beta$ has minimal variance among all linear, unbiased estimators of $\beta$.
+
+
+::: {#exr-empirical-correlation}
+This exercise relates the empirical correlations between the predictor 
+variables to the variance of the least squares estimator. The
+setup is as follows. The matrix $\mathbf{X}$ denotes an $n \times p$ matrix of
+predictor variables, $\mathbf{1}$ denotes an $n$ dimensional column vector
+of ones and $(\mathbf{1} \ \ \mathbf{X})$ denotes the $n \times (p+1)$ matrix with 
+the first column being $\mathbf{1}$ and the remaining $n \times p$ block being 
+$\mathbf{X}$. We let 
+$$\bar{X} = \frac{1}{n} \mathbf{X}^T \mathbf{1}$$
+denote the $p$ dimensional vector of mean values for the predictor,
+and we let 
+$$\hat{\Sigma} = \frac{1}{n}  (\mathbf{X} - \mathbf{1} \bar{X}^T)^T
+(\mathbf{X} - \mathbf{1} \bar{X}^T)$$
+denote the empirical covariance matrix. It is assumed that $\hat{\Sigma}$
+is invertible.
+:::
+1.
+    Show that 
+    $$
+        n \hat{\Sigma} = \mathbf{X}^T \mathbf{X} - n \bar{X} \bar{X}^T.
+    $$
+2.
+    Use block matrix inversion to show that 
+    $$
+        \Big((\mathbf{1} \ \ \mathbf{X})^T (\mathbf{1} \ \ \mathbf{X})\Big)^{-1} = 
+        \left(\begin{array}{cc} * & * \\
+        * & \frac{1}{n} \hat{\Sigma}^{-1} \end{array} \right).
+    $$
+    Here the $*$-s mean some values that we are not interested in
+    computing in this exercise.
+3.
+    Show that if we fit a 
+    linear model with an intercept (which is denoted $\beta_0$) using the 
+    least squares estimator, then the variance 
+    of $\hat{\beta}_i$, conditionally on $\mathbf{X}$, for $i = 1,\ldots, p$ is 
+    $$
+        \frac{\sigma^2}{n} \left(\hat{\Sigma}^{-1}\right)_{ii}.
+    $$
+
+With $\hat{\Sigma}_{-1}$ denoting the empirical 
+covariance matrix with the first row and column removed we can write 
+$\hat{\Sigma}$ in block form as
+$$
+    \hat{\Sigma} = \left( \begin{array}{cc} 
+    \hat{\sigma}_1^2 & \hat{\gamma}^T \\
+    \hat{\gamma} & \hat{\Sigma}_{-1} \end{array} \right).
+$$
+
+4.
+    Use block inversion (again) to show that 
+    $$ 
+        \left(\hat{\Sigma}^{-1}\right)_{11} = \frac{1}{\hat{\sigma}_1^2 - \hat{\gamma}^T \left(\hat{\Sigma}_{-1}\right)^{-1} \hat{\gamma}}.
+    $$ 
+5.
+    Show that in the case $p = 2$, the formula above reduces to 
+    $$
+        \left(\hat{\Sigma}^{-1}\right)_{11} = \frac{1}{\hat{\sigma}_1^2 (1 -
+        \widehat{\text{corr}}(X_1, X_2)^2)}.
+    $$
+6.
+    Show that if $\mathbf{X}_{\cdot 1} - \mathbf{1} \bar{X}_1$ is
+    perpendicular to the remaining columns in 
+    $\mathbf{X} - \mathbf{1}\bar{X}^T$, then 
+    $$
+        \left(\hat{\Sigma}^{-1}\right)_{11} = \frac{1}{\hat{\sigma}_1^2}.
+    $$
+7.
+    Interpret the results obtained in this exercise in terms of how the 
+    empirical variance of and empirical correlation between predictor variables affect the variances
+    of the estimators $\hat{\beta}_i$ for $i = 1, \ldots, p$. 
+

@@ -1,0 +1,38 @@
+# Birth weight -- a case study 
+
+::: {.callout-important}
+This chapter is currently undergoing conversion and substantial changes 
+will be made without notice.
+:::
+
+The question that we address in this case study is how birth 
+weight of children is associated with a number of other observable 
+variables. The data set comes from a sub-study of The Danish National Birth Cohort Study.
+The Danish National Birth Cohort Study was a nationwide study of
+pregnant women and their offspring [@Olsen:2001].
+The included pregnant women completed a computer assisted telephone interview, scheduled to take place in
+pregnancy weeks 12-16 (for some, the interview took place later). 
+We consider data on women interviewed before pregnancy
+week 17, who were still pregnant in week 17. One of the original 
+purposes of the sub-study was to investigate if fever episodes during 
+pregnancy were associated with fetal death. 
+
+We focus on birth weight as the response variable of interest. If 
+$Y$ denotes the birth weight of a child, the objective is to find 
+a good predictive model of $Y$ given a relevant set of predictor 
+variables $X$. What we believe to be relevant can depend upon
+many things, for instance, that the variables used as predictors
+should be observable when we want to make a prediction. 
+ 
+Causal mechanisms (known or unknown) may also be taken into 
+account. If coffee happened to be a known course of preterm birth, 
+and if we are interested in estimating a total causal effect
+of drinking coffee on the birth weight, we should not include 
+the gestational age (age of fetus) at birth as a predictor variable. 
+If, on the other hand, there are unobserved variables associated 
+with coffee drinking as well as preterm birth, the inclusion 
+of gestational age might give a more appropriate estimate 
+of the causal effect of coffee. We will return to this discussion in subsequent 
+sections -- the important message being that the relevant set 
+of predictors may very well be a subset of the variables in 
+the data set. 
