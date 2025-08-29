@@ -9,6 +9,5 @@ The current version can be installed from the source in this repository using th
 
 ```
 install.packages("remotes")  ## if 'remotes' is not installed
-library(remotes)
-install_github("nielsrhansen/RwR/RwR_package")
+remotes::install_github("nielsrhansen/RwR/RwR_package")
 ```
