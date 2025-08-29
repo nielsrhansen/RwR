@@ -5,6 +5,8 @@ book:
   title: "Regression with R"
   author: "Niels Richard Hansen"
   date: "8/25/2025"
+  site-url: "https://rwr.nrhstat.org"
+  repo-url: "https://github.com/nielsrhansen/RwR"
   
   chapters:
     - index.qmd

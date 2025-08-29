@@ -452,9 +452,9 @@ manuals [@R:2013] or the many textbooks on R programming and data analysis
 [@Hadley:2019;@Hadley:2023]. The classical and influential book
 *Modern Applied Statistics with S* [@Venables:2002] and the
 corresponding MASS package (comes with the R distribution) should 
-also be mentioned. Many
+also be mentioned. Several
 classical statistical models and methods are supported by the MASS package
-and documented in the book. 
+and documented in that book. 
 
 [^1_introduction-1]: <https://www.r-project.org/>
 
@@ -482,6 +482,6 @@ desktop versions are free to use.
 
 [^1_introduction-5]: <https://positron.posit.co/>
 
-ACCESS TO renv ENVIRONMENT INFORMATION FOR RUNNING ALL CODE.
-
-THE RwR package to distribute data and other stuff. 
+The book source is available from the [RwR GitHub repository](https://github.com/nielsrhansen/RwR),
+which also contains information on how to recreate the R environment used for 
+writing the book and how to obtain the RwR package containing the datasets used. 

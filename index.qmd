@@ -27,7 +27,8 @@ latter is by larger case studies using R. The R code included is complete and
 covers most aspects of the data analysis from reading data into R, cleaning and
 plotting data to data analysis, data modeling and model diagnostics.
 
-The book is accompanied by the R package RwR containing datasets used in the book.
+The book source is available from the [RwR GitHub repository](https://github.com/nielsrhansen/RwR)
+and it is accompanied by the [R package RwR](https://github.com/nielsrhansen/RwR/tree/main/RwR_package) containing datasets used in the book.
 
 ::: {.callout-important}
 The book is undergoing conversion from an older version and format.
