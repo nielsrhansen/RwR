@@ -13,6 +13,9 @@ book:
     - 1_introduction.qmd
     - 2_linear.qmd
     - 3_birth.qmd
+    - 4_regression.qmd
+    - 5_exponential.qmd
+    - 6_generalized_linear.qmd
     - references.qmd
   
 reference-location: margin
@@ -26,9 +29,6 @@ format:
       - brand
     code-block-bg: "#FCFCFC"
     code-fold: true
-
-  pdf:
-    documentclass: scrreprt
 
 execute:
   cache: true

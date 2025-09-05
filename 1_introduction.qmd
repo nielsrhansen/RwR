@@ -1,4 +1,4 @@
-# Introduction
+# Introduction {#sec-introduction}
 
 ::: {.callout-warning}
 This chapter is still a draft and minor changes are made without notice.
@@ -73,7 +73,7 @@ published in 1805 containing the appendix *Sur la Méthode des moindres carrés*
 It outlined a method for fitting a linear equation with unknown coefficients to
 observations. The English translation of the title of the appendix is *On the
 Method of least squares*, and it is the earliest known appearance of the method
-in print. Independently of Legendre, Carl F. Gauss [@Gauss:1809] invented
+in print. Independently of Legendre, Carl F. Gauss [@Gauss:1809] discovered
 the Gaussian distribution and used it to derive the method of least squares from
 Laplace's principle of inverse probability. Gauss was like Legendre motivated by
 problems in astronomy -- specifically the description and prediction of the
@@ -117,7 +117,7 @@ ancestry of the parent in addition to the parent themselve.
 To understand the co-relation Galton observed in his heriditary studies, he contributed to the theory of the bivariate
 normal distribution and introduced the general notion of correlation. The
 technical details of what is known today as the *Pearson* correlation
-coefficient ware worked out by Karl Pearson, though. Galton, nevertheless, 
+coefficient were worked out by Karl Pearson, though. Galton, nevertheless, 
 realized the usefulness of
 regression and correlation in various application areas, and the regression
 terminology was adapted by others, notably Karl Pearson. Interestingly, the

@@ -249,9 +249,10 @@ three standard model assumptions here.
 **A1.**
     The conditional expectation of $Y$ given $X$ is
     $$E(Y \mid X) = X^T \beta.$$
-[Assumption A2 is known as *homoskedasticity*, which is derived from the Greek 
-words "homo" (same) and "skedastios" (dispersion). The opposite is
-*heteroskedasticity*.]{.aside}
+[Assumption A2 is sometimes called *homoskedasticity*, which is derived from the Greek 
+words "homo" (same) and "skedastios" (dispersion). A violation of A2 is
+*heteroskedasticity*. Less pretentiously, we may call A2 *variance homogeneity* 
+and refer to violations of A2 as *variance inhomogeneity*.]{.aside}
 
 **A2.**
     The conditional variance of $Y$ given $X$ does not 
@@ -310,6 +311,13 @@ denote the $n$ observations of the response with corresponding
 predictors $X_1, \ldots, X_n$, we collect the responses into a column vector $\mathbf{Y}$, and 
 we collect the predictors into an $n \times p$ matrix $\mathbf{X}$ called the *model matrix*. 
 The $i$-th row of $\mathbf{X}$ is $X_i^T$. The additional assumptions are:
+[The response vector and model matrix:
+$$
+        \mathbf{Y} =  \left( \begin{array}{c} Y_1 \\ Y_2 \\ \vdots \\ Y_n \end{array} \right)
+        \qquad 
+        \mathbf{X} = \left( \begin{array}{c} X_1^T \\ X_2^T \\ \vdots \\ X_n^T \end{array} \right)
+$$
+]{.aside}
 
 \index{assumptions!A4 and A5}
 
@@ -372,16 +380,18 @@ or to give asymptotic justifications of inference methodologies.
 
 The linear regression model and the different assumptions related to it can also 
 be phrased in terms of an additive error. The equation 
-$$Y_i = X_i^T \beta + \epsilon_i.$$
-defines $\epsilon_i$  -- known as the \marginnote[-1cm]{The additive error.}*error* or 
-*noise* term. In terms of $\epsilon_i$ the model assumptions are as follows: 
+$$Y = X^T \beta + \epsilon.$$
+defines $\epsilon$  -- known as the *error* or 
+[Definition of the *additive error*.]{.aside}
+*noise* term. In terms of $\epsilon$ the model assumptions are as follows: 
 
-*   A1 is equivalent to $E(\epsilon_i \mid X_i) = 0$
-*   A2 is equivalent to $V(\epsilon_i \mid X) = \sigma^2$
-*   A3 is equivalent to $\epsilon_i \mid X_i \sim \mathcal{N}(0, \sigma^2)$. 
 
-Note that under Assumption A3, the conditional distribution of $\epsilon_i$ given 
-$X_i$ does not depend upon $X_i$, thus A3 implies that $\epsilon_i$ and $X_i$ are independent. 
+*   A1 is equivalent to $E(\epsilon \mid X) = 0$
+*   A2 is equivalent to $V(\epsilon \mid X) = \sigma^2$
+*   A3 is equivalent to $\epsilon \mid X \sim \mathcal{N}(0, \sigma^2)$. 
+
+Note that under Assumption A3, the conditional distribution of $\epsilon$ given 
+$X$ does not depend upon $X$, thus A3 implies that $\epsilon$ and $X$ are independent. 
 
 It is important to realize that the model assumptions cannot
 be justified prior to the data analysis. There are no magic arguments or
@@ -674,11 +684,11 @@ also discuss how the estimator is computed in practice.
 We will consider the generalization of linear least squares that 
 among other things allows for weights on the individual cases. Allowing for weights
 can be of interest in itself, but serves, in particular, as a preparation for the 
-methods we will consider in @chap-glm.
+methods we will consider in @sec-glm.
 
 We introduce the *weighted squared error loss*
 [With $\mathbf{W} = \mathbf{I}$ this loss is proportional to 
-the negative log-likelihood loss under assumptions A3 and A5 as derived in @chap-glm.]{.aside}
+the negative log-likelihood loss under assumptions A3 and A5 as derived in @sec-glm.]{.aside}
 \index{loss!squared error} \index{weighted squared loss} as 
 $$ 
 \ell(\beta) = (\mathbf{Y} - \mathbf{X}\beta)^T\mathbf{W}(\mathbf{Y}
@@ -1019,7 +1029,7 @@ orthogonal projection onto $L^{\perp}$ -- the orthogonal complement of $L$ --
 and is thus equal to the dimension of $L^{\perp}$, which is $n-p$. 
 :::
 
-### Tests and confidence intervals
+### Tests and confidence intervals {#sec-tests-confidence}
 
 For the computation of exact distributional properties of test statistics and 
 confidence intervals we need the strong distributional assumptions A3 and A5. 
@@ -1569,8 +1579,11 @@ the nonlinear fit is poorly determined for this group.
 #| code-fold: show
 #| tbl-cap: "Analysis of variance table comparing the two models based on spline expansions and the additive linear model."
 #| tbl-cap-location: bottom
-anova(claims_lm_add, claims_lm_spline_add, claims_lm_spline_int) |>
-    knitr::kable()
+anova(
+    claims_lm_add, 
+    claims_lm_spline_add, 
+    claims_lm_spline_int
+) |> knitr::kable()
 ```
 
 In the final comparison above using $F$-tests

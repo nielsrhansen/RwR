@@ -7,14 +7,21 @@ knitr::opts_chunk$set(
   fig.align = 'center'
 )
 
+
+knitr::opts_template$set(
+  widefigure6 = list(fig.width=12, fig.height=3, out.width="100%")
+)
+knitr::opts_template$set(
+  widefigure5 = list(fig.width=15, fig.height=3, out.width="100%")
+)
 knitr::opts_template$set(
   widefigure4 = list(fig.width=14, fig.height=3.5, out.width="100%")
 )
 knitr::opts_template$set(
-  widefigure3 = list(fig.width=9, fig.height=3)
+  widefigure3 = list(fig.width=9, fig.height=3, out.width="100%")
 )
 knitr::opts_template$set(
-  widefigure2 = list(fig.width=12, fig.height=6)
+  widefigure2 = list(fig.width=12, fig.height=6, out.width="100%")
 )
 knitr::opts_template$set(
   widefigure = list(fig.width=8, fig.height=4)
