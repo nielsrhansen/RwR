@@ -209,8 +209,8 @@
     },
     "RwR": {
       "Package": "RwR",
-      "Version": "0.3",
-      "Source": "Local",
+      "Version": "0.3.1",
+      "Source": "GitHub",
       "Type": "Package",
       "Title": "Regression with R",
       "Date": "2020-01-31",
@@ -238,8 +238,13 @@
       "NeedsCompilation": "no",
       "Author": "Niels Richard Hansen [aut, cre]",
       "Maintainer": "Niels Richard Hansen <Niels.R.Hansen@math.ku.dk>",
-      "RemoteType": "local",
-      "RemoteUrl": "RwR_0.3.tar.gz"
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "RwR",
+      "RemoteUsername": "nielsrhansen",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "19f02e60581c58af3cc7e62efed505a4d885e270",
+      "RemoteSubdir": "RwR_package"
     },
     "S7": {
       "Package": "S7",
