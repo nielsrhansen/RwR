@@ -10,7 +10,8 @@ Description:
 Depends: R (>= 3.2.0)
 Suggests: knitr, ggplot2, reshape2, lattice, hexbin, gridExtra, xtable,
         splines, survival, grid, lpSolve
-VignetteBuilder: quarto
+VignetteBuilder: 
+  quarto
 License: GPL-2
 LazyData: TRUE
 NeedsCompilation: no
