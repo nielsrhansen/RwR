@@ -63,8 +63,8 @@ library(dplyr)
 
 ## Exploratory data analysis
 
-First, we obtain the dataset by reading it directly from the internet
-source.
+First, we obtain the dataset by reading it from the csv file included in the 
+RwR package (Requires RwR version >= 0.3.1).
 
 ```{r}
 #| label: read-birth_weight-data
