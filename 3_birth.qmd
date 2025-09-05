@@ -1,19 +1,24 @@
+```{r}
+#| echo: false
+#| cache: false
+source("_common.R")
+```
+
 # Birth weight -- a case study 
 
-::: {.callout-important}
-This chapter is currently undergoing conversion and substantial changes 
-will be made without notice.
+::: {.callout-warning}
+This chapter is still a draft and minor changes are made without notice.
 :::
 
 The question that we address in this case study is how birth 
 weight of children is associated with a number of other observable 
-variables. The data set comes from a sub-study of The Danish National Birth Cohort Study.
+variables. The dataset comes from a sub-study of The Danish National Birth Cohort Study.
 The Danish National Birth Cohort Study was a nationwide study of
-pregnant women and their offspring [@Olsen:2001].
-The included pregnant women completed a computer assisted telephone interview, scheduled to take place in
+birth_weight women and their offspring [@Olsen:2001].
+The included birth_weight women completed a computer assisted telephone interview, scheduled to take place in
 pregnancy weeks 12-16 (for some, the interview took place later). 
 We consider data on women interviewed before pregnancy
-week 17, who were still pregnant in week 17. One of the original 
+week 17, who were still birth_weight in week 17. One of the original 
 purposes of the sub-study was to investigate if fever episodes during 
 pregnancy were associated with fetal death. 
 
@@ -35,4 +40,1005 @@ of gestational age might give a more appropriate estimate
 of the causal effect of coffee. We will return to this discussion in subsequent 
 sections -- the important message being that the relevant set 
 of predictors may very well be a subset of the variables in 
-the data set. 
+the dataset. 
+
+## Outline and prerequisites 
+
+
+The chapter primarily relies on the following four R packages. 
+
+```{r}
+#| label: setup
+#| cache: false
+#| code-fold: false
+#| message: false
+library(ggplot2)
+library(tibble)
+library(broom)
+library(splines)
+library(readr)
+library(skimr)
+library(dplyr)
+```
+
+## Exploratory data analysis
+
+First, we obtain the dataset by reading it directly from the internet
+source.
+
+```{r}
+#| label: read-birth_weight-data
+#| code-fold: show
+birth_weight_file <- system.file("extdata/birth_weight.csv", package = "RwR")
+birth_weight <- read_table(
+    birth_weight_file, 
+    col_types = cols(
+        interviewWeek = col_character(), 
+        fetalDeath = col_factor(levels = c("0", "1")), 
+        abortions = col_factor(levels = c("0", "1", "2", "3")), 
+        children = col_factor(levels = c("0", "1")), 
+        smoking = col_factor(levels = c("1", "2", "3")), 
+        coffee = col_factor(levels = c("1", "2", "3")), 
+        feverEpisodes = col_integer())
+)
+```
+
+[Mistakes are easily made if the classes of the columns in the
+data frame are not appropriate.]{.aside}
+
+The standard default for `read.table()` is that columns containing characters
+are converted to factors. This is often desirable. Use
+the `stringsAsFactors` argument to `read.table()` or set the global
+option `stringsAsFactors` to control the conversion of characters. Categorical variables
+encoded as integers or other numeric values, as in the present dataset,
+are, however, turned into `numeric` columns, which
+is most likely not what is desired. This is the reason for the
+explicit specification of the column classes above.
+
+It is always a good idea to check that the data was read correctly, that the columns
+of the resulting data frame have the correct names and are of the correct
+class, and to check the dimensions of the resulting data frame using `dim()`,
+`nrow()` or `ncol()`. This dataset
+has `r ncol(birth_weight)` variables and `r nrow(birth_weight)` cases (rows).
+
+```{r}
+#| label: tbl-birth-weight-data
+#| column: page
+#| echo: false
+#| tbl-cap: "First six rows of the birth weight data. Some variables have missing values represented as `NA`, partly due to fetal death."
+#| tbl-cap-location: bottom
+head(birth_weight) |> knitr::kable()
+```
+
+The 12 variables and their encoding in the birth weight dataset.  
+
+- `interviewWeek`:  Pregnancy week at interview.
+- `fetalDeath`: Indicator of fetal death (1 = death).
+- `age`:  Mother's age at conception in years.
+- `abortions`:  Number of previous spontaneous abortions (0, 1, 2, 3+).
+- `children`:  Indicator of previous children (1 = previous children).
+- `gestationalAge`:  Gestational age in weeks at end of pregnancy.
+- `smoking`:   Smoking status; 0, 1--10 or 11+ cigs/day encoded as 1, 2 or 3.
+- `alcohol`:   Number of weekly drinks during pregnancy.
+- `coffee`:   Coffee consumption; 0, 1--7 or 8+ cups/day encoded as 1, 2 or 3.
+- `length`:   Birth length in cm.
+- `weight`:  Birth weight in gram.
+- `feverEpisodes`:  Number of mother's fever episodes before interview.
+
+### Descriptive summaries
+
+The first step is to summarize the variables in the dataset using simple descriptive
+statistics.  This is to get an
+idea about the data and the variable ranges, but also to discover potential issues that we need to take into
+account in the further analysis. The list of issues we should be aware of includes,
+but is not limited to,
+
+-  extreme observations and potential outliers
+-  missing values
+-  skewness or asymmetry of marginal distributions
+
+Anything worth noticing should be noticed. It should not necessarily be written down in a
+final report, but figures and tables should be prepared to reveal and not conceal.
+
+A quick summary of the variables in a data frame can be obtained with the `summary()` function.
+It prints quantile information for numeric
+variables and frequencies for factor variables. This is the first example where
+the class of the columns matter for the result that R produces.  Information on the number of missing observations for each variable is also given.
+
+```{r variables, dependson='readingData'}
+#| label: tbl-skim-birth-weight
+#| skimr_include_summary: FALSE
+#| tbl-cap: "Quick data summary using the `skim()` function from the skimr package."
+#| tbl-cap-location: bottom
+#| column: page
+#| code-fold: show
+skim(birth_weight)
+```
+
+
+Further investigations of the marginal distributions of the
+variables in the dataset can be obtained by using histograms, density
+estimates, tabulations and barplots. Barplots are preferable over histograms
+for numeric variables that take only a small number of different values, e.g.,
+counts. This is the case for the `feverEpisodes` variable. Before such
+figures and tables are produced -- or perhaps after they have been produced
+once, but before they enter a final report -- we may prefer to clean
+the data a little. 
+
+We can observe from the data summary in @tbl-birth-weight-data that for some
+cases weight or length are registered as $0$ -- and in some other cases weight or length is
+unrealistically small. These are most likely registration mistakes. Likewise, some
+lengths are registered as 99, and further scrutiny, e.g., by a scatter plot, reveals
+an observation with `weight` 3550 gram but `gestationalAge` registered as 18. 
+We exclude those cases from the subsequent analysis, and we also remove the columns 
+`interviewWeek` and `fetalDeath` as they will not be used subsequently.
+
+```{r subset}
+#| label: filter-birth-weight
+#| code-fold: show
+birth_weight <- select(birth_weight, - c(interviewWeek, fetalDeath)) |>
+  filter(
+    weight > 32,
+    length > 10 & length < 99,
+    gestationalAge > 18
+  ) 
+```
+
+We present density estimates of the 5 continuous variables,
+see Figure @fig-histograms. The density estimates, as the majority of the
+figures presented in this book, were produced using the `ggplot2`
+package. Readers familiar with ordinary R graphics can easily
+produce histograms with the `hist()` function or density estimates with the `density()`
+function. For this simple task, the
+`qplot()` (for quick plot) and the general `ggplot()` functions do
+not offer much of an advantage -- besides the
+fact that figures have the same style as other `ggplot2` figures.
+However, the well-thought-out design and entire functionality of `ggplot2`
+has resulted in plotting methods that are powerful and expressive.
+The benefit is that with ggplot2 it is possible to produce quite complicated figures
+with clear and logical R expressions -- and without the need to
+mess with a lot of low-level technical plotting details.
+
+What is most noteworthy in @fig-histograms is that the distribution
+of `alcohol` is extremely skewed, with more than half of the
+cases not drinking alcohol at all. This is noteworthy since little variation
+in a predictor makes it more difficult to detect whether it is associated
+with the response.
+
+```{r}
+#| label: fig-histograms
+#| message: false
+#| warning: false
+#| fig-cap: "Density estimates or bar plots of continuous variables or variables taking many values."
+#| opts.label: widefigure5
+#| column: page
+tmp <- lapply(
+    names(birth_weight), 
+    \(x) ggplot(data = birth_weight[, x, drop = FALSE]) + 
+        aes_string(x) + xlab(x) + ylab("")
+)
+gd <- geom_density(adjust = 2, fill = gray(0.7))
+gb <- geom_bar(fill = gray(0.7))
+
+gridExtra::grid.arrange(
+  tmp[[1]] + gd,
+  tmp[[4]] + gb,
+  tmp[[6]] + gb,
+  tmp[[8]] + gd,
+  tmp[[9]] + gd,
+  ncol = 5
+)
+```
+
+For the discrete variables -- the categorical or count variables --
+we produce barplots instead of density estimates. Figure @fig-barplots
+shows that all discrete variables except `children` have
+quite skewed distributions.
+
+In summary, the typical birth_weight woman does not smoke or drink alcohol
+or coffee, nor has she had any previous spontaneous abortions or any
+fever episodes. About one-third drinks coffee or alcohol or smokes. These observations may
+not be surprising -- they reflect what is to be expected for a
+random sample of cases. Little variation of a predictor
+can, however, make estimation and detection of associations between
+the response and the predictors more difficult. In this case the dataset
+is quite large, and cases with the least frequently
+occurring predictor values are present in reasonable numbers.
+
+```{r}
+#| label: fig-barplots
+#| message: false
+#| warning: false
+#| fig-cap: "Barplots of variables taking few values."
+#| opts.label: widefigure5
+#| column: page
+gridExtra::grid.arrange(
+  tmp[[2]] + gb,
+  tmp[[3]] + gb,
+  tmp[[5]] + gb,
+  tmp[[7]] + gb,
+  tmp[[10]] + aes(x = factor(feverEpisodes)) + gb + xlab("feverEpisodes"),
+  ncol = 5
+)
+# The coercion of 'feverEpisodes' to a factor fixes the x-axes.
+```
+
+
+### Pairwise associations
+
+The next step is to investigate associations of the variables.
+We are still not attempting to build a predictive model
+and the response does not yet play a special role. One purpose
+is again to get better acquainted with the data -- this time by focusing on
+covariation -- but there is also one particular issue that we should
+be aware of.
+
+-  Collinearity of predictors.
+
+Add this bullet point to the previous list of issues.
+If two or more predictors in the dataset are strongly correlated, they contain,
+from a predictive point of view, more or less the
+same information, but perhaps encoded in slightly different ways.
+Strongly correlated predictors result in the same problem
+as predictors with little variation. It can become difficult to estimate
+and detect joint association of the predictors with the response.
+
+A technical consequence is that statistical tests of whether one of the predictors
+could be excluded become non-significant if the other is included, whereas
+a test of joint exclusion of the predictors can be highly significant.
+Thus it will become difficult to determine on statistical grounds if
+one predictor should be included over the other. It is best to know about
+such potential issues upfront. Perhaps it is, by subject matter arguments, possible to
+choose one of the predictors over the other as the most relevant to
+include in the model.
+
+A scatter plot matrix is a useful graphical summary of the pairwise
+association of continuous variables. It can be supplemented with computations
+of Pearson correlations.  \index{scatter plot matrix}
+
+```{r}
+#| label: fig-scatter-plot-matrix
+#| warning: false
+#| fig-cap: "Scatter plot matrix of the numeric variables and corresponding Pearson correlations."
+#| out-width: 100%
+#| fig-cap-location: margin
+#| fig-width: 6
+#| fig-height: 6
+ggally_hexbin <- function(data, mapping, ...) 
+    ggplot(data, mapping) + stat_binhex(...)
+
+GGally::ggpairs(
+    birth_weight, 
+    columns = c("age", "alcohol", "gestationalAge", "length", "weight"), 
+    lower = list(continuous = GGally::wrap("hexbin", bins = 20)), 
+    diag = list(continuous = "blankDiag"),
+)
+```
+
+The scatter plots, @fig-scatter-plot-matrix, show that
+`length` and `weight` are (not surprisingly) very correlated, and that both of
+these variables are also highly correlated with `gestationalAge`. The `alcohol`
+and `age` variables are mildly correlated, but they are virtually uncorrelated with
+the other three variables.
+
+The scatter plot matrix was produced using the `splom()`
+function from the `lattice` package. The dataset is quite large and
+a naive plot of a scatter plot matrix results in a lot of overplotting
+and huge pdf graphics files. Figures can be saved as high-resolution png files
+instead of pdf files to remedy problems with file size. The actual
+plotting may, however, still be slow, and the information content in the
+plot may be limited due to the overplotting. A good way to deal with overplotting
+is to use hexagonal binning of data points. This was done using the `panel.hexbinplot()`
+function from the hexbin package together with the `splom()` function.
+
+If two categorical variables are strongly
+dependent the corresponding vectors of dummy variable encoding of the categorical levels
+will be collinear. In extreme cases where only certain pairwise combinations of the
+categorical variables are observed, the resulting dummy variable vectors will be perfectly
+collinear. Dependence between categorical variables may be investigated by cross-tabulation
+and formal tests of independence can, for instance, be computed.
+However, neither test statistics of independence nor corresponding $p$-values
+are measures of the degree of dependence -- they
+scale with the size of the dataset and become more and more extreme for larger datasets.
+There is no single suitable substitute for the Pearson correlation that applies to
+categorical variables in general. In this particular example all the categorical
+variables are, in fact, ordinal. In this case we can use the Spearman correlation.
+The Spearman correlation is simply the Pearson correlation between the ranks
+of the observations. Since we only need to be able to sort observations to compute
+ranks, the Spearman correlation is well defined for ordinal as well as continuous
+variables.
+
+```{r}
+#| label: fig-cor-matrix
+#| fig-cap: "Spearman correlation matrix. Variables are ordered according to a hierarchical clustering. A rectangular grouping of variables into four clusters is shown."
+#| fig-height: 6
+#| fig-width: 6
+#| out-width: 100%
+#| fig-cap-location: margin
+cp <- cor(
+  data.matrix(birth_weight), 
+  use = "complete.obs", 
+  method = "spearman"
+)
+col_pal <- colorRampPalette(c("blue", "yellow"), space = "rgb")(100)
+
+corrplot::corrplot(
+  cp, 
+  diag = FALSE, 
+  order = "hclust", 
+  col = col_pal, 
+  addrect = 4, 
+  tl.srt = 45, 
+  tl.col = "black", 
+  tl.cex = 0.8
+)
+```
+
+
+Figure @fig-cor-matrix shows Spearman correlations of all variables -- categorical as well as
+continuous. For continuous variables the Spearman correlation is, furthermore,
+invariant to monotone transformations and less sensitive to outliers than the Pearson correlation.
+These properties make the Spearman correlation more attractive as a means
+for exploratory investigations of pairwise association.
+
+
+
+For the production of the plot of the correlation matrix, Figure @fig-cor-matrix, we used a
+hierarchical clustering of the variables. The purpose was to sort the variables so
+that the large correlations are concentrated around the diagonal. Since there is no
+natural order of the variables, the correlation matrix could be plotted using any order.
+We want to choose an order that brings highly correlated variables close together to
+make the figure easier to read. Hierarchical clustering can be useful for this
+purpose. For the clustering, a dissimilarity measure between variables is
+needed. We used 1 minus the absolute value of the correlation. It resulted in a useful ordering in this
+case.
+
+What we see most clearly from Figure @fig-cor-matrix are three
+groupings of positively correlated variables. The `weight`, `length` and `gestationalAge` group,
+a group consisting of `age`, `children` and `abortions` (not surprising), and
+a grouping of `alcohol`, `smoking` and `coffee` with mainly coffee
+being correlated with the two others.
+
+An alternative way to study the relation between a continuous and a categorical variable is
+to look at the distribution of the continuous variable stratified according to the
+values of the categorical variable. This can be done using boxplots.
+
+@fig-marginal-categorical shows boxplots for the continuous variable `weight`. 
+From this figure we see that `weight` seems to
+be larger if the mother has had children before and to be negatively related to
+coffee drinking and smoking.
+
+```{r}
+#| label: fig-marginal-categorical
+#| fig-cap: "Boxplots of weight stratified according to the values of five of the other variables."
+#| column: page
+#| opts.label: widefigure5
+birth_weight_long <- tidyr::pivot_longer(
+    birth_weight[, c("weight", "abortions", "children", "smoking", "coffee", "feverEpisodes")],
+    cols = !weight,
+    values_transform = as.factor
+)
+ggplot(birth_weight_long, aes(x = value, y = weight)) +
+  geom_boxplot(fill = gray(0.8)) + xlab("") +
+  facet_wrap(~ name, scale = "free_x", ncol = 5)
+```
+
+## A linear model of birth weight
+
+To build a linear regression model of the response variable `weight`, we
+need to decide which of the predictors we want to include. We also need
+to decide if we want to include the predictor variables as is, or
+if we want to transform them. Before we make any of these
+decisions we explore linear regression models where we just include
+one of the predictors at a time. This analysis is not to be misused for
+variable selection, but to supplement the explorative studies from the
+previous sections. In contrast to correlation considerations this
+procedure for studying single predictor association with the response
+can be generalized to models where the response is discrete.
+
+```{r}
+#| label: single-term-inclusion
+#| code-fold: show
+form <- weight ~ gestationalAge + length + age + children +
+  coffee + alcohol + smoking + abortions + feverEpisodes
+birth_weight <- na.omit(birth_weight)
+null_model <- lm(weight ~ 1, data = birth_weight)
+one_term_models <- add1(null_model, form, test = "F")
+```
+
+@tbl-single-term-inclusion shows the result of
+testing if inclusion of each of the predictors by themselves
+is significant. That is, we test the model with only an
+intercept against the alternative where a single predictor is
+included. The test used is the $F$-test -- see @sec-tests-confidence 
+for details on the theory.
+For each of the categorical predictor variables the
+encoding requires `df` (degrees of freedom) dummy variables in addition
+to the intercept to encode the inclusion of a variable with `df + 1` levels.
+
+```{r}
+#| label: tbl-single-term-inclusion
+#| tbl-cap: "Marginal association tests sorted according to the $p$-value."
+#| tbl-cap-location: margin
+one_term_models |> 
+  tidy() |> 
+  arrange(p.value, desc(statistic)) |>
+  filter(term != "<none>") |>
+  select(-AIC) |> 
+  knitr::kable()
+```
+
+@fig-marg-reg-weight shows the scatter plots of `weight` against
+the 4 continuous predictors. This is actually just the last row in the scatter plot matrix in
+@fig-scatter-plot-matrix, but this time we have added the regression line.
+For the continuous variables the tests reported in @tbl-single-term-inclusion are
+tests of whether the regression line has slope $0$.
+
+```{r}
+#| label: fig-marg-reg-weight
+#| warning: false
+#| message: false
+#| fig-cap: "Scatter plots including linear regression lines."
+#| column: page
+#| opts.label: widefigure4
+birth_weight_long <- tidyr::pivot_longer(
+  select(birth_weight, c(age, alcohol, gestationalAge, length, weight)),
+  cols = !weight,
+  names_to = "variable"
+)
+
+binScale <- scale_fill_continuous(
+  breaks = c(1, 10, 100, 1000),
+  low = "gray80", 
+  high = "black",
+  trans = "log", 
+  guide = "none"
+)
+
+ggplot(birth_weight_long, aes(value, weight)) +
+  stat_binhex(bins = 20) + binScale +
+  facet_wrap(~ variable, scales = "free_x", ncol =  4) +
+  geom_smooth(linewidth = 1, method = "lm")
+```
+
+
+To decide upon the variables to include in the first multivariate linear model,
+we summarize some of the findings of the initial analyses. The `length` variable
+is obviously a very good predictor of `weight`, but it is also close to
+being an equivalent "body size" measurement, and it will be affected in similar
+ways as `weight` by variables that affect fetus growth. From a predictive modeling point
+of view it is in most cases useless, as it is will not be observable unless
+`weight` is also observable. The `gestationalAge` variable
+is likewise of little interest if we want to predict `weight` early in
+pregnancy. The variable is, however, virtually unrelated to the other predictors,
+and age of the fetus at birth is a logic cause of the weight of the child.
+It could also be a relevant predictor late in pregnancy for
+predicting the weight if the woman were to give birth at a given time.
+Thus we keep `gestationalAge` as a predictor.
+The remaining predictors are not
+strongly correlated, and we have not found reasons to exclude any of them.
+We will thus fit a main effects linear model with 8 predictors. We include all the
+predictors as they are.
+
+[The main effects model.]{.aside}
+
+```{r}
+#| label: tbl-birth-lm
+#| tbl-cap: "Summary table of parameter estimates, standard errors and $t$-tests for the linear model of weight fitted with 8 predictors."
+#| tbl-cap-location: margin
+form <- update(form, . ~ . - length)
+birth_weight_lm <- lm(form, data = birth_weight)
+tidy(birth_weight_lm) |>
+  knitr::kable()
+```
+
+
+@tbl-birth-lm shows the estimated $\beta$-parameters among other things.
+Note that all categorical variables (specifically, those that are encoded as
+factors in the data frame) are included via a dummy variable representation.
+The precise encoding is determined by a linear constraint, known as a
+*contrast*. By default, the first factor level is constrained to
+have parameter $0$, in which case the remaining parameters represent differences
+to this base level. In this case it is only occasionally of interest to look at
+the $t$-tests for testing if a single parameter is $0$. 
+
+@tbl-anova-main-effect
+shows instead $F$-tests of excluding any one of the predictors. It shows that the
+predictors basically fall into two groups; the strong predictors `gestationalAge`,
+`children`, `smoking` and `coffee`, and the weak predictors
+`abortions`, `age`, `feverEpisodes` and `alcohol`.
+The table was obtained using the `drop1()` function. We should at this stage resist
+the temptation to use the tests for a model reduction or model selection, as this will
+generally invalidate subsequent statistical analyses unless properly accounted for.
+
+```{r}
+#| label: tbl-anova-main-effect
+#| echo: false
+#| tbl-cap: "Tests of models excluding each term from the full model one at a time."
+#| tbl-cap-location: margin
+drop1(birth_weight_lm, test = "F") |> 
+  tidy() |> 
+  arrange(p.value, desc(statistic)) |>
+  filter(term != "<none>") |>
+  select(-AIC) |>
+  knitr::kable()
+```
+
+Model diagnostics are then to be considered to justify the model
+assumptions. Several aspects of the statistical analysis presented so far
+rely on these assumptions, though the theory is postponed to the subsequent sections.
+Most notably, the distribution of the test statistics, and thus the $p$-values,
+depend on the strong set of assumptions, A3 + A5.
+We cannot hope to prove that the assumptions are fulfilled, but
+we can check -- mostly using graphical methods --
+that they are either not obviously wrong, or if they appear to be wrong,
+the methods should reveal how we can improve the model.
+
+
+[There exists a plot method for lm objects that can produce a 
+range of standard diagnostic plots. The method is useful for quick interactive usage, 
+but the resulting plots are difficult to customize for publication quality. We 
+develop alternatives based on ggplot2]{.aside}
+
+Model diagnostics for the linear model are mostly based on the residuals, which are estimates of
+the unobserved errors $\epsilon_i$, or the *standardized* residuals,
+which are estimates of $\epsilon_i / \sigma$. Plots of the standardized residuals against
+the fitted values, or against any one of the predictors, are useful to detect deviations
+from A1 or A2. For A3 we consider a qq-plot against the standard normal distribution.
+The assumptions A4 or A5 are more difficult to investigate. If we don't have a
+specific idea about how the errors, and thus the observations, might be correlated,
+it is very difficult to do anything.
+
+```{r}
+#| label: fig-weight-model-control
+#| fig-cap: "Diagnostic plots. Standardized residuals plotted against fitted values, the predictor `gestationalAge`, and a qq-plot against the normal distribution."
+#| fig-cap-location: margin
+#| opts.label: widefigure3
+#| warning: false
+#| message: false
+birth_weight_diag <- augment(birth_weight_lm)
+p1 <- ggplot(birth_weight_diag, aes(.fitted, .std.resid)) +
+  stat_binhex(bins = 20) + binScale + geom_smooth(linewidth =  1, fill = "blue") +
+  xlab("fitted values") + ylab("standardized residuals")
+p2 <- ggplot(birth_weight_diag, aes(gestationalAge, .std.resid)) +
+  stat_binhex(bins = 20) + binScale + geom_smooth(linewidth =  1, fill = "blue") +
+  xlab("gestationalAge") + ylab("")
+p3 <- ggplot(birth_weight_diag, aes(sample = .std.resid)) +
+  geom_abline(intercept = 0, slope = 1, color = "blue", linewidth =  1) +
+  geom_qq() + 
+  xlab("theoretical quantiles") + ylab("")
+gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
+```
+
+The residual plot in Figure @fig-weight-model-control shows that the model is not spot on.
+The plot of the residuals against `gestationalAge` shows that there is a non-linear effect
+that the linear model does not catch. Thus A1 is not fulfilled. We address this specific issue in
+a later section, where we solve the problem using splines. The qq-plot shows
+that the tails of the residuals are heavier than the normal distribution and right skewed. However, given
+the problems with A1, this issue is of secondary interest.
+
+The diagnostics considered  above address if the data set as a whole does
+not comply to the model assumptions. Single observations can also be
+extreme and, for instance, have a large influence on how the model is
+fitted. For this reason we should also be aware of single extreme
+observations in the residual plots and the qq-plot.
+
+
+Interactions between the different predictors can then be considered.
+The inclusion of interactions results in a  substantial increase in the complexity of the models,
+even if we have only a few
+predictors. Moreover, it becomes possible to construct an overwhelming number of comparisons of
+models. Searching haphazardly through thousands of models with various combinations of interactions
+is not recommended. It will result in spurious discoveries that will be difficult to reproduce
+in other studies. If there is no specific interactions of particular interest, it is often
+recommended that one should not to begin searching for any. It may, on the other hand, be of interest to
+investigate if the data set contains evidence of interactions. The strategy we follow here
+is to include interactions of the strongest predictors from the main effects model.
+To comprehend an interaction model it is advisable to visualize the model to the
+extent it is possible. This is a point where the ggplot2 package is really strong.
+It supports a number of ways to stratify a plot according to different variables.
+
+```{r}
+#| label: fig-interaction-plot
+#| warning: false
+#| message: false
+#| fig-cap: "Scatter plots of `weight` against `gestationalAge` stratified according to the values of `smoking`, `children` and `coffee`"
+#| column: page
+#| opts.label: widefigure2
+ggplot(birth_weight, aes(gestationalAge, weight)) +
+  facet_grid(coffee ~ children + smoking, label = label_both) +
+  binScale + stat_binhex(bins = 20) +
+  geom_smooth(method = "lm", linewidth = 1, se = FALSE, fullrange = TRUE)
+```
+
+Figure @fig-interaction-plot shows a total of 18 scatter plots where the stratification
+is according to `children`, `smoking` and `coffee`. A
+regression line was fitted separately for each plot. This corresponds to a
+model with a third order interaction between the 4 strong predictors (and with the
+weak predictors left out). Variations between the
+regression lines are seen across the different plots, which is an indication of
+interaction effects. For better comparison of the regression
+lines it can be beneficial to plot them differently. Figure @fig-interaction-plot2
+shows an example where the stratification according to `coffee` is visualized by
+color coding the levels of `coffee`. 
+
+```{r}
+#| label: fig-interaction-plot2
+#| warning: false
+#| message: false
+#| fig-cap: "Comparison of estimated  regression lines for `gestationalAge` stratified according to the values of `smoking`, `coffee` and `children`"
+#| column: page
+#| opts.label: widefigure4
+ggplot(birth_weight, aes(gestationalAge, weight, color = coffee)) +
+  facet_grid(. ~ children + smoking, label = label_both) +
+  geom_smooth(method = "lm", linewidth =  1, se = FALSE, fullrange = TRUE)
+```
+
+
+We can test the model with a third order interaction
+between the strong predictors against the main effects model. In doing so we keep the
+weak predictors in the model.
+
+```{r}
+#| label: tbl-inter-test
+#| tbl-cap: "Test of the model including a third order interaction against the main effects model."
+#| tbl-cap-location: margin
+form <- weight ~ smoking * coffee * children * gestationalAge +
+  age + alcohol + abortions + feverEpisodes
+birth_weight_lm_int <- lm(form, data = birth_weight)
+anova(birth_weight_lm, birth_weight_lm_int) |>
+  knitr::kable()
+```
+
+@tbl-inter-test shows that the $F$-test of the full third order interaction model
+against the main effects model is clearly significant. Since there is
+some lack of model fit, we should be skeptical about the conclusions from formal
+hypothesis tests. However, deviations from A1 result in an increased residual
+variance, which will generally result in more conservative tests. That is, it will become
+harder to reject a null hypothesis, and thus, in this case, conclude that inclusion of the
+interactions is significant. The third order interaction model
+contains 42 parameters, so a full table of all the parameters is not very comprehensible,
+and it will thus not be reported.
+
+```{r}
+#| label: fig-weight-int-model-control
+#| echo: false
+#| fig-cap: "Residual plot for the third order interaction model."
+#| column: margin
+#| opts.label: smallfigure
+#| warning: false
+#| message: false
+birth_weight_diag_int <- augment(birth_weight_lm_int)
+ggplot(birth_weight_diag_int, aes(.fitted, .std.resid)) +
+  stat_binhex(bins = 20) + binScale + geom_smooth(linewidth =  1, fill = "blue") +
+  xlab("fitted values") + ylab("standardized residuals")
+```
+
+We reconsider model diagnostics for the extended model, where
+we have included the interactions.  @fig-weight-int-model-control shows the residual plot. The
+inclusion of the interactions did not solve the earlier observed problems with the model fit. This is hardly
+surprising as the problem with the model appears to be related to a nonlinear relation
+between `weight` and `gestationalAge`. Such an apparent nonlinearity could
+be explained by interaction effects, but this would require a strong correlation between
+the predictors, e.g. that heavy coffee drinkers (`coffee = 3`) have large
+values of `gestationalAge`. We already established that this was not the
+case.
+
+Before we conclude the analysis, we test the hypothesis where we exclude 
+the 4 weak predictors together. @tbl-test-weak-predictors shows that the test results in a borderline $p$-value of
+around 5%. On the basis of this we might exclude the 4 weak predictors even though @tbl-anova-main-effect
+suggested that the number of abortions is related to `weight`. The highly skewed distribution
+of `abortions` resulted in large standard errors and low power despite the size of the data set.
+In combination with the different signs on the estimated parameters
+in Table @tbl-birth-lm, depending upon whether the woman had had 1, 2 or 3+ spontaneous abortions,
+the study is inconclusive on how `abortions` is related to `weight`.
+
+```{r}
+#| label: tbl-test-weak-predictors
+#| tbl-cap: "Test of the full third order interaction model against the model excluding the 4 weak predictors."
+#| tbl-cap-location: margin
+form <- weight ~ smoking * coffee * children * gestationalAge
+birth_weight_lm_int_sub <- lm(form, data = birth_weight)
+anova(birth_weight_lm_int_sub, birth_weight_lm_int) |>
+  knitr::kable()
+```
+
+
+In conclusion, we have arrived at a predictive model of `weight`
+given in terms of a third order interaction of
+the 4 predictors `gestationalAge`, `smoking`, `coffee` and `children`.
+The model is not a perfect fit, as it doesn't
+catch a nonlinear relation between `weight` and `gestationalAge`.
+The fitted model can be visualized as in the @fig-interaction-plot or
+@fig-interaction-plot2. 
+
+We note that the formal $F$-test of the interaction model
+against the main effects model justifies the need for the increased model
+complexity. It is, however, clear from the figures that the actual differences
+in slopes are small, and the significance of the test reflects that we have a large data set,
+which makes us able to detect even small differences.
+
+There is no clear-cut interpretation of the interactions either.
+The regression lines in the figures should, preferably, be equipped with
+confidence bands. This can be achieved by removing the `se = FALSE` argument
+to the `geom_smooth()` function, but this will result in a separate
+variance estimate for each combination of `smoking`, `coffee` and `children`.
+If we want to use the pooled variance estimate obtained by our model, we have to
+do something else. How this is achieved is shown in a later section, where
+we also consider how to deal with the nonlinearity using spline basis expansions.
+
+## Nonlinear expansions
+
+Basis expansions can be tried if we expect to
+get something out of it, that is, if we expect that there are some
+nonlinear relations in the data. On the other hand, if we construct
+models tailor-made to capture
+nonlinear relations we have spotted by eye-balling residual plots we
+run the risk of overfitting random fluctuations. In particular,
+formal downstream justifications using statistical tests are invalidated.
+The eye-balling process is a model selection procedure with statistical
+implications, which are difficult to account for.
+
+We decided to expand `gestationalAge` using natural cubic splines
+with three knots in 38, 40, and 42 weeks. The boundary knots were determined
+by the range of the data set, and were thus 25 and 47. We also expanded
+`age`, but we let the `ns()` function
+determine the knots automatically for that predictor. The last continuous
+predictor, `alcohol` has a very skewed marginal distribution, and it
+was not judged to be suitable for a standard basis expansion.
+We also present a test of the nonlinear effect. \index{spline expansion}
+
+[Nonlinear main effects model.]{.aside}
+
+```{r splineRegModel}
+#| label: tbl-test-nonlinear-model
+#| tbl-cap: "Test of the model including a spline expansion of `gestationalAge` against the main effects model."
+#| tbl-cap-location: margin
+#| code-fold: show
+nsg <- function(x) ns(x, knots = c(38, 40, 42), Boundary.knots = c(25, 47))
+form <- weight ~ nsg(gestationalAge) + ns(age, df = 3) + children +
+  coffee + alcohol + smoking + abortions + feverEpisodes
+birth_weight_lm_spline <- lm(form, data = birth_weight)
+anova(birth_weight_lm, birth_weight_lm_spline) |> knitr::kable()
+```
+
+The main effects model is a submodel of the nonlinear main effects model.
+This is not obvious. The nonlinear expansion will result in 4 columns in
+the model matrix $\mathbf{X}$, none of which being `gestationalAge`. However, the
+linear function is definitely a natural cubic spline, and it is thus in the
+span of the 4 basis functions. With $\mathbf{X}'$ the model matrix for the main
+effects model, it follows that there is a $C$ such that @eq-subspace holds.
+This justifies the use of the $F$-test. The conclusion from @tbl-test-nonlinear-model
+is that the nonlinear model is highly significant.
+
+
+```{r}
+#| label: fig-spline-model-diag
+#| fig-cap: "Diagnostic plots for the model with `gestationalAge` expanded using splines."
+#| fig-cap-location: margin
+#| opts.label: widefigure3
+#| message: false
+birth_weight_diag <- cbind(augment(birth_weight_lm_spline), birth_weight[, "gestationalAge", drop = FALSE])
+p1 <- ggplot(birth_weight_diag, aes(.fitted, .std.resid)) +
+  stat_binhex(bins = 20) + binScale + geom_smooth(linewidth = 1, fill = "blue") +
+  xlab("fitted values") + ylab("standardized residuals")
+p2 <- ggplot(birth_weight_diag, aes(gestationalAge, .std.resid)) +
+  stat_binhex(bins = 20) + binScale + geom_smooth(linewidth = 1, fill = "blue") +
+  xlab("gestationalAge") + ylab("")
+p3 <- ggplot(birth_weight_diag, aes(sample = .std.resid)) +
+  geom_abline(intercept = 0, slope = 1, color = "blue", linewidth =  1) +
+  geom_qq() + 
+  xlab("theoretical quantiles") + ylab("")
+gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
+```
+
+The positioning of the knots for spline expansion
+is selected based on the marginal distribution of the predictor[^knots]
+The knots should be placed reasonably relative to the distribution of the
+predictor, so that we learn about nonlinearities where there is data to learn from.
+In this case we placed knots at the median and the 10% and 90% quantiles
+of the distribution of `gestationalAge`. The `ns()` function
+makes a similar automatic selection of knots based on the marginal distribution
+of the predictor variables when it is applied in the formula. One just have to
+specify the number of basis functions using the `df` argument.
+
+
+[^knots]: Letting the knots be parameters to be estimated is not a statistically viable idea. The resulting estimation problem becomes computationally much more difficult, and it is not straightforward how to adjust subsequent statistical analyses to account for the data adaptive choice of knots.
+
+An eye-ball decision based on
+@fig-weight-model-control would be that a single knot around 41 would have done the job,
+but we refrained from making such a decision. A subsequent test of the
+nonlinear effect with 1 degrees of freedom would not appropriately take
+into account how the placement of the knot was made. 
+
+
+@fig-spline-model-diag shows diagnostic plots for the nonlinear main
+effects model. They show that the inclusion of the nonlinear effect
+removed the previously observed problem with assumption A1. The error distribution
+is still not normal, but right skewed with a fatter right tail than the normal
+distribution. There is a group
+of extreme residuals for preterm born children, which should be given more attention
+than they will be given here.
+
+
+[Reduced nonlinear main effects model.]{.aside}
+
+```{r}
+#| label: tbl-spline-small
+#| tbl-cap: "Test of weak predictors in the nonlinear main effects model."
+#| tbl-cap-location: margin
+#| code-fold: show
+form <- weight ~ nsg(gestationalAge) + children + coffee + smoking
+birth_weight_lm_spline_small <- lm(form, data = birth_weight)
+anova(birth_weight_lm_spline_small, birth_weight_lm_spline) |> 
+  knitr::kable()
+```
+
+
+@tbl-spline-small shows that dropping the 4 weak predictors from
+the nonlinear main effects model is again borderline and not really significant.
+
+@fig-spline-fit shows examples of the fit for the reduced nonlinear main effects model.
+The figure illustrates the general nonlinear relation between `weight` and `gestationalAge`. Differences
+due to other variables are purely additive in this model, which amounts to translations up
+or down of the curve. The figure shows a couple of extreme cases; the majority group who
+have had children before and who don't smoke or drink coffee, and a minority group who have
+had children before and smoke and drink coffee the most. What we should notice is
+the wider confidence band on the latter (`smoke = 3`, `coffee = 3`) compared
+to the former, which is explained by the skewness of the predictor distributions.
+@tbl-spline-conf-int gives confidence intervals for the remaining parameters
+based on the nonlinear main effects model.
+
+```{r}
+#| label: fig-spline-fit
+#| fig-cap: "Main effects model with basis expansion of `gestationalAge`. Here illustrations of the fitted mean and 95% confidence bands for `children=1`."
+#| fig-cap-location: margin
+#| opts.label: widefigure2
+pred_frame <- expand.grid(
+  children = factor(1),
+  smoking = factor(c(1, 3)),
+  coffee = factor(c(1, 3)),
+  gestationalAge = seq(25, 47, 0.1),
+  alcohol = 0,
+  age = median(birth_weight$age),
+  feverEpisodes = 0,
+  abortions = factor(0)
+)
+
+pred <- predict(
+  birth_weight_lm_spline, 
+  newdata = pred_frame,
+  interval = "confidence"
+)
+
+pred_frame <- cbind(pred_frame, pred)
+
+ggplot(pred_frame, aes(gestationalAge, fit, color = coffee)) + 
+  geom_line() + ylab("weight") +
+  geom_ribbon(
+    aes(ymin = lwr, ymax = upr, fill = coffee), 
+    alpha = 0.3
+  ) + facet_grid(. ~ smoking, label = label_both)
+```
+
+
+```{r}
+#| label: tbl-spline-conf-int
+#| tbl-cap: "Confidence intervals."
+#| column: margin
+#| echo: false
+tidy(birth_weight_lm_spline, conf.int = TRUE)[9:14, ] |>
+  select(c(term, conf.low, conf.high)) |> knitr::kable(digits = 3)
+```
+
+
+To conclude the analysis, we will again include interactions. However, the variable
+`gestationalAge` is in fact only taking the integer values 25 to 47,
+and the result of a nonlinear effect coupled with a third order interaction, say,
+results in an almost saturated model. That is, the interaction model has more or less a separate mean for
+all observed combinations of the predictors. We choose to consider a less complex model with all
+second order interactions between `gestationalAge` and the three factors that
+we have judged to be strong predictors.
+
+[Nonlinear interaction model.]{.aside}
+
+```{r}
+#| label: nonlinear-int-model
+#| code-fold: show
+#| tbl-cap: "Test of nonlinear interaction model."
+#| tbl-cap-location: margin
+form <- weight ~ (smoking + coffee + children) * nsg(gestationalAge) +
+   ns(age, df = 3) + alcohol + abortions + feverEpisodes
+birth_weight_lm_spline_int <- lm(form, data = birth_weight)
+```
+
+
+```{r predCompar, dependson=c('interRegModel2', 'splineRegModel2'), fig.cap='', fig.width=12, fig.height=6, fig.env='figure*', fig.pos='t'}
+#| label: fig-spline-int-fit
+#| fig-cap: "Comparison of the interaction model (red, 95% gray confidence bands) with the nonlinear main effects model (blue)."
+#| opts.label: widefigure2
+#| column: page
+pred_frame <- expand.grid(
+  children = factor(c(0, 1)),
+  smoking = factor(c(1, 2, 3)),
+  coffee = factor(c(1, 2, 3)),
+  gestationalAge = 25:47,
+  alcohol = 0,
+  age = median(birth_weight$age),
+  feverEpisodes = 0,
+  abortions = factor(0)
+)
+
+pred <- predict(birth_weight_lm_spline_int, newdata = pred_frame, interval = "confidence")
+
+
+pred_frame <- cbind(pred_frame, pred)
+pred_frame$fit_spline <- predict(birth_weight_lm_spline, newdata = pred_frame)
+
+ggplot(pred_frame, aes(gestationalAge, fit)) +
+  facet_grid(coffee ~ children + smoking, label = label_both) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), fill = gray(0.85)) +
+  geom_line(color = "red") + coord_cartesian(ylim = c(0, 5000)) +
+  geom_line(aes(y = fit_spline), color = "blue") + ylab("weight") +
+  scale_y_continuous(breaks = c(1000, 2000, 3000, 4000))
+```
+
+
+@fig-spline-int-fit shows the predicted values for the reduced nonlinear main effects model for
+all combinations of `children`, `smoking` and `coffee` (blue curves).
+These curves are all just translations of each other. In addition, the figure
+shows the predicted values and a 95% confidence band as estimated with the
+nonlinear interaction model. We observe minor deviations for the
+reduced main effects model, which can explain the significance of the
+test, but the deviations appear unsystematic and mostly related to
+extreme values of `gestationalAge`. The conclusion is that even
+though the inclusion of interaction effects is significant, there is
+little to gain over the reduced nonlinear main effects model.
+
+```{r}
+#| label: tbl-nonlinear-int-model
+#| tbl-cap: "Test of nonlinear interaction model."
+#| tbl-cap-location: margin
+anova(birth_weight_lm_spline, birth_weight_lm_spline_int) |> 
+  knitr::kable(digits = 10)
+```
+
+@tbl-nonlinear-int-model shows that inclusion of interaction terms is still significant by a
+formal statistical test. It is, however, always a good idea to visualize how the nonlinear interaction model
+differs from the model with only main effects as above instead of just focusing on the formal test. The test
+may, on the other hand, support the visualization as a quantification of whether the differences
+seen in a figure are actually statistically significant.
+
+## Exercises {.unnumbered}
+
+::: {#exr-wage}
+This exercise is on the modeling of annual wage. The data set `wage` from 
+the R package RwR is from a US survey with 1125 respondents. It contains five variables. 
+The response variable is `wage`, which is 
+the respondent's annual wage is USD. In addition to wage the dataset includes the 
+variables: `hours` (annual hours worked), `educ` 
+(education, 1 = no high school diploma, 2 = high school graduate, 
+3 = college graduate), `age` (age of respondent in years) and `children` (number of children living 
+with the respondent). The respondents with `hours` and  `wage` equal to $0$ 
+are unemployed.
+
+The objective of this exercise is to fit a predictive regression model of wage using 
+some or all of the other variables in the dataset. 
+
+[There are few respondents with many children, and it might 
+therefore be a good idea to collapse respondents with three or more children, say,
+into one group.]{.aside}
+
+1. Fit and report a linear, additive model of the mean wage given some 
+    of the other variables using data for the employed respondents only. 
+
+2. Investigate how well the linear, additive model fits the data.
+
+3. Investigate if nonlinear or interaction effects should be 
+included into the model. Choose a model to report.
+
+4. Use the model chosen to predict the wage distribution for the 
+    unemployed respondents should they get a job. Compare with the 
+    wage distribution for the employed respondents. Discuss reasons 
+    that would invalidate such wage predictions for the unemployed. 
+:::
