@@ -1,0 +1,792 @@
+# Exponential dispersion models {#sec-exponential}
+
+::: {.callout-important}
+This chapter is currently undergoing conversion and substantial changes 
+will be made without notice.
+:::
+
+This chapter introduces a class of response distributions more general than 
+the normal distribution, which  will 
+form the basis of a considerable extension of the linear model in @sec-generalized-linear. 
+Among the possible 
+alternatives to the normal distribution are discrete distributions like the binomial and the Poisson 
+distribution and continuous distributions like the Gamma distribution.
+
+## A motivating example
+
+To motivate the introduction of the exponential dispersion models, we consider an example. 
+
+\index{Bernoulli model}
+
+::: {#exm-bernoulli}
+
+## Bernoulli model
+
+For a binary response variable $Y \in \{0, 1\}$ with $p = P(Y = 1)$ 
+the log-odds parameter is \index{log-odds}
+$$
+    \theta := \log \frac{P(Y = 1)}{P(Y = 0)} = \log \frac{p}{1 - p}.
+$$
+Rearranging this equation gives 
+$$
+    p = \frac{e^{\theta}}{1 + e^{\theta}}
+$$
+and
+$$
+    1 - p = \frac{1}{1 + e^{\theta}}.
+$$
+From this,
+$$
+    P(Y = y) = p^y(1-p)^{(1-y)} = \frac{e^{y\theta}}{1 + e^{\theta}}
+$$
+for $y \in \{0, 1\}$. The point probabilities thus take the form 
+$$
+    \frac{1}{\phi(\theta)}e^{y \theta}
+$$ 
+with $\phi(\theta) = 1 + e^{\theta}$. By direct computations we may observe that 
+$$
+    E(Y) = p = \frac{\phi'(\theta)}{\phi(\theta)}
+$$
+and that 
+$$
+    V(Y) = p(1-p) = \left(\frac{\phi'(\theta)}{\phi(\theta)}\right)'.
+$$
+That is, the mean can be found by differentiation of $\phi$, and the 
+variance is the derivative of the mean as a function of $\theta$. 
+::: 
+
+The identities relating the mean, variance and 
+log-odds parameter $\theta$  for the Bernoulli model above may seem coincidential for this 
+particular model. In fact, they are examples from the general theory 
+of exponential families. The Bernoulli model can be parametrized by 
+the mean value parameter (the probability $p$) or the log-odds parameter $\theta$. The
+function
+$$
+    \theta \mapsto \frac{e^{\theta}}{1 + e^{\theta}} = p
+$$ 
+is a one-to-one correspondance mapping $\mathbb{R}$ onto $(0,1)$. The inverse of 
+this function is the *logit function* \index{logit function}
+$$
+    \mathrm{logit}(p) = \log \frac{p}{1 - p}.
+$$
+Moreover, the variance can be expressed in terms of the mean as $p(1-p)$
+or in terms of the log-odds parameter. The latter is obtainable from the function 
+$\phi$ via differentiation. 
+
+As mentioned, the Bernoulli model is an example of a univariate exponential family. The normal
+distribution with fixed variance is another example. 
+This chapter investigates the class of exponential families on the real line with 
+the extension that a dispersion parameter is also allowed. By introducing a 
+dispersion parameter the resulting class of exponential dispersion models includes a 
+number of two-parameter families of distributions on the real line such as the 
+normal distribution and the Gamma distribution. 
+
+## Exponential dispersion models
+
+An exponential dispersion model is a two-parameter family of 
+so-called exponential dispersion distributions determined by an exponential family 
+and a dispersion parameter. The theory of exponential dispersion models provides a framework for a number 
+of widely applied univariate distributions. The theory is interesting in itself, but 
+it is treated here first of all to provide the theoretical foundation for  
+generalized linear regression models as treated in @sec-generalized-linear. In this section the models and 
+their associated terminology are introduced, and the general relation between mean and 
+variance is established. In subsequent chapters the statistical theory 
+for generalized linear models is developed based on the framework of exponential 
+dispersion models. 
+
+Every model is determined by a single $\sigma$-finite measure on the real line. 
+With $\nu$ a $\sigma$-finite measure on $\mathbb{R}$ we define 
+$\phi : \mathbb{R} \to [0,\infty]$ by 
+\begin{equation} \label{eq:psidef}
+\phi(\theta) = \int e^{\theta y} \, \nu(\mathrm{d} y),
+\end{equation}
+and we let
+$$ 
+    I = \{ \theta \in \mathbb{R} \mid \phi(\theta) < \infty \}^{\circ}
+$$
+denote the interior of the set of $\theta$-s for which $\phi(\theta) < \infty$. 
+
+Note that it is possible that $I = \emptyset$ -- take, for instance, $\nu$ to be Lebesgue measure.
+If $\nu$ is a finite measure then $\phi(0) < \infty$,
+but it is still possible that $\phi(\theta) = \infty$ for all $\theta \neq 0$, which results 
+in $I = \emptyset$. The case where $I$ is empty is not of any relevance. There are two 
+other special situations that are not relevant either. If $\nu$ is the zero measure, $\phi(\theta) = 0$, 
+and if $\nu$ is a one-point measure, that is, $\nu = c \delta_{y}$ for $c \in (0, \infty)$ and $\delta_y$ the Dirac 
+measure in $y$, then $\phi(\theta) = c e^{\theta y}$. Neither of these two cases will 
+be of any interest, and they result in pathological problems that we want to avoid. 
+We will therefore make the following regularity assumptions about $\nu$ throughout. 
+
+* The measure $\nu$ is not the zero measure, nor is it a one-point measure. 
+* The open set $I$ is non-empty.
+ 
+By the assumption that $\nu$ is not the zero measure, it follows that $\phi(\theta) > 0$ for
+$\theta \in I$. This allows us to make the following definition. 
+
+\index{exponential family} \index{canonical parameter!exponential family} \index{structure measure}
+
+::: {#def-exponential-family}
+The exponential family with 
+structure measure $\nu$ is the one-parameter family of probability measures, $\rho_{\theta}$ for $\theta \in I$,  defined by
+$$\frac{\mathrm{d} \rho_\theta}{\mathrm{d} \nu}(y) = \frac{1}{\phi(\theta)}e^{\theta y}.$$
+The parameter $\theta$ is called the canonical parameter. 
+:::
+
+Note that the exponential family is determined completely by the choice of the structure 
+measure $\nu$. Introducing $\kappa(\theta) = \log \phi(\theta)$ we have that 
+$$
+    \frac{\mathrm{d} \rho_\theta}{\mathrm{d} \nu}(y) = e^{\theta y - \kappa(\theta)}
+$$
+for $\theta \in I$. The function $\kappa$ is called the *unit cumulant function*
+\index{cumulant function!unit}
+for the exponential family. It is closely related to the cumulant generating functions 
+for the probability measures in the exponential family, see @exr-cum.
+
+Under the regularity assumptions we have made on $\nu$ we can obtain a 
+couple of very useful results about the exponential family. 
+
+::: {#lem-Istruct}
+The set $I$ is an open interval, the parametrization  $\theta \mapsto \rho_{\theta}$ is 
+one-to-one, and the function $\kappa : I \mapsto \mathbb{R}$ is strictly convex. 
+::: 
+
+::: {.proof}
+We first prove that the parametrization is one-to-one. If $\rho_{\theta_1} = \rho_{\theta_2}$
+their densities w.r.t. $\nu$ must agree $\nu$-almost everywhere, which implies that
+$$(\theta_1 - \theta_2)y = \kappa(\theta_1) - \kappa(\theta_2)$$
+for $\nu$-almost all $y$. Since $\nu$ is assumed not to be the zero measure or a one-point measure, 
+this can only hold if $\theta_1 = \theta_2$. 
+
+To prove that $I$ is an interval let $\theta_1, \theta_2 \in I$, and let $\alpha \in (0, 1)$. Then by Hölder's inequality
+$$
+\begin{align*}
+\phi(\alpha \theta_1 + (1-\alpha)\theta_2) & = \int e^{\alpha \theta_1 y} e^{(1-\alpha)\theta_2 y}  \, \nu(\mathrm{d} y) \\
+& \leq   \left(\int e^{\theta_1 y} \, \nu(\mathrm{d} y)\right)^{\alpha} \left(\int e^{\theta_2 y}  \, \nu(\mathrm{d} y)\right)^{1-\alpha} \\
+& = \phi(\theta_1)^{\alpha} \phi(\theta_2)^{1-\alpha} < \infty.
+\end{align*}
+$$
+This proves that $I$ is an interval. It is by definition open. 
+[Hölder's inequality says that 
+$$
+    \int|fg|  \leq \left(\int |f|^p\right)^{\frac{1}{p}}\left(\int |g|^q\right)^{\frac{1}{q}}
+$$
+for $p,q \geq 1$ and $\frac{1}{p} + \frac{1}{q} = 1$. It is used with 
+$$
+\begin{align*}
+f(y) & = e^{\alpha \theta_1 y}, \\
+g(y) &= & e^{(1-\alpha)\theta_2 y},
+\end{align*}
+$$
+$$
+    p = \frac{1}{\alpha} \ \mathrm{ and } \ q = \frac{1}{1-\alpha}.
+$$
+]{.aside}
+Finally, it follows directly from the inequality above that 
+$$
+    \kappa(\alpha \theta_1 + (1-\alpha) \theta_2) \leq \alpha \kappa(\theta_1) + (1-\alpha)\kappa(\theta_2),
+$$
+which shows that $\kappa$ is convex. If we have equality in this inequality, we have equality in Hölder's inequality.
+This happens only if $e^{\theta_1 y}/\phi(\theta_1) = e^{\theta_2 y}/\phi(\theta_2)$ for $\nu$-almost all $y$, 
+and just as above we conclude that this implies $\theta_1 = \theta_2$. The conclusion is that $\kappa$ is
+strictly convex. 
+::: 
+
+The structure measure $\nu$ determines the unit cumulant function by the formula
+$$
+    \kappa(\theta) = \log \int e^{\theta y} \, \nu(\mathrm{d}y).
+$$
+The fact that $I$ is open implies that $\kappa$ determines $\nu$ uniquely, see
+@exr-uniqueness. In many cases the structure
+measure belongs to a family of $\sigma$-finite measures $\nu_{\psi}$ parametrized by $\psi > 0$, and whose 
+cumulant functions are $\theta \mapsto \kappa(\psi \theta)/\psi$. 
+That is, $\nu_1 = \nu$ and 
+$$
+    \frac{\kappa(\theta)}{\psi} = \log \int e^{\frac{\theta y}{\psi}} \, \nu_{\psi}(\mathrm{d}y).
+$$
+Since this cumulant function is defined on the same open interval $I$, it uniquely determines
+$\nu_{\psi}$ -- if there exists such a $\nu_{\psi}$. It is, however, not at all obvious whether there exists a 
+$\sigma$-finite measure $\nu_{\psi}$ with cumulant function $\kappa(\psi \theta)/\psi$ for a given unit cumulant function $\kappa$. \index{cumulant function!with dispersion parameter}
+We will find this to be the case for all $\psi > 0$ for a number of concrete examples, but we will not
+pursue a systematic study. What we can say is that if there is such a family $\nu_{\psi}$ for $\psi > 0$,
+it is uniquely determined by $\nu$, and that all such measures will satisfy the same regularity conditions
+we have required of $\nu$. 
+
+Whenever $\nu$ is embedded in such a family $(\nu_{\psi})_{\psi > 0}$ of structure measures 
+we introduce the *exponential dispersion model* determined by $\nu$ -- 
+a two-parameter family of probability measures -- by
+$$
+    \frac{\mathrm{d} \rho_{\theta, \psi}}{\mathrm{d} \nu_{\psi}} (y) = e^{\frac{\theta y - \kappa(\theta)}{\psi}}.
+$$ {#eq-expdisp}
+The parameter $\psi$ is called the dispersion parameter, and we call $\nu = \nu_1$ the 
+unit structure measure for the exponential dispersion model. For fixed $\psi$ 
+the exponential dispersion model is an exponential family with 
+structure measure $\nu_{\psi}$ and canonical parameter $\theta/\psi$. 
+\marginnote{The parameters $\psi$ and $\theta$ are only uniquely determined up to a scale transformation, which 
+corresponds to specifying which of the structure measures $\nu_{\psi}$ is the unit structure measure.}
+\index{canonical parameter!exponential dispersion model} \index{structure measure!unit} We 
+abuse the terminology slightly and call $\theta$ the canonical parameter for the 
+exponential dispersion model. Thus, whether $\theta/\psi$ or $\theta$ is 
+canonical depends upon whether we regard the model as an exponential family with structure measure $\nu_{\psi}$
+or as an exponential dispersion model with unit structure measure $\nu$. Whenever we consider 
+an exponential dispersion model, the measure $\nu$ will always denote the unit structure measure $\nu_1$. 
+
+\index{exponential dispersion distribution}
+
+::: {#def-expdisp}
+The probability distribution $\rho_{\theta, \psi}$ is called the 
+$(\theta, \nu_{\psi})$-exponential dispersion distribution and is 
+denoted $\mathcal{E}(\theta, \nu_{\psi})$. 
+::: 
+
+In practice we check that a given parametrized family of distributions is, in fact, an exponential dispersion model
+by checking that its density can be brought on the form ([-@eq-expdisp]). 
+
+\index{distribution!normal}
+
+::: {#exm-normal}
+The normal distribution $\mathcal{N}(\mu, 1)$ has density 
+$$
+    \frac{1}{\sqrt{2\pi}} e^{-\frac{(y-\mu)^2}{2}} = e^{y\mu -
+    \frac{\mu^2}{2}} \frac{1}{\sqrt{2\pi}}  e^{-\frac{y^2}{2}}
+$$
+w.r.t. Lebesgue measure $m$. We identify this as an
+exponential family with[^unique]
+$$
+    \theta = \mu, \quad \kappa(\theta) = \frac{\theta^2}{2} \quad \mathrm{and} \quad
+    \frac{\mathrm{d}\nu}{\mathrm{d} m}(y) = \frac{1}{\sqrt{2\pi}}  e^{-\frac{y^2}{2}}.
+$$
+The $\mathcal{N}(\mu,\sigma^2)$ distribution is an exponential dispersion model
+with dispersion parameter $\psi = \sigma^2$ and 
+$$
+    \frac{\mathrm{d} \nu_{\psi}}{\mathrm{d} m}(y) = \frac{1}{\sqrt{2\pi \psi}} e^{-\frac{y^2}{2\psi}}.
+$$
+Observe that with $S_{\sigma}(x) = \sigma x$ denoting a scale transformation,
+$\nu_{\psi} = S_{\sqrt{\psi}}(\nu)$. With the notation introduced in @def-expdisp,
+$$
+    \mathcal{E}\left(\mu, S_{\sigma}(\nu) \right) = \mathcal{N}(\mu,\sigma^2).
+$$
+:::
+
+[^unique]: The $\kappa$ and $\nu$ are not unique. The constant $$\frac{1}{\sqrt{2\pi}}$$ in $\nu$ can be moved to a $- \log \sqrt{2\pi}$ term in $\kappa$.
+
+\index{distribution!Poisson}
+
+
+::: {#exm-pois}
+The Poisson distribution with mean $\mu > 0$ has density (point probabilities)
+$$e^{-\mu} \frac{\mu^y}{y!}$$
+w.r.t. the counting measure $\tau$ for $y \in \mathbb{N}_0$. With $\theta = \log \mu$ we can rewrite this density as
+$$e^{y \log \mu -\mu} \frac{1}{y!} = e^{y \theta - e^{\theta}} \frac{1}{y!},$$
+and we identify the distribution as an exponential family with 
+$$\theta = \log \mu, \quad \kappa(\theta) = e^{\theta} \quad \mathrm{and} \quad  \frac{\mathrm{d}\nu}{\mathrm{d} \tau} (y) = \frac{1}{y!}.$$
+We conclude that 
+$$\mathcal{E}\left(\log \mu, \frac{1}{y!} \cdot \tau \right) = \mathrm{Poi}(\mu).$$
+[It is possible to introduce a dispersion parameter via 
+a scaled Poisson distribution, but the resulting distribution will 
+not have support on $\mathbb{N}_0$. It is therefore not 
+useful for modeling counts.]{.aside}
+:::
+
+The next example is the $\Gamma$-family of distributions, whose representation as an 
+exponential dispersion model is less obvious. These distributions can be 
+parametrized by a shape and a scale parameter, and we have to rewrite their density 
+to identify the parametrization in terms of the canonical parameter and the 
+dispersion parameter. For this family of distributions there is yet another useful 
+parametrization in terms of mean and variance. 
+
+\index{gamma distribution} \index{distribution!gamma}
+
+::: {#exm-gam}
+The $\Gamma$-distribution with shape parameter $\lambda > 0$ 
+and scale parameter $\alpha > 0$ has density 
+$$
+    \frac{1}{\alpha^{\lambda} \Gamma(\lambda)} y^{\lambda - 1} e^{-y/\alpha} = 
+    e^{\frac{- y/(\lambda \alpha) - \log (\lambda \alpha)}{1/\lambda}} 
+    \frac{\lambda^{\lambda}}{\Gamma(\lambda)} y^{\lambda - 1} 
+$$
+w.r.t. Lebesgue measure $m$ on $(0, \infty)$. We identify this family of 
+distributions as the exponential dispersion model with dispersion parameter 
+$\psi = 1/\lambda$, canonical parameter 
+$$
+    \theta = - 1 /(\lambda \alpha)  < 0,
+$$ 
+$$
+    \kappa(\theta) =  - \log (- \theta),
+$$
+and structure measure given by
+$$
+    \frac{\mathrm{d} \nu_{\psi}}{\mathrm{d} m}  = 
+    \frac{1}{\psi^{1/\psi}\Gamma(1/\psi)} y^{\frac{1}{\psi} - 1}
+$$
+on $(0, \infty)$. We have $I = (- \infty, 0)$. 
+The mean value of the $\Gamma$-distribution is 
+$\mu := \alpha \lambda = - \frac{1}{\theta}$, and the variance is 
+$\alpha^2 \lambda = \psi \mu^2 = \psi/\theta^2$. 
+Observe that the unit structure measure, $\nu_1$, is
+Lebesgue measure on $(0, \infty)$, and the corresponding exponential family 
+is the exponential distribution. 
+:::
+
+The next theorem shows that the mean and variance for exponential dispersion models 
+are always computable via differentiation of the cumulant function. 
+
+[For the $\Gamma$-distribution:
+$$
+    \kappa'(\theta) = - \frac{1}{\theta}
+$$ 
+and 
+$$
+    \kappa''(\theta) = \frac{1}{\theta^2}.
+$$
+]{.aside}
+
+::: {#thm-meanvar}
+The function $\kappa$ is infinitely often differentiable on $I$. If 
+$Y \sim \mathcal{E}(\theta, \nu_{\psi})$ for $\theta \in I$ then 
+$$
+    E(Y) = \kappa'(\theta)
+$$ {#eq-kapmean}
+and
+$$
+    V(Y) = \psi \kappa''(\theta).
+$$ {#eq-kapvar}
+::: 
+
+::: {.proof}  
+It follows by 
+a suitable domination argument that, for $\theta \in I$, 
+$$
+    \frac{\mathrm{d}^n}{\mathrm{d}\theta^n} \phi(\theta) = \int y^n e^{\theta y} \, \nu(\mathrm{d} y) = \phi(\theta) E(Y^n).
+$$
+Since $\kappa(\theta) = \log \phi(\theta)$, it follows that also $\kappa$ is infinitely often differentiable. 
+In particular, if $Y \sim \mathcal{E}(\theta, \nu_1)$,
+$$
+    E(Y) = \frac{\phi'(\theta)}{\phi(\theta)} = (\log \phi)'(\theta) = \kappa'(\theta),
+$$
+and 
+$$
+    E(Y^2) =  \frac{\phi''(\theta)}{\phi(\theta)},
+$$
+and we find that 
+$$
+    V(Y) = E(Y^2) - (E(Y))^2 =  \frac{\phi''(\theta)\phi(\theta) - \phi'(\theta)^2}{\phi(\theta)^2} = \kappa''(\theta).
+$$
+The general case for $\psi \neq 1$ can be proved by similar arguments. 
+Alternatively, observe that for an arbitrary dispersion parameter
+$\psi > 0$, the distribution of $Y$ is an exponential family with canonical parameter $\theta_0 = \theta/\psi$
+and with corresponding cumulant function
+$$
+    \kappa_0(\theta_0) = \frac{\kappa(\psi \theta_0)}{\psi}.
+$$ 
+The conclusion follows by differentiating $\kappa_0$ twice w.r.t. $\theta_0$. 
+:::
+
+We know from @lem-Istruct that $\kappa$ is strictly convex, which actually implies, since $\kappa$ 
+was found to be differentiable on $I$, that $\kappa'$ is a strictly increasing function. 
+This can also be seen directly from the previous theorem. Indeed, by the regularity assumptions on $\nu_{\psi}$, 
+$\rho_{\theta, \psi}$ is not a Dirac measure, which implies that $V(Y) > 0$ in ([-@eq-kapvar]), see 
+@exr-deg.
+Hence $\kappa''$ is strictly positive, and it follows that $\kappa'$ is strictly increasing, and that 
+$\kappa$ is strictly convex. 
+\marginnote{Theorem \ref{thm:meanvar} only implies that $\kappa$ is (strictly) convex because $I$ is 
+already known to be an interval. The argument based on Hölder's inequality 
+is necessary to show this.}
+That $\kappa'$ is continuous and strictly increasing 
+imply that the range of $\kappa'$, $J := \kappa'(I)$, is an open interval. This range 
+is the range of possible mean values for the exponential dispersion model. 
+Since $\kappa'$ bijectively maps $I$ onto $J$ we can always express the variance in terms of 
+the mean. 
+
+\index{Variance function}
+
+::: {#def-variance-function}
+The variance function $\mathcal{V} : J \to (0, \infty)$ is defined as
+$$\mathcal{V}(\mu) = \kappa''((\kappa')^{-1}(\mu)).$$
+::: 
+
+From the considerations above, the map 
+$$
+    (\theta, \psi) \mapsto (\kappa'(\theta), \psi \kappa''(\theta))
+$$
+is a bijection from $I \times (0, \infty)$ onto $J \times (0,\infty)$, 
+and this shows that the exponential dispersion model can be parametrized either 
+in terms of the canonical and dispersion parameters or in terms of the mean and variance.  
+
+\index{arbitrary parametrization}
+
+A third parametrization of the exponential dispersion model is occasionally 
+useful or even natural. With $H \subseteq \mathbb{R}$ and $\theta : H \to I$, the canonical 
+parameter, $\theta(\eta)$, can be expressed in terms of 
+an *arbitrary* parameter $\eta$. We call $\eta$ arbitrary because we don't 
+make any assumptions about what this parameter is\sidenote{In regression applications, $\eta$ will be $X^T \beta$, known as the linear predictor, \index{linear predictor} for a vector of predictors $X$.}, 
+besides that it parametrizes the exponential dispersion model. The density for the exponential dispersion model 
+w.r.t. $\nu_{\psi}$ in the arbitrary parametrization is 
+$$
+    e^{\frac{\theta(\eta)y - c(\eta)}{\psi}}
+$$
+where $c(\eta) = \kappa(\theta(\eta))$ and $\eta \in H$. 
+The parameter function can depend upon additional (nuisance) parameters. 
+We suppress any such dependences in the abstract notation. It is, however, not allowed 
+to depend upon the dispersion parameter, because then the dispersion parameter 
+cannot be eliminated from subsequent estimation equations. 
+
+The *mean value function*, in the arbitrary parametrization, is 
+given as
+$$
+    \mu(\eta) = \kappa'(\theta(\eta)).
+$$
+We can then express the mean and the variance functions in terms of the function $\eta \mapsto c(\eta)$.
+
+::: {#cor-meanvar}
+If $\theta$ is twice differentiable as a function of $\eta$ with $\theta'(\eta) \neq 0$, then  
+$$
+    \mu(\eta) = \frac{c'(\eta)}{\theta'(\eta)}
+$$
+and 
+$$
+    \mathcal{V}(\mu(\eta)) = \frac{c''(\eta)\theta'(\eta) - c'(\eta)\theta''(\eta)}{\theta'(\eta)^3} 
+= \frac{\mu'(\eta)}{\theta'(\eta)}.
+$$
+:::
+
+```{r}
+#| label: fig-diagram-1
+#| fig-cap: "Relations between the three parametrizations."
+#| column: margin
+#| engine: tikz
+#| echo: false
+\begin{tikzpicture}[description/.style={fill=white,inner sep=2pt}] 
+\matrix (m) [matrix of math nodes, row sep=4em, column sep=5em, text height=1.5ex, text depth=0.25ex] {
+ J & H \\
+ I & \\}; 
+\path[->] 
+(m-1-2) edge node [above] {$\mu$} (m-1-1) 
+(m-2-1) edge node [left] {$\kappa'$} (m-1-1)
+(m-1-2) edge node [below] {$\theta$} (m-2-1);
+\end{tikzpicture}
+```
+
+::: {.proof}
+From the definition $c(\eta) = \kappa(\theta(\eta))$ we get by differentiation 
+and ([-@eq-kapmean]) that 
+$$c'(\eta) = \kappa'(\theta(\eta)) \theta'(\eta) = \mu(\eta) \theta'(\eta),$$
+and the first identity follows. An additional differentiation yields
+$$
+\begin{align*}
+c''(\eta) & = \kappa''(\theta(\eta)) \theta'(\eta)^2 +  \kappa'(\theta(\eta)) \theta''(\eta) \\
+& = \mathcal{V}(\mu(\eta)) \theta'(\eta)^2 +  \frac{c'(\eta) \theta''(\eta)}{\theta'(\eta)},
+\end{align*}
+$$
+and the second identity follows by isolating $\mathcal{V}(\mu(\eta))$. 
+:::
+
+::: {#exm-gammaloglink}
+The canonical parameter in the $\Gamma$-model can be parametrized by 
+$H = \mathbb{R}$ via the parametrization 
+$$
+    \theta(\eta) = - e^{-\eta}.
+$$
+Then $c(\eta) = \eta$ and from @cor-meanvar it follows that 
+$$
+    \mu(\eta) = e^{\eta}.
+$$
+::: 
+
+
+When the mean value function, defined above as a function of the arbitrary parameter, 
+is bijective, its inverse is called *the link function* and denoted $g$. \index{link function}
+It maps the mean value $\mu$ to the arbitrary parameter $\eta$, that is, $\eta = g(\mu)$. 
+The choice of the link function (equivalently, the mean value function) completely 
+determines the $\theta$-map and vice versa. The choice for which 
+$\theta = \eta$ plays a particularly central role. If $\theta = \eta$ then $\mu = \kappa'$,
+and the corresponding link function is $g = (\kappa')^{-1}$. 
+
+\index{canonical link function} \index{link function!canonical} 
+
+::: {#def-canonical-link}
+The canonical link function is the link function 
+$$
+    g = (\kappa')^{-1}.
+$$
+[The variance function is 
+$$
+    \mathcal{V}(\mu) = \kappa''(g(\mu))
+$$ 
+in terms of the canonical link.]{.aside}
+::: 
+
+::: {#exm-pois-model} 
+For the Poisson distribution we have $\kappa(\theta) = e^{\theta}$, 
+see @exm-pois. This implies that $\kappa'(\theta) = e^{\theta}$ and the canonical 
+link function is, for the Poisson distribution, $g(\mu) = \log \mu$. 
+::: 
+
+A regression model with $\eta = X^T \beta$ and a log-link function is \index{log-linear}
+often called a log-linear model. Thus the canonical link function for the 
+Poisson distribution gives a log-linear regression model. @exm-gammaloglink
+gives a log-linear regression model with a $\Gamma$-distributed response, but the 
+log-link is not the canonical link for the $\Gamma$-distribution as the following example will reveal. 
+
+::: {#exm-gamma}
+For the $\Gamma$-model we have from @exm-gam
+that $\kappa(\theta) = - \log(-\theta)$ and
+$$\kappa'(\theta) = -\frac{1}{\theta}.$$
+This gives that the canonical link function for the $\Gamma$-model is 
+$$g(\mu) = - \frac{1}{\mu}.$$
+The canonical link for the $\Gamma$-model is not that attractive. Its range is 
+$I = (-\infty, 0)$, and not the entire real line, which can be a nuisance. In practice, 
+the $\Gamma$-model is often used with the log-link instead. 
+::: 
+
+```{r}
+#| label: fig-diagram
+#| fig-cap: "The linear predictor enters the exponential dispersion model through the mean value function."
+#| column: margin
+#| engine: tikz
+#| echo: false
+\begin{tikzpicture}[description/.style={fill=white,inner sep=2pt}] 
+\matrix (m) [matrix of math nodes, row sep=4em, column sep=5em, text height=1.5ex, text depth=0.25ex] {
+ \mu & \eta\\
+ \theta & \beta \\}; 
+\path[->] 
+(m-1-2) edge [bend right] node [above] {$\mu$} (m-1-1) 
+(m-1-1) edge [bend right] node [below] {$g$} (m-1-2) 
+(m-2-1) edge node [left] {$\kappa'$} (m-1-1)
+(m-1-2) edge [bend left] node [below] {$\theta$} (m-2-1)
+(m-2-2) edge [bend right] node [right] {$X^T$} (m-1-2);
+\end{tikzpicture}
+```
+
+
+In generalized linear regression models, the response distribution 
+will be specified in terms of the linear predictor $\eta = X^T \beta$, that 
+determines the mean, and an exponential 
+dispersion model, that determines the remaining aspects of the distribution. 
+The specification of the mean is given in terms of the mean value 
+function, or equivalently in terms of the link function. That is, with link function $g$,  
+$$g(E(Y \mid X)) = \eta = X^T \beta$$
+or 
+$$E(Y \mid X) = \mu(\eta).$$
+This specifies implicitly the canonical parameter in the exponential dispersion model,
+and results in a model with 
+$$V(Y \mid X) = \psi \mathcal{V}(\mu(\eta))$$
+where $\mathcal{V}$ is the variance function.
+
+## Deviance {#sec-deviance}
+
+\index{deviance}
+
+The (unit) *deviance* for an exponential dispersion 
+model generalizes the squared error 
+$$
+    (Y - \mu)^2
+$$
+for the $\mathcal{N}(\mu, 1)$ distribution. 
+For a unit cumulant function $\kappa : I \to \mathbb{R}$ we let 
+$$
+    \ell_Y(\theta) = \theta Y - \kappa(\theta).
+$$
+for $\theta \in I$ denote the log-likelihood of the 
+corresponding exponential family, see also 
+@lem-scorefisher in @sec-generalized-linear. \index{likelihood!deviance}
+The deviance is defined as twice the negative log-likelihood up to an additive 
+constant. In terms of the canonical parameter the *deviance* is defined as
+$$
+    2 \left( \sup_{\theta_0 \in I} \ell_Y(\theta_0) - \ell_Y(\theta)\right)
+$$
+for $Y \in \overline{J}$ and $\theta \in I$. The supremum 
+in the definition is attained in $g(Y)$ for $Y \in J$ where $g = (\kappa')^{-1}$ is the canonical link. 
+For practical computations it is more convenient to express the deviance in terms of the 
+mean value parameter than the canonical parameter.
+
+\index{exponential dispersion model!deviance} \index{deviance!unit}
+
+::: {#def-dispersion}
+With $g$ denoting the canonical link function the unit[^unit] 
+deviance is defined as 
+$$
+    d(Y, \mu) = 2 \left( \sup_{\mu_0 \in J} \Big\{ g(\mu_0) Y - \kappa(g(\mu_0)) \Big\} -  
+    g(\mu) Y + \kappa(g(\mu)) \right)
+$$
+for $Y \in \overline{J}$ and $\mu \in J$. 
+:::
+
+[^unit]: Here *unit* refers to the dispersion parameter being 1.
+
+
+
+For $Y \in J$, the supremum is attained in $\mu_0 = Y$ and the unit deviance can
+be expressed as 
+$$
+    d(Y, \mu) = 2 \left( Y (g(Y) - g(\mu)) - \kappa(g(Y)) + \kappa(g(\mu)) \right).
+$$
+  Note that by 
+ the definition of the unit deviance we have that $d(Y, Y) = 0$ and 
+ $$
+    d(Y, \mu) > 0
+$$
+for $\mu \neq Y$. 
+ 
+The deviance has simple analytic expressions for many concrete examples,
+which are interpretable as measures of how the observation $Y$ 
+deviates from the expectation $\mu$. 
+
+\index{deviance!normal}
+
+::: {#exm-normal}
+For the normal distribution the canonical link is the identity and 
+$\kappa(\theta) = \theta^2/2$, hence 
+$$d(Y, \mu) = 2(Y ( Y - \mu) - Y^2/2 + \mu^2/2) = (Y - \mu)^2.$$ 
+:::
+
+\index{deviance!Poisson}
+
+::: {#exm-pois}
+For the Poisson distribution the canonical link is the logarithm,
+and $\kappa(\theta) = e^{\theta}$, hence 
+$$d(Y, \mu) = 2(Y(\log Y - \log \mu) - Y + \mu) = 2 ( Y \log (Y/\mu) - (Y - \mu))$$
+for $Y, \mu > 0$. It is clear from the definition that $d(0, \mu) = 2\mu$, and the 
+identity above can be maintained even for $Y = 0$ by the convention $0 \log 0 = 0$. 
+:::
+
+\index{deviance!binomial}
+
+::: {#exm-bindev}
+For the binomial distribution it follows directly from the 
+definition that for $Y = 1, \ldots, m - 1$ and $\mu \in (0, m)$
+$$
+\begin{align*}
+d(Y, \mu) & = 2 \Big( Y \log Y/m + (m-Y) \log (1 - Y/m) \\
+& \hskip 1cm - Y \log \mu/m - (m - Y) \log (1 - \mu/m) \Big) \\
+& = 2 \Big( Y \log(Y/\mu) + (m - Y) \log \big( (m - Y)/(m - \mu) \big) \Big).
+\end{align*}
+$$
+Again, by the convention $0 \log 0 = 0$ the identity is seen to extend also to 
+the extreme cases $Y = 0$ or $Y = m$. 
+:::
+
+The unit deviance is approximately a quadratic form for $Y \approx \mu$.  
+
+::: {#thm-devianceapprox}
+For the unit deviance it holds that
+$$d(Y, \mu) = \frac{(Y - \mu)^2}{\mathcal{V}(\mu)} + o((Y - \mu)^2)$$
+for $Y, \mu \in J$. 
+:::
+
+::: {.proof}
+We consider the function 
+$$
+    Y \mapsto d(Y, \mu)
+$$
+around $\mu$. Since we know that $d(\mu, \mu) = 0$, that $Y = \mu$ is a local minimum, and that $d$ is 
+twice continuously differentiable in $J \times J$, we get by Taylor's formula 
+that
+$$d(Y, \mu) = \frac{1}{2} \partial_{Y}^2 d(\mu, \mu) (Y - \mu)^2 + o( (Y - \mu)^2).$$
+Using that $\partial_Y \kappa(g(Y)) = Y g'(Y)$ we find that 
+$$
+\begin{align*}
+\frac{1}{2} \partial_{Y}^2 d(Y, \mu) & = \partial_{Y}^2 \Big\{ Y g(Y) - \kappa(g(Y)) - Yg(\mu) + \kappa(g(\mu))\Big\} \\
+& = \partial_{Y} \Big\{ g(Y) + Y g'(Y) - Y g'(Y) - g(\mu) \Big\}\\
+& = g'(Y) = \frac{1}{\kappa''(g(Y))} = \frac{1}{\mathcal{V}(Y)}.
+\end{align*}
+$$
+Plugging in $Y = \mu$ completes the proof.
+:::
+
+TODO: 
+
+- Uniqueness of the variance function. 
+- Representation of the deviance in terms of the variance function.
+
+# Exercises  {.unnumbered}
+
+::: {#exr-bernoulli}
+The point probabilities for any probability measure on $\{0, 1\}$ can be 
+written as
+$$p^y(1-p)^{1-y}$$
+for $y \in \{0, 1\}$. Show that this family of probability measures for $p \in (0,1)$ 
+form an exponential family. Identify $I$ and how the canonical parameter depends 
+on $p$. 
+:::
+
+::: {#exr-binomial}
+Show that the binomial distributions on $\{0, 1, \ldots, n\}$ with 
+success probabilities $p \in (0,1)$ form an exponential family.
+::: 
+
+::: {#exr-deg}
+ Show that if the structure measure $\nu = \delta_y$ is the Dirac-measure in $y$ 
+then for the corresponding exponential family we have $\rho_{\theta} = \delta_y$ for all $\theta \in \mathbb{R}$.
+Show next, that if $\nu$ is not a one-point measure, then 
+$\rho_{\theta}$ is not a Dirac-measure for $\theta \in I$ and conclude that its
+variance is strictly positive. 
+::: 
+
+::: {#exr-cum}
+If $\rho$ is a probability measure on $\mathbb{R}$, its cumulant generating 
+function is defined as the function
+$$
+    s \mapsto \log \int e^{s y} \ \rho(\mathrm{d} y)
+$$
+for $s$ such that the integral is finite. Let $\rho_{\theta}$ be an
+exponential family with unit cumulant function $\kappa$. Show that 
+$$
+    s \mapsto \kappa(\theta + s) - \kappa(\theta)
+$$
+is the cumulant generating function for $\rho_{\theta}$. 
+:::
+
+::: {#exr-uniqueness}
+Let $\rho_{\theta}$ be the exponential family given by the structure measure $\nu$. Show that 
+$$
+    \frac{\mathrm{d} \nu}{\mathrm{d} \rho_{\theta_0}} = e^{\kappa(\theta_0) - \theta y}
+$$
+for any $\theta_0 \in I$. Then show that $\nu$ is uniquely specified by the unit cumulant 
+function $\kappa$. 
+
+*Hint: Use that the cumulant generating function for $\rho_{\theta_0}$  is determined by $\kappa$, and that a probability measure is uniquely determined by its cumulant generating function if it is defined on an open interval around $0$.*
+::: 
+
+::: {#exr-inverse-gauss}
+This exercise is about the *inverse Gaussian distribution*, \index{inverse Gaussian distribution} 
+which has density
+$$
+    f(y) = \sqrt{\frac{\lambda}{2 \pi y^3}} e^{-\frac{\lambda(y - \mu)^2}{2 \mu^2 y}}
+$$ {#eq-invgaus}
+w.r.t. Lebesgue measure on $(0, \infty)$. In this parametrization, $\lambda, \mu > 0$ are positive parameters. 
+
+1.  Show that the family of inverse Gaussian distributions
+    parametrized by $\lambda, \mu > 0$ is an exponential dispersion
+    model. Identify how the canonical parameter and the dispersion
+    parameter are given in terms of $\lambda$ and $\mu$ -- with the 
+    lack of uniqueness resolved by letting the unit 
+    structure measure correspond to $\lambda = 1$.
+    [The use of $\mu$ in the "Wikipedia" parametrization in @eq-invgaus is sensible!]{.aside}
+2.  Show that the mean is $\mu$ and show that the variance function is 
+    $$
+        \mathcal{V}(\mu) = \mu^3.
+    $$
+3.  Find the canonical link function and the unit deviance.
+:::
+
+::: {#exr-lebres}
+This exercise is about the exponential family with structure measure 
+$\nu = m_{[-1,1]}$, being Lebesgue measure restricted to the interval $[-1, 1]$. 
+
+1. Compute the unit cumulant function $\kappa$ and show that
+    $I = \mathbb{R}$. Plot the density for the corresponding exponential
+    family w.r.t. Lebesgue measure for $\theta = -1$ and $\theta = 1$.
+
+
+Assume that $Y \sim \rho_{\theta}$ where 
+$$
+    \frac{\mathrm{d} \rho_{\theta}}{\mathrm{d} \nu} = e^{\theta y - \kappa(\theta)}.
+$$
+
+2. Compute the mean value function $\mu(\theta)$ and show that 
+    $$
+        V(Y) = \frac{1}{\theta^2} - \frac{1}{\sinh(\theta)^2}
+    $$
+    for $\theta \neq 0$. Plot the variance function $\mathcal{V}(\mu)$ as a function of $\mu$. 
+
+    *Hint: For the plot, it is not necessary to compute an analytic expression for the inverse of the mean value map.*
+:::

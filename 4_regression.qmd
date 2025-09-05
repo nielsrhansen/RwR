@@ -1,0 +1,630 @@
+::: {.hidden}
+{{< include _macros.qmd >}}
+:::
+
+# Regression modeling
+
+::: {.callout-important}
+This chapter is currently undergoing conversion and substantial changes 
+will be made without notice. For the sections on practical data analysis 
+we refer, for the time being, to the 2020-edition.
+:::
+
+This chapter deals with a range of general problems and questions related to 
+regression modeling and the practical process of data analysis. Some of the general 
+considerations apply to statistics and data analysis in a broad sense, but to keep focus, 
+data analysis is treated in the framework of regression models only. 
+
+In the first part of the chapter we position the linear model from 
+@sec-linear within a more general framework. This makes it possible to 
+formulate some of the central objectives in regression analysis without 
+relying on specific model assumptions. 
+
+In the subsequent parts we turn to the process of practical data analysis, 
+which involves a lot of decision making. For an 
+inexperienced data analyst the decision making can be a daunting task, first of all 
+because there is never a set of clearly correct decisions.  Instead it appears 
+as if many decisions have to be made on the basis of little knowledge, and whenever 
+a decision is made, it may be open to criticism. It is therefore tempting to 
+hide the decision process, but this can be detrimental to the scientific 
+process.  
+
+We will develop methods for understanding and controlling the decision making 
+process involved in practical data analysis. This ranges from grand decisions, 
+like what the overall purpose of the analysis is, to technical decisions, 
+such as how to handle missing values. Central to the decision process is a 
+a solid understanding of how we can interpret an associational regression 
+model and what it can ultimately be used for. For this reason we will also 
+briefly treat some central *causal* questions and how and when we can use 
+regression models to answer them.
+
+## General regression models
+
+There exists a range of generalizations of the linear regression model. It would be 
+misleading to lump them all together under the umbrella term *non*linear regression. 
+Some generalizations focus specifically on nonlinear relations between the response and 
+the predictors, while other generalizations focus on other targets than the conditional 
+expectation, e.g., the median or certain quantiles. 
+
+We will consider various generalizations in this book. In 
+@sec-generalized-linear the target is still 
+the conditional expectation -- with a particular form of nonlinearity. But just as importantly, 
+the chapter generalizes both the estimation methodology and the statistical theory to account for  
+variance heterogeneity. 
+
+In @sec-survival the target is the conditional hazard function of a 
+survival distribution. One particular class of such survival regression models are
+models of the conditional expectation of the *log-survival time*, but most models are not 
+directly targeting a conditional expectation.  
+
+In this chapter we treat some general aspects of regression modeling
+without making any of the linear modeling assumptions A1, A2 or A3, but 
+for clarity, the modeling target will remain the conditional expectation throughout.
+
+::: {#def-regression-function}
+Let $X \in \mathbb{R}^p$ and $Y \in \mathbb{R}$ be random variables and suppose that $E(|Y|) < \infty$. 
+The regression function $m : \mathbb{R}^p \to \mathbb{R}$ is defined by 
+$$
+    m(x) = E(Y \mid X = x)
+$$ {#eq-regression-fct}
+:::
+
+The regression function $m$ is in general only uniquely defined almost surely w.r.t. to the 
+distribution of $X$. Though if it has a continuous version, that version is unique on 
+the support of $X$. In most applications it is reasonable to assume that $m$ is continuous.
+
+A general regression model is a set $\mathcal{M}$ of regression functions. That is, 
+$$
+    \mathcal{M} \subseteq \{ m \mid m : \mathbb{R}^p \to \mathbb{R} \}.
+$$
+We see that the linearity assumption A1 can be expressed in terms of the regression function as 
+$$
+    m(x) = x^T \beta,
+$$
+which means that the corresponding linear regression model can be expressed as 
+$$
+    \mathcal{M}_{\mathrm{linear}} = \{ x \mapsto x^T \beta \mid \beta \in \mathbb{R}^p \}.
+$$
+The linear regression model is parametrized by the parameter $\beta$ belonging to the parameter set $\mathbb{R}^p$. 
+
+Most regression models are parametrized by a parameter, abstractly denoted $\theta \in \Theta$, 
+and we then write the model as 
+$$
+    \mathcal{M} = \{m_\theta \mid \theta \in \Theta \}.
+$$
+
+::: {#exm-logistic-curve}
+
+## Dose-response curves
+
+A simple classical example is the *logistic function* for $p = 1$: 
+$$
+    m_{(a,b,c)}(x) = \frac{a}{1 + e^{-b(x - c)}}
+$$ {#eq-logistic-curve}
+The parameter $\theta = (a, b, c)$ is $3$-dimensional and the parameter set is 
+$\Theta = (0, \infty) \times \mathbb{R} \times \mathbb{R}$. 
+The S-shaped graph of a logistic function can, for instance, model the relation
+between a dosage ($x$) and a continuous response ($y$). 
+:::
+
+::: {#exm-neural-network}
+
+## Neural networks
+
+Let 
+$$
+    \mu, h_1: \mathbb{R} \to \mathbb{R}
+$$ 
+be two fixed (nonlinear) functions. 
+With $B$ a real $p \times q$ matrix and $\beta \in \mathbb{R}^{q}$ 
+we define the regression function
+$$
+    m_{B, \beta} (x) = \mu(h(x^T B) \beta)
+$$
+parametrized by $(B, \beta)$. The convention above is that $h$ is 
+applied coordinatewisely to the $q$-dimensional (row)-vector $x^T B$.
+
+[The functions $h$ and $\mu$ are known as *activation functions* 
+in the literature on neural networks.]{.aside}
+This is an example of a neural network with a single hidden layer. The 
+matrix $B$ parametrizes the *input layer* mapping the predictor 
+vector $x \in \mathbb{R}^p$ to $h(x^T B) \in \mathbb{R}^{q}$. It is 
+a composition of the parametrized linear map $x \mapsto x^T B$ and a fixed coordinatewise 
+nonlinear function $h$. The vector $\beta$ parametrizes the *output layer*, which is 
+likewise a composition of a linear map and the nonlinear function $\mu$. 
+
+We introduce the notation $L_B^{h} (x) = h(x^T B)$ for an activation
+function $h$ and a $p \times q$ matrix $B$. Then $L_B^h : \mathbb{R}^p \to \mathbb{R}^q$ 
+and it represents a single layer in a neural network. Using this notation we 
+can write the neural network regression function above as a composition of two such maps:
+$$
+    m_{B, \beta} = L_\beta^\mu \circ L_{B}^{h}
+$$
+
+A neural network with $k$ hidden layers is given as 
+$$
+    \begin{align*}
+    m_{B_1, \ldots, B_k, \beta} (x) & = \mu(h_k( \cdots ( h_2(h_1(x^T B_1)B_2) \cdots B_k))\beta) \\
+    & =  L_\beta^\mu \circ L_{B_k}^{h_k} \circ  \ldots \circ L_{B_1}^{h_1} (x)
+    \end{align*}
+$$
+The model is parametrized by $(B_1, \ldots, B_k, \beta)$ where 
+$B_{j}$ is a $p_{j-1} \times p_j$ real matrix ($p_0 = p$) and 
+$\beta \in \mathbb{R}^{p_k}$. 
+
+It is quite common to use the same activation function for all layers, 
+that is, $h_1 = h_2 = \ldots = h_k = \mu$. A couple of standard choices are:
+$$
+    \begin{align*}
+    \mu(\eta) & = (1 + e^{-\eta})^{-1} \qquad \mathrm{(logistic)} \\
+    \mu(\eta) & = \log(1 + e^\eta) \qquad \ \mathrm{(softplus)} \\
+    \mu(\eta) & = \max(0, \eta) \qquad \ \ \ \mathrm{(ReLU)}
+    \end{align*}
+$$
+
+We will in @sec-generalized-linear treat *generalized linear models*, 
+which can be regarded as neural networks with no hidden layers. That is, 
+the regression function is of the form
+$$
+    m_\beta(x) = \mu(x^T \beta)
+$$
+We will in that context see canonical choices of the activation function $\mu$ 
+dictated by the distribution of the response variable. 
+:::
+
+Even though the parameter space of a neural network can be very large -- in 
+particular for deep neural networks with many hidden layers -- the parameter 
+space is formally a finite dimensional space. We might 
+want to choose a model $\mathcal{M}$ that is even larger, e.g., the set of all continuous functions, 
+the set of all Lipschitz functions, or the set of all smooth functions. These sets 
+cannot be parametrized in a nice way by a finite dimensional parameter[^parametric], 
+and we call the corresponding regression models *nonparametric*. 
+
+[^parametric]: More precisely, they are not finite dimensional differentiable 
+manifolds.
+
+There are substantial theoretical differences between trying to estimate a 
+regression function in a parametric model or in a nonparametric model. 
+From a practical perspective, though, the transition 
+from small parametric models to nonparametric models via large parametric 
+models is much more gradual. We will 
+not deal with estimation methods or theory that are explicitly nonparametric, but 
+it can be conceptually advantageous to define and discuss the 
+purposes and objectives of a regression analysis in a nonparametric way. 
+Doing so, we will be able to define our aims clearly without reference to a 
+particular parametric model -- even though we eventually, in this book, 
+develop solutions in terms of specific parametric models. 
+ 
+### Estimation methodologies
+
+The most widely used estimator of the regression function is the least squares 
+estimator minimizing the squared error loss. 
+With a model $\mathcal{M}$ and observations $(X_1, Y_1), \ldots, (X_n, Y_n)$ 
+it is formally defined as 
+$$
+    \hat{m} = \argmin_{m \in \mathcal{M}} \sum_{i=1}^n (Y_i - m(X_i))^2.
+$$ {#eq-nonlinear-least-squares}
+If the model is parametrized by $\theta \in \Theta$, we can formulate 
+the estimator in terms of estimating $\theta$.
+$$
+    \hat{\theta} = \argmin_{\theta \in \Theta} \sum_{i=1}^n (Y_i - m_{\theta}(X_i))^2.
+$$ {#eq-nonlinear-least-squares-theta}
+
+[For sufficiently flexible models $\mathcal{M}$ there is often 
+a subset $\mathcal{M}_0 \subseteq \mathcal{M}$ such that 
+for all $m \in \mathcal{M}_0$, $m(X_i) = Y_i$ for all $i = 1, \ldots, n$. 
+All regression functions in $\mathcal{M}_0$ are said to *interpolate* 
+the data perfectly, and they all achieve the global minimal squared error loss of $0$.]{.aside}
+There are several practical problems with these formal definition, though. 
+First, there may be no global minimizer of the sum of squares or there may 
+be many. Second, it may be practically impossible to compute any such global 
+minimizer unless $\mathcal{M}$ is particularly nice, e.g.,
+$\mathcal{M} = \mathcal{M}_{\mathrm{linear}}$ as in @thm-normal. Third, 
+even if we could compute $\hat{m}$ it might not be a good estimator 
+if $\mathcal{M}$ is very large relative to the sample size $n$. 
+
+Many practical estimation algorithms do not attempt to litterally 
+compute $\hat{m}$ or $\hat{\theta}$ as defined by ([-@eq-nonlinear-least-squares])
+and ([-@eq-nonlinear-least-squares-theta]), respectively. Typically, 
+they iteratively find and improve candidate regression functions in the model
+-- using the squared error loss as guide rather than 
+trying to drive it to its minimal value. This can be done in many ways, 
+e.g., by explicitly restricting the model space to an $n$-dependent subset 
+$\mathcal{M}_n \subseteq \mathcal{M}$, or by regularizing the estimator 
+via a penalty function $\mathrm{pen} : \mathcal{M} \to \mathbb{R}$. 
+In the latter case, the algorithm would then (try to) compute   
+$$
+    \hat{m}^{\lambda_n} = \argmin_{m \in \mathcal{M}} \sum_{i=1}^n (Y_i - m(X_i))^2 + \lambda_n \mathrm{pen}(m)
+$$ {#eq-nonlinear-least-squares-pen}
+for an $n$-dependent parameter $\lambda_n > 0$ controlling the tradeoff 
+between the squared error loss and the penalty term. Typically, 
+$\lambda_n \to 0$ for $n \to \infty$ so that the regularization 
+has less and less impact on the estimator as the sample size increases.
+@sec-nonlinear-expansions demonstrated by example the use of penalization 
+within the framework of a linear model, where the penalization was used to 
+control the fluctuations of nonlinear interaction terms. 
+
+We can interpret the term $\lambda_n \mathrm{pen}(m)$ as an *inductive bias*, 
+where we bias the estimator toward small values of $\mathrm{pen}(m)$. Another 
+way to introduce an inductive bias is by *early stopping*. If we start the 
+optimization algorithm in a particular subset $\mathcal{M}_0$ and then 
+stop it before convergence, the result is implicitly biased toward models 
+in $\mathcal{M}_0$. To decide when to stop the algorithm could compute 
+the squared error loss on an independent dataset and stop when it does not 
+improve. Similarly, the parameter $\lambda_n$ could also be selected 
+by minimizing the squared error loss on an independent dataset over 
+a range of possible values of $\lambda_n$. 
+
+For a notable part of this book we consider parametrized models and 
+loss functions that are nice enough for the estimators we use in practice 
+to actually be global minimizers, such as $\hat{\theta}$ in 
+([-@eq-nonlinear-least-squares-theta]). Moving beyond those models,
+regression function estimators used in practice are mostly the result of running 
+a complicated algorithm on data, which does not have a simple analytic 
+representation as, e.g., a minimizer or a solution to an equation. 
+This does not make such estimators bad, but it does make it somewhat 
+more complicated to understand their theoretical properties. The 
+least squares estimator in $\mathcal{M}_{\mathrm{linear}}$, as 
+treated in detail in @sec-linear, stands out as having a 
+particularly well understood theory, which we can leverage for 
+practical statistical data analysis. We cannot expect a similarly 
+clear theory for general regression function estimators, but what 
+we can do is formulate clear modeling objectives that do not hinge 
+on simplistic model assumptions.  
+
+### Regression modeling objectives
+
+As discussed at some length in the introduction, @sec-introduction, one purpose of 
+estimating the regression function $m$ is to use $\hat{m}$ to make predictions 
+about $Y$ from observation of $X$. This is the primary focus in most of the machine learning 
+literature. Though we will cover this aspect in later chapters -- where we discuss 
+quantification and optimization of predictive strength of a model -- we also deal at length 
+with other objectives. 
+
+[In this section we focus for clarity on how $m$ depends on a single coordinate. 
+Similar questions can, of course, be formulate for any group of coordinates.]{.aside}
+One main question we consider is:
+
+**Does $m$ depend on $x_i$?**
+
+To formulate this precisely, let $x_{-j} = (x_1, \ldots, x_{j-1}, x_{j+1}, \ldots, x_p)^T$ denote 
+the $(p-1)$-dimensional vector with the $j$-th coordinate removed from $x$, and let
+$$
+    m_{-j}(x_{-j}) = E(Y \mid X_{-j} = x_{-j})
+$$
+denote the regression function based on the $X_{-j}$-predictors only. We can then 
+formulate the hypothesis 
+$$
+    H_0: E(Y \mid X) = m_{-j}(X_{-j}).
+$$ {#eq-fund-hyp}
+This hypothesis means that $m$ does not depend on the $i$-th coordinate,
+and it is an example of a conditional (mean) independence hypothesis.
+We will develop statistical theory to test $H_0$ based on various regression 
+modeling frameworks. 
+
+Another main objective we consider is to:
+
+**Quantify (and estimate) how much $m$ depends on a particular coordinate $x_i$.**
+
+Obviously, this objective is closely related to the hypothesis 
+above -- any sensible quantification should show that $m$ does not depend on $x_i$
+if $H_0$ is true. Additionally, such a quantification is naturally tied together
+with the development of a test statistic of $H_0$. Testing $H_0$ is, however, 
+a simpler problem, and the challenge is to develop easily interpretable 
+quantifications that are simultaneously easy to estimate. The regression modeling 
+frameworks we consider will have some natural ways of quantifying such 
+conditional associations.  
+
+To aid the general discussion of the two objectives above, we introduce 
+to useful general constructs below. To ease notation we will in the following 
+use the convention that
+$$
+    m(x_j, x_{-j}) = m((x_1, \ldots, x_{j-1}, x_j, x_{j+1}, \ldots, x_{p})^T),
+$$
+where $m(x_j, x_{-j})$ is simply a shorthand notation for the right hand side 
+above. We let $m(x) = E(Y \mid X = x)$ denote the joint regression function 
+of $Y$ on $X$ and $m_{-j}(x_{-j}) = E(Y \mid X_{-j} = x_{-j})$ the regression function 
+of $Y$ on $X_{-j}$ excluding the $j$-th coordinate of $X$. Note that 
+by the tower property of conditional expectations,
+$$
+    m_{-j}(x_{-j}) = E( m(X_j, x_{-j}) \mid X_{-j} = x_{-j}).
+$$
+
+::: {#def-partial-dependence} 
+The partial dependence function $m_j : \mathbb{R} \to \mathbb{R}$ for the $j$-th coordinate is 
+$$
+    m_j(x_j) = E(m(x_j, X_{-j})) = E(E(Y \mid  X_j = x_j, X_{-j})).
+$$ {#eq-partial-dependence}
+::: 
+
+The partial dependence function is also known as the adjusted regression function. 
+It is essential for its definition that we integrate out over the *marginal* 
+distribution of $X_{-j}$ and not the conditional distribution of $X_{-j}$ given 
+$X_{j} = x_j$.  
+
+::: {#def-partial-error}
+The $j$-th partial error is defined as 
+$$
+    \epsilon_{-j} = Y - m_{-j}(X_{-j}).
+$$ {#eq-partial-error}
+::: 
+
+::: {#prp-dependence} 
+If the regression function $m(x) = E(Y \mid X = x)$ does not depend on $x_j$ then 
+
+1. The partial dependence function $m_{j}$ is constant.
+2. $m_{-j}(x_{-j}) = m(x_j, x_{-j})$ for any $x_j$.
+3. $\mathrm{cov}(\epsilon_{-j}, X_j) = 0$.
+::: 
+
+::: {.proof}
+It follows directly from ([-@eq-partial-dependence]) that if $m$ does not depend on $x_j$ 
+then $m_{j}(x_j) = E(m(X_{-j}))$ is constant. 
+
+To prove the second claim we note that if  $m$ does not depend on the $j$-th coordinate, 
+$m(X_j, x_{-j}) = m(x_j, x_{-j})$ for any fixed $x_j$, whence 
+$$
+    m_{-j}(x_{-j}) = E( m(X_j, x_{-j}) \mid X_{-j} = x_{-j}) =  m(x_j, x_{-j}).
+$$
+
+Finally, if $m$ does not depend on $x_j$, $\epsilon_{-j} = \epsilon = Y - E(Y \mid X)$. 
+Whence by the tower property of conditional expections, 
+$$
+    \begin{align*}
+    \mathrm{cov}(\epsilon_{-j}, X_j) & = \mathrm{cov}(\epsilon, X_j) \\
+    & = E( \epsilon X_j ) \\
+    & = E( E(\epsilon X_j \mid X)) \\
+    & = E( E(\epsilon \mid X) X_j) = 0,
+    \end{align*}
+$$
+where we have used that $E(\epsilon \mid X) = 0$. 
+::: 
+
+There are various procedures, motivated by @prp-dependence, 
+that are used in practice to better understand how $m$ depends on a 
+particular predictor. To describe them, let $\hat{m}$ and $\hat{m}_{-j}$ 
+denote estimates of $m$ and $m_{-j}$, respectively. 
+
+1. The *partial dependence plot* is simply a plot of $\hat{m}_j(X_{i,j})$ against $X_{i,j}$, where 
+    $$
+        \hat{m}_j(X_{i,j}) = \frac{1}{n} \sum_{i'=1}^n \hat{m}(X_{i,j}, X_{i', -j}).
+    $$
+    It is a direct graphical check of whether $m_j$ is constant.
+2.  For a $q$-dimensional model $\mathcal{M}$ of $m$ and a $q_0$ dimensional model $\mathcal{M}_{-j}$ of 
+    $m_{-j}$, the $F$-test statistic is 
+    $$
+        F = \frac{\sum_{i=1}^n (\hat{m}_{-j}(X_{i,-j}) - \hat{m}(X_{i}))^2(q - q_0)}{\sum_{i=1}(Y_i - \hat{m}(X_{i}))^2 / (n - q)}.
+    $$
+    It quantifies directly any differences between $m_{-j}$ and $m$. 
+3.  Defining the $j$-th *partial residuals* as 
+    $$
+        \hat{\epsilon}_{i, -j} = Y_i - \hat{m}_{-j}(X_{-j}),
+    $$ 
+    we can plot $\hat{\epsilon}_{i, -j}$ against $X_{i,j}$. 
+4.  Letting $\hat{r}_j$ denote an estimate of the regression function 
+    $$
+        r_j(x_{-j}) = E(X_j \mid X_{-j} = x_{-j}),
+    $$ 
+    we can also plot the partial residuals $\hat{\epsilon}_{i,-j}$ against $X_{i,j} - \hat{r}_j(X_{i,-j})$.
+    This plot is known as an *added variable plot*.
+
+The suggested plots of the partial residuals against either the $j$-th predictor 
+or its residual are both attempts to visualize dependencies between $\epsilon_{-j}$ and $X_j$. 
+The plots can be used to graphically detect if $\mathrm{cov}(\epsilon_{-j}, X_j) = 0$ or not. 
+We can also use the partial residuals to directly estimate the covariance, either as 
+$$
+    \tilde{\mathrm{cov}}_j = \frac{1}{n} \sum_{i=1}^n \hat{\epsilon}_{i, -j} X_{i,j} 
+$$ {#eq-partial-cov-bad}
+or as 
+$$
+    \hat{\mathrm{cov}}_j = \frac{1}{n} \sum_{i=1}^n \hat{\epsilon}_{i, -j} (X_{i,j} - \hat{r}(X_{i,-j})).
+$$ {#eq-partial-cov-good}
+
+Both of these covariance estimates quantify deviations from $H_0$, and in this way indirectly 
+also how much $m$ depends on the $j$-th coordinate. The estimator ([-@eq-partial-cov-bad]) 
+has the advantage that we do not need to estimate the regression function $r_j$, but it can
+be severely biased and $\hat{\mathrm{cov}}_j$ is preferred in practice. 
+
+To better appreciate the general definitions and procedures outlined above, we go through four 
+different model examples in increasing complexity, where most of the definitions and quantities 
+above have some explicit expressions in terms of model parameters or components.
+
+::: {#exm-linear-model}
+If $m(x) = x^T \beta$ is linear we find that the partial dependence function is 
+$$
+    m_j(x_j) = \beta_j x_j + E(X_{-j})^T \beta_{-j}.
+$$ 
+We see that the partial dependence function is affine with slope $\beta_j$. It 
+is constant if and only if $\beta_j = 0$, which is the case if and only if $m$ 
+does not depend on $x_j$. 
+
+The $F$-test statistic defined above coincides for this model with the $F$-test statistic 
+defined by @eq-F-test-statistic, and it can be used to formally test $H_0$. 
+
+We also find that 
+$$
+    m_{-j}(x_{-j}) = x_{-j}^T \beta_{-j} + \beta_j E(X_j \mid X_{-j} = x_{-j}) 
+    = x_{-j}^T \beta_{-j} + \beta_j r_j(x_{-j}).
+$$
+Therefore 
+$$
+    m(x) - m_{-j}(x_{-j}) = \beta_j(x_j - r_j(x_{-j}))
+$$
+This difference is non-zero only if $\beta_j \neq 0$. Moreover, 
+$$
+    \epsilon_{-j} = \epsilon + \beta_j(X_j - r_j(X_{-j}))
+$$
+and we find that 
+$$
+    \mathrm{cov}(\epsilon_{-j}, X_j) = \beta_j V(X_j - r_j(X_{-j})).
+$$
+This covariance is thus proportional to $\beta_j$, with a proportionality 
+constant $V(X_j - r_j(X_{-j}))$ depending on the distribution of $X$ only. 
+::: 
+
+::: {#exm-partially-linear-model}
+The regression function is called *partially linear* in the $j$-th variable if it 
+is of the form 
+$$
+    m(x) = \beta_j x_j + h_{-j}(x_{-j}).
+$$
+In this case, similarly as above, the partial dependence function is an affine function
+$$
+    m_j(x_j) = \beta_j x_j + E(h_{-j}(X_{-j})) 
+$$
+with slope $\beta_j$. Moreover, 
+$$
+    m_{-j}(x_{-j}) = h_{-j}(x_{-j}) + \beta_j E(X_j \mid X_{-j} = x_{-j}) 
+    = h_{-j}(x_{-j}) + \beta_j r_j(x_{-j}),
+$$
+and thus 
+$$
+    m(x) - m_{-j}(x_{-j}) = \beta_j(x_j - r_j(x_{-j}))
+$$
+exactly as if $m$ were linear. By the same argument as above, we get that 
+$$
+    \mathrm{cov}(\epsilon_{-j}, X_j) = \beta_j V(X_j - r_j(X_{-j})).
+$$
+::: 
+
+The computations above for a partially linear regression function reveal that 
+the partial dependence plot as well as procedures based on the partial residuals 
+should reveal the same affine dependence of $m$ on $x_j$ whether $m$ 
+is linear or only partially linear. The subtle, but important, 
+practical difference is that this is only true if the estimators used 
+for estimating the partial dependence function or for computing 
+the partial residuals are flexible enough to correctly model the 
+potentially nonlinear functions $h_{-j}$ and $m_{-j}$. 
+
+::: {#exm-partially-linear-het-model}
+If the regression function has the form
+$$
+    m(x) = \beta_j(x_{-j}) x_j + h_{-j}(x_{-j}),
+$$
+it is affine in $x_j$ for any fixed $x_{-j}$. It is
+partially linear in the $j$-th variable but with a coefficient 
+that depends on $x_{-j}$. The partial dependence function is 
+the affine function
+$$
+    m_j(x_j) = E(\beta_j(X_{-j})) x_j + E(h_{-j}(X_{-j})) 
+$$
+with slope $E(\beta_j(X_{-j}))$ being the mean slope of $x_j$ in $m$. 
+$$
+    m_{-j}(x_{-j}) = h_{-j}(x_{-j}) + \beta_j(x_{-j}) E(X_j \mid X_{-j} = x_{-j}) 
+    = h_{-j}(x_{-j}) + \beta_j(x_{-j}) r_j(x_{-j}),
+$$
+and thus 
+$$
+    m(x) - m_{-j}(x_{-j}) = \beta_j(x_{-j})(x_j - r_j(x_{-j})).
+$$
+The covariance becomes 
+$$
+    \begin{align*}
+    \mathrm{cov}(\epsilon_{-j}, X_j) & = E(\beta_j(X_{-j})(X_j - r_j(X_{-j}))^2) \\
+    & = E(\beta_j(X_{-j})V(X_j - r_j(X_{-j}) \mid X_{-j})) \\
+    & = E(\beta_j(X_{-j})v_j(X_{-j})), \\
+    \end{align*}
+$$
+which we can interpret as a weighted mean of the individual slopes with weights 
+$v_j(X_{-j}) = V(X_j - r_j(X_{-j}) \mid X_{-j})$ being conditional variances. 
+:::
+
+::: {#exm-partially-additive-model}
+The regression function is called *partially additive* in the $j$-th variable if 
+it is of the form 
+$$
+    m(x) = m^0_j(x_j) + h_{-j}(x_{-j}).
+$$
+The partial dependence function is then 
+$$
+    m_j(x_j) = m^0_j(x_j) + E(h_{-j}(X_{-j})), 
+$$
+which up to an additive constant coincides with $m^0_j$. 
+The regression function $m_{-j}$ becomes 
+$$
+    m_{-j}(x_{-j}) = h_{-j}(x_{-j}) + E(m^0(X_j) \mid X_{-j} = x_{-j}) 
+    = h_{-j}(x_{-j}) + w_{-j}(x_{-j})
+$$
+where $w_{-j}(x_{-j}) = E(m^0_j(X_j) \mid X_{-j} = x_{-j})$. Therefore 
+$$
+    m(x) - m_{-j}(x_{-j}) = m^0_j(x_j) - w_{-j}(x_{-j}). 
+$$
+Finally
+$$
+    \begin{align*}
+        \mathrm{cov}(\epsilon_{-j}, X_j) & =  \mathrm{cov}(m^0_j(X_j) - w_{-j}(X_{-j}), X_j) \\
+        & = E( \mathrm{cov}(m^0_j(X_j), X_j \mid X_{-j})).
+    \end{align*}
+$$
+::: 
+
+
+## Practical data analysis
+
+## 
+
+
+
+
+```{r}
+#| label: a-tikz-figure
+#| engine: tikz
+#| eval: false
+#| echo: false
+\begin{tikzpicture}[description/.style={fill=white,inner sep=2pt}] 
+\matrix (m) [matrix of math nodes, row sep=3em, column sep=3em, text height=1.5ex, text depth=0.25ex] {
+ \textrm{Low birth weight} & \textrm{Risk factors} \\
+ \textrm{Smoking} & \textrm{Mortality}\\}; 
+\path[->] 
+(m-1-2) edge (m-1-1) 
+(m-2-1) edge (m-1-1)
+(m-1-2) edge (m-2-2);
+\end{tikzpicture}
+```
+
+
+```{r}
+#| label: another-tikz-figure
+#| engine: tikz
+#| column: page
+#| eval: false
+#| echo: false
+\begin{tikzpicture}
+
+  \draw[->] (-0.5,0) -- (5.5,0) node[right] {predictors}; 
+  \draw[->] (0,-0.5) -- (0,4) node[above] {$|\beta_i|/\text{se}_i$}; 
+  \draw[-, blue!40!white] (0.4, 0) node [below, black] {1} -- (0.4, 3);
+  \draw[-, blue!40!white] (0.8, 0) -- (0.8, 2.9);
+  \draw[-, blue!40!white] (1.2, 0) -- (1.2, 2.8);
+  \draw[-, blue!40!white] (1.6, 0) -- (1.6, 2.4);
+  \draw[-, blue!40!white] (2.0, 0) -- (2.0, 2);
+  \draw[-, blue!40!white] (2.4, 0) -- (2.4, 1.5);
+  \draw[-, blue!40!white] (2.8, 0) -- (2.8, 1.3);
+  \draw[-, blue!40!white] (3.2, 0) -- (3.2, 1);
+  \draw[-, blue!40!white] (3.6, 0) -- (3.6, 0.8);
+  \draw[-, blue!40!white] (4.0, 0) -- (4.0, 0.5);
+  \draw[-, blue!40!white] (4.4, 0) -- (4.4, 0.4);
+  \draw[-, blue!40!white] (4.8, 0) node [below, black] {$p$} -- (4.8, 0.2);
+  \draw[-, red!40!white] (-0.1, 1)  node [left] {2} -- (5, 1);
+  \node at (5, 4) {(A)};
+
+  \begin{scope}[shift = {(0, 5)}]
+  \draw[->] (-0.5,0) -- (5.5,0) node[right] {predictors}; 
+  \draw[->] (0,-0.5) -- (0,4) node[above] {$|\beta_i|/\text{se}_i$}; 
+  \draw[-, blue!40!white] (0.4, 0) node [below, black] {1} -- (0.4, 3);
+  \draw[-, blue!40!white] (0.8, 0) -- (0.8, 2.9);
+  \draw[-, blue!40!white] (1.2, 0) -- (1.2, 2.8);
+  \draw[-, blue!40!white] (1.6, 0) -- (1.6, 2.4);
+  \draw[-, blue!40!white] (2.0, 0) -- (2.0, 2);
+  \draw[-, blue!40!white] (2.4, 0) -- (2.4, 1.5);
+  \draw[-, blue!40!white] (2.8, 0) -- (2.8, 1.3);
+  \draw[-, blue!40!white] (3.2, 0) -- (3.2, 1);
+  \draw[-, blue!40!white] (3.6, 0) -- (3.6, 0.8);
+  \draw[-, blue!40!white] (4.0, 0) -- (4.0, 0.5);
+  \draw[-, blue!40!white] (4.4, 0) -- (4.4, 0.4);
+  \draw[-, blue!40!white] (4.8, 0) node [below, black] {$p$} -- (4.8, 0.2);
+  \draw[-, red!40!white] (-0.1, 1)  node [left] {2} -- (5, 1);
+  \node at (5, 4) {(A)};
+  \end{scope}
+\end{tikzpicture}
+```
