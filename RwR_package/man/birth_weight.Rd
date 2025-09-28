@@ -1,5 +1,5 @@
 \name{birth_weight}
-\alias{birth_weigh}
+\alias{birth_weight}
 \docType{data}
 \title{
 Birth weight data
@@ -8,7 +8,7 @@ Birth weight data
 Birth weight and length of infants together with additional
 information obtained from interviews with the mother during pregnancy.
 }
-\usage{data("birth_weigh")}
+\usage{data("birth_weight")}
 \format{
   A data frame with 11817 observations on the following 12 variables.
   \describe{
@@ -36,6 +36,6 @@ information obtained from interviews with the mother during pregnancy.
 %%  ~~ possibly secondary sources and usages ~~
 }
 \examples{
-data(pregnant)
+data("birth_weight")
 }
 \keyword{datasets}

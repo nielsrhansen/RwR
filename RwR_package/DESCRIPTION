@@ -1,8 +1,8 @@
 Package: RwR
 Type: Package
 Title: Regression with R
-Version: 0.3.3
-Date: 2025-09-20
+Version: 0.3.4
+Date: 2025-09-28
 Authors@R: person("Niels Richard", "Hansen", email = "Niels.R.Hansen@math.ku.dk", role = c("aut", "cre"))
 Description: 
   Data sets and case studies from the book "Regression with R". The case studies are
