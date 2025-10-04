@@ -1,7 +1,7 @@
 Package: RwR
 Type: Package
 Title: Regression with R
-Version: 0.3.4
+Version: 0.3.5
 Date: 2025-09-28
 Authors@R: person("Niels Richard", "Hansen", email = "Niels.R.Hansen@math.ku.dk", role = c("aut", "cre"))
 Description: 
