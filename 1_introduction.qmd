@@ -251,7 +251,7 @@ regression models, but little interaction between the different scientific
 communities. Frank Rosenblatt [@Rosenblatt:1962] explored perceptrons and
 artificial neural networks for binary classification from multiple input
 variables. Support vector machines [@Cortes:1995] were developed for similar
-purposes, with the conceptual framework established in 1965 by Valdimir Vapnik.
+purposes, with the conceptual framework established in 1965 by Vladimir Vapnik.
 
 Artificial neural networks and support vector machines are today core subjects
 in the field of machine learning. Both can be understood as regression models of
@@ -484,4 +484,4 @@ desktop versions are free to use.
 
 The book source is available from the [RwR GitHub repository](https://github.com/nielsrhansen/RwR),
 which also contains information on how to recreate the R environment used for 
-writing the book and how to obtain the RwR package containing the datasets used. 
+writing the book and how to obtain the RwR package containing the datasets used.
