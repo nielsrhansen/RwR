@@ -48,7 +48,6 @@ The chapter primarily relies on the following R packages.
 library(ggplot2)
 library(tibble)
 library(broom)
-library(splines)
 library(readr)
 library(skimr)
 library(dplyr)
@@ -216,8 +215,8 @@ with the outcome.
 #| column: page
 tmp <- lapply(
     names(birth_weight), 
-    \(x) ggplot(data = birth_weight[, x, drop = FALSE]) + 
-        aes_string(x) + xlab(x) + ylab("")
+    \(x) ggplot(data = birth_weight[, x, drop = FALSE], aes(.data[[x]])) + 
+         xlab(x) + ylab("")
 )
 gd <- geom_density(adjust = 2, fill = gray(0.7))
 gb <- geom_bar(fill = gray(0.7))
@@ -746,8 +745,10 @@ form <- weight ~ smoking * coffee * children * gestationalAge +
 
 birth_weight_lm_int <- lm(form, data = birth_weight)
 
-anova(birth_weight_lm, birth_weight_lm_int) |>
-  knitr::kable()
+anova(
+  birth_weight_lm, 
+  birth_weight_lm_int
+) |> knitr::kable()
 ```
 
 @tbl-inter-test shows that the $F$-test of the third order interaction model
@@ -790,7 +791,7 @@ around 5%. On the basis of this we might exclude the four weak predictors even t
 suggested that the number of abortions is related to `weight`. The highly skewed distribution
 of `abortions` resulted in large standard errors and low power despite the size of the data set.
 In combination with the different signs on the estimated parameters
-in Table @tbl-birth-lm, depending upon whether the woman had had 1, 2 or 3+ spontaneous abortions,
+in @tbl-birth-lm, depending upon whether the woman had had 1, 2 or 3+ spontaneous abortions,
 the study is inconclusive on how `abortions` is related to `weight`.
 
 ```{r}
@@ -799,8 +800,10 @@ the study is inconclusive on how `abortions` is related to `weight`.
 #| tbl-cap-location: bottom
 form <- weight ~ smoking * coffee * children * gestationalAge
 birth_weight_lm_int_sub <- lm(form, data = birth_weight)
-anova(birth_weight_lm_int_sub, birth_weight_lm_int) |>
-  knitr::kable()
+anova(
+  birth_weight_lm_int_sub, 
+  birth_weight_lm_int
+) |> knitr::kable()
 ```
 
 

@@ -418,7 +418,7 @@ regression model classes:
 - generalized linear models
 - parametric and proportional hazards regression models
 
-These are classical subjects and  
+These are classical subjects and
 an obligatory part of an education in statistics. At
 the same time they serve as good examples when developing general statistical
 principles and methodologies such as estimation methodology, 
@@ -444,12 +444,13 @@ question deals with formally testing the hypothesis that there is no association
 between the outcome and one predictor given the other predictors. 
 These two questions are inferential and ask about specific properties of an 
 unknown conditional distribution. The last question is directly 
-asking for a (good) predictive model. 
+asking for a (good) model of the conditional distribution of the outcome 
+given the predictors. 
 
 The book deals with the questions above exclusively in 
 terms of *associational* regression modeling, 
 where the regression model relates the distribution of the *outcome* 
-variable to one or more *predictor variables* in terms of a full or partial specification of the 
+variable to one or more *predictor* variables in terms of a full or partial specification of the 
 conditional distribution of the outcome given the predictors. 
 Importantly, associational regression models do *not* necessarily 
 capture *causal* relations, that is, relations that persist under 

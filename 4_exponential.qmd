@@ -344,7 +344,7 @@ $$
 $$
 on $(0, \infty).$ We have $I = (- \infty, 0).$ 
 The mean value of the $\Gamma$-distribution is 
-$\mu \coloneqq \alpha \lambda = - \frac{1}{\theta},$ and the variance is 
+$\mu = \alpha \lambda = - \frac{1}{\theta},$ and the variance is 
 $\alpha^2 \lambda = \varphi \mu^2 = \varphi/\theta^2.$ 
 Observe that the unit structure measure, $\nu_1,$ is
 Lebesgue measure on $(0, \infty),$ and the corresponding exponential family 
@@ -805,8 +805,8 @@ $$
 Since $\partial_y d_K(\mu, \mu) = d_K(\mu, \mu) = 0$ we conclude that $a = b = 0$.
 :::
 
-@exr-variance-to-bregman shows that *any* continuous and strictly positive 
-$\mathcal{V} : J \to \mathbb{R}$, defined on an open interval $J$, is a 
+@exr-variance-to-bregman shows that *any* continuous
+$\mathcal{V} : J \to (0, \infty)$, defined on an open interval $J$, is a 
 quasi-variance function corresponding to Bregman divergence. The quasi-deviance,
 defined by 
 $$
@@ -973,8 +973,8 @@ whose distribution is a *compound Poisson distribution*.
 
 ::: {#exr-variance-to-bregman}
 
-Let $J \subseteq \mathbb{R}$ be an open interval and let $\mathcal{V} : J \to \mathbb{R}$ be continuous and 
-strictly positive. Fix $\mu_0 \in J$ and define 
+Let $J \subseteq \mathbb{R}$ be an open interval and let $\mathcal{V} : J \to (0, \infty)$ be continuous. 
+Fix $\mu_0 \in J$ and define 
 $$
     g(\mu) = \int_{\mu_0}^\mu \frac{1}{\mathcal{V}(t)} \mathrm{d} t.
 $$

@@ -102,7 +102,7 @@ for a vector of predictors $X$ and a vector of parameters $\beta.$
     $$
         \mathbf{E}(Y \mid X) = \mu(\eta),
     $$
-    with $\mu : \mathbb{R} \to J$ the *mean value function.* The set $J \subseteq \mathbb{R}$ 
+    with[^mu-domain] $\mu : \mathbb{R} \to J$ the *mean value function.* The set $J \subseteq \mathbb{R}$ 
     denotes the range of the mean value function. \index{mean value function}
 
 **GA2.** The conditional variance of $Y$ given $X$ is 
@@ -117,6 +117,8 @@ for a vector of predictors $X$ and a vector of parameters $\beta.$
     $$
         Y \mid X \sim \mathcal{E}(\theta(\eta), \nu_{\varphi}).
     $$
+[^mu-domain]: Occasionally, models have a mean value function defined on a domain $H \subseteq \mathbb{R}$ that is not the entire real line. This implicitly restricts the $\beta$ parameter space to ensure that the linear predictor ends up in $H$, which is a practical and theoretical nuisance. We will develop the theory assuming that $H = \mathbb{R}$.
+
 
 The exponential dispersion distributions referred to in **GA3** are introduced 
 in @sec-exponential. The normal distribution, as in Assumption **A3**, is a special case. 
@@ -125,6 +127,14 @@ distributional assumption, which implies **GA1** and **GA2** for *specific*
 choices of $\mu$ and $\mathcal{V}$ that depend on the map $\eta \mapsto \theta(\eta)$
 and the chosen exponential dispersion model. 
 
+Whenever the mean value function $\mu$ is one-to-one, its inverse 
+$$
+    g \coloneqq \mu^{-1} : J \to \mathbb{R}
+$$
+is called the *link function*. Besides the identity link, common link functions are the log-link
+and logit-link functions corresponding to the exponential and logistic mean value functions, respectively. 
+These link functions are also the canonical link functions for the Poisson model and the Bernoulli 
+model, respectively.
 
 \index{distribution!log-normal}
 
@@ -327,8 +337,8 @@ $$w_{ii} = \frac{\theta'(\eta_i) \mu'(\eta_i)}{\varphi}.$$
 The alternative formula for the weights follows from @cor-meanvar. 
 Thus 
 $$
-    \mathcal{J}(\beta) = - \mathbf{E} (D_{\beta} \mathcal{U}(\beta)) 
-    = - \mathbf{E} (\mathbf{X}^T D_{\boldsymbol{\eta}} U(\boldsymbol{\eta}) \mathbf{X}) = \mathbf{X}^T \mathbf{W} \mathbf{X}.
+    \mathcal{J}(\beta) = - \mathbf{E} (D_{\beta} \mathcal{U}(\beta) \mid \mathbf{X}) 
+    = - \mathbf{X}^T \mathbf{E} ( D_{\boldsymbol{\eta}}  U(\boldsymbol{\eta}) \mid \mathbf{X}) \mathbf{X} = \mathbf{X}^T \mathbf{W} \mathbf{X}.
 $$
 ::: 
 
@@ -767,7 +777,7 @@ $$\sqrt{\varphi (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1}_{jj}}$$
 of the standard error \index{standard error} of $\hat{\beta}_j.$ By plugging in the estimate 
 of the dispersion parameter and the estimate of the weights, we define the $j$-th 
 $Z$-score as \index{$Z$-score!generalized linear model}
-$$Z_j \coloneqq \frac{\hat{\beta}_j - \beta_j}{\sqrt{\hat{\varphi} (\mathbf{X}^T \hat{\mathbf{W}} \mathbf{X})^{-1}_{jj}}}.$$
+$$Z_j \coloneqq \frac{\hat{\beta}_j - \beta_j}{\sqrt{\hat{\varphi} ((\mathbf{X}^T \hat{\mathbf{W}} \mathbf{X})^{-1})_{jj}}}.$$
 More generally, we can introduce 
 $$Z_a \coloneqq \frac{a^T \hat{\beta} - a^T \beta}{\sqrt{\hat{\varphi} a^T (\mathbf{X}^T \hat{\mathbf{W}} \mathbf{X})^{-1}a}}$$
 for $a \in \mathbb{R}^p.$

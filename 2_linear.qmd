@@ -34,7 +34,6 @@ library(RwR)
 library(ggplot2)
 library(tibble)
 library(broom)
-library(splines)
 ```
 
 A few functions from additional packages are used, but in those cases the package is made explicit
@@ -129,8 +128,7 @@ was constructed using `ggplot()` from the R package ggplot2.
 #| cap-location: margin
 p0 <- ggplot(
         data = claims, 
-        aes(sum, claims), 
-        alpha = I(0.2)
+        aes(sum, claims)
     ) + 
     scale_x_log10(
         "Insurance sum (DKK)", 
@@ -142,7 +140,7 @@ p0 <- ggplot(
         breaks = 10^c(2, 4, 6, 8), 
         labels = c("100", "10K", "1M", "100M")
     ) +
-    geom_point()
+    geom_point(alpha = 0.2)
 
 p <- p0 + 
     geom_smooth(
@@ -322,7 +320,7 @@ $$
 **A4.**
 The conditional distribution of $Y_i$ given $\mathbf{X}$ depends upon $X_i$ only,
 and $Y_i$ and $Y_j$ are conditionally *uncorrelated* given $\mathbf{X}$,
-$$\text{cov}(Y_i, Y_j \mid \mathbf{X}) = 0.$$
+$$\mathrm{cov}(Y_i, Y_j \mid \mathbf{X}) = 0.$$
 
 **A5.**
 The conditional distribution of $Y_i$ given $\mathbf{X}$ depends upon $X_i$ only,
@@ -547,7 +545,7 @@ $$
 
 The parameter estimates and model matrix are:
 
-```{r echo=-c(1, 5)}
+```{r}
 #| label: claims-lm-int
 #| column: page-right
 claims_lm_int <- lm(
@@ -819,7 +817,7 @@ $$
 $$
 is just one possible solution.
 
-### Algorithms
+### Algorithms {#sec-lm-algorithms}
 
 The actual computation of the solution to the normal equation is 
 typically based on a QR decomposition of $\mathbf{X}$ 
@@ -989,8 +987,8 @@ $$
     \end{align*}
 $$
 The sum of the diagonal elements in $(\mathbf{I} - \boldsymbol{\Pi})$ is the trace of this 
-orthogonal projection onto $L^{\perp}$---the orthogonal complement of $L$ --
-and is thus equal to the dimension of $L^{\perp}$, which is $n-p$. 
+orthogonal projection onto $L^{\perp}$---the orthogonal complement of $L$---and
+is thus equal to the dimension of $L^{\perp}$, which is $n-p$. 
 :::
 
 ### Tests and confidence intervals {#sec-tests-confidence}
@@ -1125,7 +1123,7 @@ so that relevant scientific hypotheses can be formulated in terms of certain par
 $0$. Though this can ease communication in certain cases, it can also be quite confusing. Linear
 hypotheses considered within the linear model are not specific to a given choice of parametrization,
 and there is no requirement that a linear hypothesis is linked to certain 
-parameters being $0$. This will be illustrated in subsequent sections. 
+parameters being $0$. This will be illustrated in subsequent chapters. 
 
 ## Model assessment {#sec-model-assessment}
 
@@ -1245,7 +1243,7 @@ pursue the effect of those.
 #| cap-location: margin
 claims_diag <- augment(claims_lm) ## Residuals etc.
 gridExtra::grid.arrange(
-  ggplot(claims_diag, aes(.fitted, .resid), alpha = I(0.2)) + geom_point() + geom_smooth(),
+  ggplot(claims_diag, aes(.fitted, .resid)) + geom_point(alpha = 0.2) + geom_smooth(),
   ggplot(claims_diag, aes(.resid)) + geom_histogram(bins = 40),
   ggplot(claims_diag, aes(sample = .std.resid)) + geom_qq() + geom_abline(),
   ncol = 3
@@ -1371,8 +1369,11 @@ the $F$-tests can be computed by a single call of `anova()`.
 #| code-fold: show
 #| tbl-cap: "Analysis of variance table comparing the three linear models of claim sizes."
 #| tbl-cap-location: bottom
-anova(claims_lm, claims_lm_add, claims_lm_int) |> 
-    knitr::kable()
+anova(
+    claims_lm, 
+    claims_lm_add, 
+    claims_lm_int
+) |> knitr::kable()
 ```
 
 The conclusion is that we cannot reject $H_1$ while $H_0$ can be clearly rejected. 
@@ -1392,7 +1393,7 @@ time for the interaction model, see @fig-claims-diag-int.
 #| cap-location: margin
 claims_diag_int <- augment(claims_lm_int) ## Residuals etc.
 gridExtra::grid.arrange(
-  ggplot(claims_diag_int, aes(.fitted, .resid), alpha = I(0.2)) + geom_point() + geom_smooth(),
+  ggplot(claims_diag_int, aes(.fitted, .resid)) + geom_point(alpha = 0.2) + geom_smooth(),
   ggplot(claims_diag_int, aes(.resid)) + geom_histogram(bins = 40),
   ggplot(claims_diag_int, aes(sample = .std.resid)) + geom_qq() + geom_abline(),
   ncol = 3
