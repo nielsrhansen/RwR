@@ -117,6 +117,7 @@ for a vector of predictors $X$ and a vector of parameters $\beta.$
     $$
         Y \mid X \sim \mathcal{E}(\theta(\eta), \nu_{\varphi}).
     $$
+
 [^mu-domain]: Occasionally, models have a mean value function defined on a domain $H \subseteq \mathbb{R}$ that is not the entire real line. This implicitly restricts the $\beta$ parameter space to ensure that the linear predictor ends up in $H$, which is a practical and theoretical nuisance. We will develop the theory assuming that $H = \mathbb{R}$.
 
 

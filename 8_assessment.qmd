@@ -7,8 +7,8 @@ source("_common.R")
 # Model Assessment {#sec-assessment}
 
 ::: {.callout-warning}
-This chapter is still a draft and minor changes are made without notice.
-Some changes to Section 9.6 are to be expected.
+This chapter is still a draft and minor changes can be made without notice.
+Section 8.6 is still a little rough and incomplete.
 :::
 
 This chapter deals with general statistical methodology for 
@@ -96,9 +96,9 @@ $$
 $$
 where the $h_d$-s are spline basis functions. The number $\mathrm{df}$ specifies 
 the number of basis functions and thus the complexity of the model. The dimension 
-of the corresponding linear model will be $\mathrm{df} + 1$, since the model 
+of the corresponding linear model will be $\mathrm{df} + 1,$ since the model 
 also includes an intercept. The code below fits six models for $\mathrm{df}$
-ranging from $0$ to $16$. 
+ranging from $0$ to $16.$ 
 
 ```{r}
 #| label: lm-bike
@@ -157,10 +157,10 @@ which is computed as
 $$
     \frac{1}{n} \sum_{i=1}^n (Y_i - \hat{m}(X_i))^2,
 $$ {#eq-mse-train}
-where $\hat{m} = \hat{\beta}_0 + \sum_{d=1}^{\mathrm{df}} \hat{\beta}_d h_d$. We note 
+where $\hat{m} = \hat{\beta}_0 + \sum_{d=1}^{\mathrm{df}} \hat{\beta}_d h_d.$ We note 
 that the MSE is monotonely decreasing as a function of the complexity of the model, that is, 
-as a function of $\mathrm{df}$. The adjusted $R^2$ increases until $\mathrm{df} = 4$, 
-and then it appears to settle just above $0.5$ -- suggesting that the models can 
+as a function of $\mathrm{df}.$ The adjusted $R^2$ increases until $\mathrm{df} = 4,$ 
+and then it appears to settle just above $0.5$---suggesting that the models can 
 explain around 50% of the variation in the data.
 
 @fig-bike-residual shows the residual plots for the six models. We see that 
@@ -186,7 +186,7 @@ gridExtra::grid.arrange(p[[1]], p[[2]], p[[3]], p[[4]], p[[5]], p[[6]], ncol = 3
 ```
 
 Based on the MSE in @tbl-bike-mse the most complex model is best. However, the 
-adjusted $R^2$ suggests that all the three models with $\mathrm{df} = 4$, 
+adjusted $R^2$ suggests that all the three models with $\mathrm{df} = 4,$ 
 $\mathrm{df} = 8$ and $\mathrm{df} = 16$ are about equally good, and the residual 
 plots suggest that these three models all fit the data. If we consider the 
 predictions made by the most complex model ($\mathrm{df} = 16$) in 
@@ -233,7 +233,7 @@ general approach for making such a quantification a motivating example is consid
 
 ```{r}
 #| label: fig-mse
-#| fig-cap: "The mean squared error is a quadratic function of $\\mu$, which can be decomposed as a sum of the the variance and the squared bias."
+#| fig-cap: "The mean squared error is a quadratic function of $\\mu,$ which can be decomposed as a sum of the the variance and the squared bias."
 #| fig-cap-location: margin
 #| engine: tikz
 #| echo: false 
@@ -242,42 +242,42 @@ general approach for making such a quantification a motivating example is consid
   \draw[->, >=stealth] (0,-1) -- (0,8) node[above] {$\mathrm{MSE}$};
   \draw[-, dashed] (-0.2, 2)  node [left] {$\sigma^2$} -- (12, 2);  
   \draw (1, 7) parabola bend (6, 2)  (11, 7);
-  \draw[-] (6, -0.1) node [below] {$\mu_0$} -- (6, 0.1);
+  \draw[-] (6, -0.1) node [below] {$\mu^0$} -- (6, 0.1);
   \draw[dashed] (10, 2) -- (10, 5.2);
-  \node[right] at (10.5, 3.6) {$\mathrm{bias}^2(\mu) = (\mu - \mu_0)^2$};
+  \node[right] at (10.5, 3.6) {$\mathrm{bias}^2(\mu) = (\mu - \mu^0)^2$};
 \end{tikzpicture}
 ```
 
 ::: {#exm-sqloss}
 Assume that $Y$ is a real valued random variable and that 
-we use the point prediction[^point-pred] $\mu \in \mathbb{R}$ of $Y$. 
+we use the point prediction[^point-pred] $\mu \in \mathbb{R}$ of $Y.$ 
 Just as the squared error can be used 
 for fitting the model to data it can be used for quantifying predictive 
 strength. Thus 
 $$
     \mu \mapsto (Y - \mu)^2
 $$
-is a quantification of how good a prediction $\mu$ is of $Y$. Its expectation is the mean squared error 
+is a quantification of how good a prediction $\mu$ is of $Y.$ Its expectation is the mean squared error 
 \index{mean squared error}
 $$
     \mathrm{MSE}(\mu) = \mathbf{E} (Y - \mu)^2.
 $$
-If $\mu_0 = \mathbf{E}(Y)$ denotes the mean of $Y$ and $\sigma^2 = \mathbf{V}(Y)$ its variance then
-[In a regression context the prediction $\mu$ would depend on $X$, and 
-the mean $\mu_0$ and the variance $\sigma^2$ would be conditional on $X$.]{.aside}
+If $\mu^0 = \mathbf{E}(Y)$ denotes the mean of $Y$ and $\sigma^2 = \mathbf{V}(Y)$ its variance then
+[In a regression context the prediction $\mu$ would depend on $X,$ and 
+the mean $\mu^0$ and the variance $\sigma^2$ would be conditional on $X.$]{.aside}
 $$
-    \mathrm{MSE}(\mu) = (\mu_0 - \mu)^2 + \mathbf{E} (Y - \mu_0)^2 = \mathrm{bias}^2(\mu) + \sigma^2.
+    \mathrm{MSE}(\mu) = (\mu^0 - \mu)^2 + \mathbf{E} (Y - \mu^0)^2 = \mathrm{bias}^2(\mu) + \sigma^2.
 $$ {#eq-biasvar}
 It is clear from ([-@eq-biasvar]) that the mean squared error is bounded below by $\sigma^2$ --
-that does not depend upon $\mu$ -- and that the optimal predictor from a mean squared error 
-perspective minimizes the squared bias term and is equal to $\mu_0$.
+that does not depend upon $\mu$---and that the optimal predictor from a mean squared error 
+perspective minimizes the squared bias term and is equal to $\mu^0.$
 
-[^point-pred]: A point prediction is a single element in the sample space for $Y$. Alternatives include interval predictions -- and probabilistic predictions as introduced below.
+[^point-pred]: A point prediction is a single element in the sample space for $Y.$ Alternatives include interval predictions---and probabilistic predictions as introduced below.
 
 The size of the squared bias can best be interpreted relative to the variance 
-$\sigma^2$, and the *unitless* quantity 
+$\sigma^2,$ and the *unitless* quantity 
 $$\frac{\mathrm{bias}^2(\mu)}{\sigma^2}$$
-is therefore a useful quantification of the predictive strength of $\mu$. 
+is therefore a useful quantification of the predictive strength of $\mu.$ 
 :::
 
 \index{loss!squared error}
@@ -298,26 +298,26 @@ A point prediction as in @exm-sqloss may not in all
 cases be the most relevant kind of prediction. If $Y$ is a binary
 variable, say, it is more informative to make a prediction of the
 probability that $Y = 1$ than just predicting that $Y$ will be $0$ or
-$1$. This is particularly true if $\mathbf{P}(Y = 1)$ is small, in which case
-the only sensible point prediction of $Y$ is $0$. A
+$1.$ This is particularly true if $\mathbf{P}(Y = 1)$ is small, in which case
+the only sensible point prediction of $Y$ is $0.$ A
 *probabilistic prediction* of $Y$ is simply a probability measure
-$P$, and to quantify how well $P$ predicts $Y$ we need to quantify the
-discordance between $Y$ and $P$ -- or perhaps rather the
-discordance between the distribution of $Y$ and $P$.  
+$P,$ and to quantify how well $P$ predicts $Y$ we need to quantify the
+discordance between $Y$ and $P$---or perhaps rather the
+discordance between the distribution of $Y$ and $P.$  
 
 For the quantification of the discordance we choose a (sensible) *loss function* \index{loss function}
 $$
     (y, P) \mapsto \mathrm{Loss}(y, P) \in \mathbb{R}.
 $$
 Then $\mathrm{Loss}(Y, P)$ quantifies how well $P$ predicts 
-the random variable $Y$. 
+the random variable $Y.$ 
 It is common to also call a loss function used for probabilistic 
 predictions a *scoring rule*. 
 
-Letting $P_0$ denote the distribution of $Y$, the 
+Letting $P^0$ denote the distribution of $Y,$ the 
 *risk*[^loss] \index{risk} of $P$ is the expectation of the loss,
 $$
-    \mathrm{Risk}(P) = E \big( \mathrm{Loss}(Y, P) \big) = \int \mathrm{Loss}(y, P) P_0(\mathrm{d}y),
+    \mathrm{Risk}(P) = \mathbf{E}\big( \mathrm{Loss}(Y, P) \big) = \int \mathrm{Loss}(y, P) P^0(\mathrm{d}y),
 $$
 provided that the expectation exists. 
 The larger the value of the loss is, the greater is the discordance, but 
@@ -337,112 +337,112 @@ $$ {#eq-log-likelihood-loss}
 ::: 
 [The factor "2" in ([-@eq-log-likelihood-loss]) is an arbitrary convention, but it aligns with the scaling of the deviance and results in an unscaled squared error loss for the standard normal distribution.]{.aside}
 
-[^log-zero]: The convention is that $\log(0) = -\infty$. 
+[^log-zero]: The convention is that $\log(0) = -\infty.$ 
 
 There is an arbitrariness in the choice of $\nu$ that makes the absolute value of 
 the negative log-likelihood impossible to interpret, but it is suitable for comparisons 
 between two or more probability distributions that all have densities w.r.t. the same 
-measure $\nu$. This is particularly clear if we compare $P$ to the distribution of 
-$Y$ -- if this distribution has density w.r.t. $\nu$ as well. To this end we introduce 
-the *entropy* \index{entropy} of the distribution of $Y \sim P_0 = h_0 \cdot \nu$ 
+measure $\nu.$ This is particularly clear if we compare $P$ to the distribution of 
+$Y$---if this distribution has density w.r.t. $\nu$ as well. To this end we introduce 
+the *entropy* \index{entropy} of the distribution of $Y \sim P^0 = h^0 \cdot \nu$ 
 as 
 [The entropy introduced here is related to Shannon's entropy and information theory rather than thermodynamics.]{.aside}
 $$
-    H(P_0) = - \mathbf{E}(\log h_0(Y)) = - \int \log h_0(y) P_0(\mathrm{d}y),
+    H(P^0) = - \mathbf{E}(\log h^0(Y)) = - \int \log h^0(y) P^0(\mathrm{d}y),
 $$
-provided that $\log h_0$ is $P_0$-integrable. 
+provided that $\log h^0$ is $P^0$-integrable. 
 
 ::: {#lem-epelowerbound}
-Assume that $Y \sim P_0 = h_0 \cdot \nu$ with entropy $H(P_0)$. 
+Assume that $Y \sim P^0 = h^0 \cdot \nu$ with entropy $H(P^0).$ 
 Then the risk for the negative log-likelihood loss fulfills
 $$
-    \mathrm{Risk}(P) \geq 2 H(P_0)
+    \mathrm{Risk}(P) \geq 2 H(P^0)
 $$ {#eq-epelowerbound}
-for any probability measure $P = h \cdot \nu$ with $\log h$ being $P_0$-integrable.
-Moreover, the inequality in ([-@eq-epelowerbound]) is sharp unless $P = P_0$. 
+for any probability measure $P = h \cdot \nu$ with $\log h$ being $P^0$-integrable.
+Moreover, the inequality in ([-@eq-epelowerbound]) is sharp unless $P = P^0.$ 
 :::
 
 ::: {.proof}
-First note that $- \mathbf{E}(\log h(Y)) = - \int \log h(y) P_0(\mathrm{d}y).$
-Introducing the set $A = \{y \mid h_0(y) > 0\}$ with $P_0(A) = 1$ and the function
+First note that $- \mathbf{E}(\log h(Y)) = - \int \log h(y) P^0(\mathrm{d}y).$
+Introducing the set $A = \{y \mid h^0(y) > 0\}$ with $P^0(A) = 1$ and the function
 $$
     r(y) = \left\{\begin{array}{ll}
-    \frac{h(y)}{h_0(y)} & \quad \mathrm{for } \ y \in A \\
+    \frac{h(y)}{h^0(y)} & \quad \mathrm{for } \ y \in A \\
     1 & \quad \mathrm{for } \ y  \not \in A
     \end{array}\right.
 $$
 we find that
 $$
     \begin{align*}
-        \frac{1}{2} \mathrm{Risk}(P) -  H(P_0) & = 
-        -  \int \log h(y) P_0(\mathrm{d} y) + \int \log h_0(y) P_0(\mathrm{d} y) \\
-        & = \int_A -(\log h(y) - \log h_0(y)) P_0(\mathrm{d} y) \\
-        & = \int_A - \log r(y) P_0(\mathrm{d}y) \\
-        & = \int - \log r(y) P_0(\mathrm{d}y).
+        \frac{1}{2} \mathrm{Risk}(P) -  H(P^0) & = 
+        -  \int \log h(y) P^0(\mathrm{d} y) + \int \log h^0(y) P^0(\mathrm{d} y) \\
+        & = \int_A -(\log h(y) - \log h^0(y)) P^0(\mathrm{d} y) \\
+        & = \int_A - \log r(y) P^0(\mathrm{d}y) \\
+        & = \int - \log r(y) P^0(\mathrm{d}y).
     \end{align*}
 $$
 Since the negative logarithm on $[0,\infty)$ is convex it follows from Jensen's inequality that
 $$
     \begin{align*}
-        \frac{1}{2} \mathrm{Risk}(P) - H(P_0) & \geq -  \log \int r(y) P_0(\mathrm{d}y) \\
-        & = - \log \int_A r(y) P_0(\mathrm{d}y) \\
+        \frac{1}{2} \mathrm{Risk}(P) - H(P^0) & \geq -  \log \int r(y) P^0(\mathrm{d}y) \\
+        & = - \log \int_A r(y) P^0(\mathrm{d}y) \\
         & = - \log \int_A h(y) \nu(\mathrm{d}y) \\
         & = - \log P(A) \geq 0
     \end{align*}
 $$
-since $P(A) \leq 1$. The negative logarithm is, in fact, strictly convex on $(0,\infty)$,
-so Jensen's inequality implies that there is equality only if $r(y) = 1$ for $P_0$-almost all $y$, 
-in which case $P = P_0$. 
+since $P(A) \leq 1.$ The negative logarithm is, in fact, strictly convex on $(0,\infty),$
+so Jensen's inequality implies that there is equality only if $r(y) = 1$ for $P^0$-almost all $y,$ 
+in which case $P = P^0.$ 
 :::
 
 @lem-epelowerbound provides some insight on the use of the negative log-likelihood 
-as a loss function. The distribution $P_0$ should by any reasonable standards be 
-in greatest concordance with $Y$ (have lowest risk) -- and this is indeed the case as inequality 
+as a loss function. The distribution $P^0$ should by any reasonable standards be 
+in greatest concordance with $Y$ (have lowest risk)---and this is indeed the case as inequality 
 ([-@eq-epelowerbound]) shows. Moreover, all other probability measures have 
 strictly larger risk. 
 [The negative log-likelihood loss is a so-called *strictly proper scoring rule*.]{.aside}
 
-[The cross-entropy \index{cross-entropy} of $P_0$ and $P$ is
+[The cross-entropy \index{cross-entropy} of $P^0$ and $P$ is
 $$
-    H(P_0, P) = - \int \log h(y) P_0(\mathrm{d}y),
+    H(P^0, P) = - \int \log h(y) P^0(\mathrm{d}y),
 $$
 and 
 $$
-    K(P_0\|P) = H(P_0, P) - H(P_0).
+    K(P^0\|P) = H(P^0, P) - H(P^0).
 $$
 The risk for the negative log-likelihood loss is equal to twice the cross-entropy.
 ]{.aside}
 
 ::: {#def-KL-div} 
 The Kullback-Leibler divergence \index{Kullback-Leibler divergence}
-of $P = h \cdot \nu$ from $P_0 = h_0 \cdot \nu$ is defined as 
+of $P = h \cdot \nu$ from $P^0 = h^0 \cdot \nu$ is defined as 
 $$
-    K(P_0\|P) = \int \log \frac{h_0(y)}{h(y)} P_0(\mathrm{d} y)
+    K(P^0\|P) = \int \log \frac{h^0(y)}{h(y)} P^0(\mathrm{d} y)
 $$ {#eq-KL-div}
 provided that the risk and the entropy are finite. 
 ::: 
 
 ```{r}
 #| label: fig-KL-div
-#| fig-cap: "Schematic illustration of the risk for the negative log-likelihood loss as a function of the distribution $\P$. The risk is a convex function of $\P$, which can be decomposed as a sum of twice the entropy and twice the Kullback-Leibler divergence."
+#| fig-cap: "Schematic illustration of the risk for the negative log-likelihood loss as a function of the distribution $\P.$ The risk is a convex function of $\P,$ which can be decomposed as a sum of twice the entropy and twice the Kullback-Leibler divergence."
 #| fig-cap-location: margin
 #| engine: tikz
 #| echo: false 
 \begin{tikzpicture}[scale = 0.5]
   \draw[->, >=stealth] (-1,0) -- (12,0) node[right] {$P$}; 
   \draw[->, >=stealth] (0,-1) -- (0,8) node[above] {$\mathrm{Risk}$};
-  \draw[-, dashed] (-0.2, 2)  node [left] {$2 H(P_0)$} -- (12, 2);  
+  \draw[-, dashed] (-0.2, 2)  node [left] {$2 H(P^0)$} -- (12, 2);  
   \draw plot[smooth] coordinates {(3,7) (4,3.3) (6,2) (10,4) (11,7)};
-  \draw[-] (6, -0.1) node [below] {$P_0$} -- (6, 0.1);
+  \draw[-] (6, -0.1) node [below] {$P^0$} -- (6, 0.1);
   \draw[dashed] (10, 2) -- (10, 4);
-  \node[right] at (10.5, 3) {$2 K(P_0\|P)$};
+  \node[right] at (10.5, 3) {$2 K(P^0\|P)$};
 \end{tikzpicture}
 ```
 
 From the definition of the Kullback-Leibler divergence we have that 
 for the negative log-likelihood loss,
 $$
-\mathrm{Risk}(P) =  2H(P_0, P) = 2K(P_0\|P) +  2H(P_0).
+\mathrm{Risk}(P) =  2H(P^0, P) = 2K(P^0\|P) +  2H(P^0).
 $$ {#eq-epedecomp}
 This decomposition has a similar interpretation as the bias-variance decomposition 
 for the mean squared error. The entropy term corresponds to the variance term 
@@ -451,17 +451,17 @@ risk is equivalent to minimizing the Kullback-Leibler divergence.
 
 As a direct consequence of @lem-epelowerbound we see that 
 the Kullback-Leibler divergence takes values in $[0,\infty)$ and equals $0$ if and 
-only if $P = P_0$. It also follows directly from its integral representation above
-that its value does not depend upon the reference measure $\nu$. The arbitrariness 
+only if $P = P^0.$ It also follows directly from its integral representation above
+that its value does not depend upon the reference measure $\nu.$ The arbitrariness 
 in the risk as well as the entropy cancels out in the Kullback-Leibler divergence. 
-The Kullback-Leibler divergence can be interpreted as a distance from $P_0$ to
-$P$, but it is not a metric since it is neither symmetric nor does
+The Kullback-Leibler divergence can be interpreted as a distance from $P^0$ to
+$P,$ but it is not a metric since it is neither symmetric nor does
 it fulfill the triangle inequality. 
 
 ::: {#exm-norm-KL}
 If $P = \mathcal{N}(\mu, \sigma^2)$ then $P$ has a density w.r.t. Lebesgue 
 measure, which is proportional
-to $e^{-(y-\mu)^2/(2\sigma^2)}$, hence 
+to $e^{-(y-\mu)^2/(2\sigma^2)},$ hence 
 $$ 
 - 2 \log h_{\mu}(y) = \frac{1}{\sigma^2} (y - \mu)^2.
 $$
@@ -472,14 +472,14 @@ $$
 and the example does therefore not cover the comparison of two normal distributions with 
 different variances.]{.aside} 
 
-If $Y \sim \mathcal{N}(\mu_0, \sigma^2)$ we find that 
+If $Y \sim \mathcal{N}(\mu^0, \sigma^2)$ we find that 
 $$ 
     \mathrm{Risk}(P) = \frac{1}{\sigma^2} \mathbf{E} (Y - \mu)^2 = \frac{\mathrm{MSE}(\mu)}{\sigma^2}.
 $$
-The entropy[^norm-ent] is seen to be $H(P_0) = 1/2.$
-The Kullback-Leibler divergence of $P$ from $P_0$ is therefore 
+The entropy[^norm-ent] is seen to be $H(P^0) = 1/2.$
+The Kullback-Leibler divergence of $P$ from $P^0$ is therefore 
 $$
-    K(P_0\|P) = \frac{\mathrm{MSE}(\mu)}{2\sigma^2} - \frac{1}{2}
+    K(P^0\|P) = \frac{\mathrm{MSE}(\mu)}{2\sigma^2} - \frac{1}{2}
     = \frac{\mathrm{bias}^2(\mu)}{2\sigma^2},
 $$
 which is precisely the squared bias relative to the 
@@ -490,7 +490,7 @@ variance as discussed in @exm-sqloss.
 
 The example above shows the relation between the squared error loss and the 
 negative log-likelihood loss for the normal distribution. For a semiparametric model of 
-the mean -- where a distributional assumption is not made -- the squared error loss
+the mean---where a distributional assumption is not made---the squared error loss
 is still a sensible loss under a constant variance assumption. 
 
 ::: {#exm-exp-KL}
@@ -498,38 +498,38 @@ If $P_\theta = \mathcal{E}(\theta, \nu_{\varphi})$ is an exponential dispersion 
 $$ 
     - 2 \log h_{\theta}(y) = 2 \frac{\kappa(\theta) - \theta y}{\varphi},
 $$
-so if $Y \sim \mathcal{E}(\theta_0, \nu_{\varphi})$ the risk is given as 
+so if $Y \sim \mathcal{E}(\theta^0, \nu_{\varphi})$ the risk is given as 
 $$
-    \mathrm{Risk}(P) = 2 \frac{\kappa(\theta) - \theta \mu(\theta_0)}{\varphi},
+    \mathrm{Risk}(P) = 2 \frac{\kappa(\theta) - \theta \mu(\theta^0)}{\varphi},
 $$
 where $\mu$ is the mean value function. 
 
-[The reference measure is taken as $\nu_{\varphi}$, and this example does 
+[The reference measure is taken as $\nu_{\varphi},$ and this example does 
 therefore not cover the comparison of distributions with different dispersion parameters.]{.aside}
 
 The entropy is similarly
 $$
-    H(P_0) = \frac{\kappa(\theta_0) - \theta_0 \mu(\theta_0)}{\varphi},
+    H(P^0) = \frac{\kappa(\theta^0) - \theta^0 \mu(\theta^0)}{\varphi},
 $$
 and the Kullback-Leibler divergence is 
 $$
     \begin{align*}
-        K(P_0\| P_\theta) & =  \frac{(\mu(\theta_0)(\theta_0 - \theta) - 
-        \kappa(\theta_0) + \kappa(\theta))}{\varphi} \\
-        & = \frac{d(\mu(\theta_0), \mu(\theta))}{2\varphi}
+        K(P^0\| P_\theta) & =  \frac{(\mu(\theta^0)(\theta^0 - \theta) - 
+        \kappa(\theta^0) + \kappa(\theta))}{\varphi} \\
+        & = \frac{d(\mu(\theta^0), \mu(\theta))}{2\varphi}
     \end{align*}
 $$
 with $d$ the unit deviance. 
 :::
 
 Note that in the example above the deviance $d(y, \mu(\theta))$ is equal 
-to $-2 \log h_{\theta}(y)$ up to an additive constant that does not depend upon $\theta$. 
+to $-2 \log h_{\theta}(y)$ up to an additive constant that does not depend upon $\theta.$ 
 We can therefore just as well replace the negative log-likelihood loss 
 by the deviance in the computation of the risk. For comparison purposes, 
 the constant will cancel out. 
 
-For any given unit deviance $d$ the deviance loss, $d(Y, \mu)$, can be computed for 
-any probability distribution $P$ on $\mathbb{R}$, provided it has finite mean
+For any given unit deviance $d$ the deviance loss, $d(Y, \mu),$ can be computed for 
+any probability distribution $P$ on $\mathbb{R},$ provided it has finite mean
 $$\mu  = \int y P(\mathrm{d}y).$$
 Since the deviance loss depends only on the mean, it is useful for semiparametric
 models just as the squared error loss is, and it may be more
@@ -554,25 +554,25 @@ From @exm-bindev it follows that the deviance for the Bernoulli distribution is
 $$
     d(y, p) = 2y \log \Big(\frac{y}{p}\Big) + 2(1-y) \log \Big(\frac{1-y}{1-p}\Big)
 $$ 
-for $y \in [0, 1]$ and $p \in (0,1)$.
-[Though a Bernoulli variable will only take the values $0$ or $1$, 
-the deviance is defined for $y$ in the closed interval $[0,1]$.]{.aside}
+for $y \in [0, 1]$ and $p \in (0,1).$
+[Though a Bernoulli variable will only take the values $0$ or $1,$ 
+the deviance is defined for $y$ in the closed interval $[0,1].$]{.aside}
 
-If $\mathbf{P}(Y = 1) = p_0$ we get that 
+If $\mathbf{P}(Y = 1) = p^0$ we get that 
 $$
-    \mathrm{Risk}(p) = - 2 p_0 \log p - 2 (1-p_0) \log (1-p).
+    \mathrm{Risk}(p) = - 2 p^0 \log p - 2 (1-p^0) \log (1-p).
 $$
 The entropy is 
 $$
-    H(p_0) = p_0 \log p_0 + (1-p_0) \log (1-p_0),
+    H(p^0) = p^0 \log p^0 + (1-p^0) \log (1-p^0),
 $$
 and the Kullback-Leibler divergence is given by
 $$   
     \begin{align*}
-        2K(p_0\|p) & = \mathrm{Risk}(p) - 2 H(p_0) \\
-        & = 2 p_0 \log \Big(\frac{p_0}{p}\Big) + 
-        2 (1-p_0) \log \Big(\frac{1-p_0}{1-p}\Big) \\
-        & = d(p_0, p).
+        2K(p^0\|p) & = \mathrm{Risk}(p) - 2 H(p^0) \\
+        & = 2 p^0 \log \Big(\frac{p^0}{p}\Big) + 
+        2 (1-p^0) \log \Big(\frac{1-p^0}{1-p}\Big) \\
+        & = d(p^0, p).
     \end{align*}
 $$
 :::
@@ -580,7 +580,7 @@ $$
 
 ```{r}
 #| label: fig-KL-bernoulli-div
-#| fig-cap: "Risk for the Bernoulli deviance is a convex function of the probability parameter $p$. The true probability is $p_0 = 0.3$ with entropy $1.22 / 2 = 0.61$. The deviance $d(p_0, p)$ equals twice the Kullback-Leibler divergence of $p$ from $p_0$."
+#| fig-cap: "Risk for the Bernoulli deviance is a convex function of the probability parameter $p.$ The true probability is $p^0 = 0.3$ with entropy $1.22 / 2 = 0.61.$ The deviance $d(p^0, p)$ equals twice the Kullback-Leibler divergence of $p$ from $p^0.$"
 #| fig-cap-location: margin
 #| engine: tikz
 #| echo: false 
@@ -591,10 +591,10 @@ $$
   \draw[domain=0.5:9.5,smooth,samples=50] plot (\x, {-4*0.3*ln(\x/10)-4*0.7*ln(1-\x/10)}); 
 %  \draw plot[smooth] coordinates {(0.5, 3.74) (1, 3.06) (1.5, 2.73) (2, 2.56) (3, 2.44) (4, 2.52) 
 %  (5, 2.78) (6, 3.18) (7, 3.80) (8, 4.78) (8.5, 5.51) (9, 6.58) (9.5, 8.44)};
-  \draw[-] (3, -0.1) node [below] {$p_0 = 0.3$} -- (3, 0.1);
+  \draw[-] (3, -0.1) node [below] {$p^0 = 0.3$} -- (3, 0.1);
   \draw[-] (10, -0.1) node [below] {$1$} -- (10, 0.1);
   \draw[dashed] (8, 2.44) -- (8, 4.78);
-  \node[right] at (8.5, 3.61) {$d(p_0, p)$};
+  \node[right] at (8.5, 3.61) {$d(p^0, p)$};
 \end{tikzpicture}
 ```
 
@@ -602,8 +602,8 @@ $$
 
 For a regression model of $Y$ conditionally on the predictor 
 variable $X$ there are two different ways of assessing the predictive strength of the model. 
-Either conditionally on $X = x$ or integrated over the distribution of $X$. With 
-$P(x)$ denoting the probability model of $Y$ given $X = x$ it is thus possible to consider 
+Either conditionally on $X = x$ or integrated over the distribution of $X.$ With 
+$P_x$ denoting the probability model of $Y$ given $X = x$ it is thus possible to consider 
 the conditional risk
 [The convention is that an expectation is always over all random 
 variables inside the parentheses. That is, it is an integration out over the joint 
@@ -611,48 +611,51 @@ distribution of all variables. Conditional expectations are used when
 one or more variables are held fixed.]{.aside}
 
 $$
-    \mathrm{Risk}(P(x)) = E \big( \mathrm{Loss}(Y, P(x)) \bigm| X = x\big),
+    \mathrm{Risk}(P_x) = \mathbf{E}\big( \mathrm{Loss}(Y, P_x) \bigm| X = x\big),
 $$ 
 as well as the unconditional risk
 $$
-    \mathrm{Risk}(P) = E \big( \mathrm{Loss}(Y, P(X))) = E \big( \mathrm{Risk}(P(X)) \big),
+    \mathrm{Risk}(P) = \mathbf{E}\big( \mathrm{Loss}(Y, P_X)) = \mathbf{E}\big( \mathrm{Risk}(P_X) \big),
 $$
 where the tower property of conditional expectations is used to get the last identity. 
 The unconditional risk is also called the *generalization error*
-\index{generalization error} of the model $P$. We denote it $\mathrm{Risk}(P)$, but remember
-that $P$ is now a map, $x \mapsto P(x)$, that gives a model of the 
-conditional distribution of $Y$ given $X = x$. 
+\index{generalization error} of the model $P.$ We denote it $\mathrm{Risk}(P),$ but remember
+that $P$ is now a map, 
+$$
+    x \mapsto P_x,
+$$ 
+that gives a model of the conditional distribution of $Y$ given $X = x.$ 
 
-With $m$ predictors $X_1, \ldots, X_m$ and
-the conditional risk for the $i$-th response denoted 
-$\mathrm{Risk}_i(P(X_i))$, we can summarize the conditional risks 
+With $v$ predictors $X_1, \ldots, X_v$ and
+the conditional risk for the $i$-th response denoted
+$\mathrm{Risk}_i(P_{X_i}),$ we can summarize the conditional risks
 as the average risk
 $$
-    \mathrm{Risk}_{\mathrm{avg}}(P) = \frac{1}{m} \sum_{i=1}^m \mathrm{Risk}_i(P(X_i)).
+    \mathrm{Risk}_{\mathrm{avg}}(P) = \frac{1}{v} \sum_{i=1}^v \mathrm{Risk}_i(P_{X_i}).
 $$
 When the empirical distribution of the observed predictors resembles 
-the marginal distribution[^LLN] of $X$, the average risk is a sensible 
-estimate of $\mathrm{Risk}(P)$. However, if the empirical distribution of the $X_i$-s 
-does not match the distribution of $X$, $\mathrm{Risk}_{\mathrm{avg}}(P)$ can be a 
+the marginal distribution[^LLN] of $X,$ the average risk is a sensible 
+estimate of $\mathrm{Risk}(P).$ However, if the empirical distribution of the $X_i$-s 
+does not match the distribution of $X,$ $\mathrm{Risk}_{\mathrm{avg}}(P)$ can be a 
 biased estimate of the unconditional risk. 
 This is particularly problematic if the $X_i$-s are selected to overrepresent situations where 
-the model gives very good predictions -- whether or not the selection was deliberate to give a 
+the model gives very good predictions---whether or not the selection was deliberate to give a 
 favorable validation or just due to ignorance. 
 
-[^LLN]: Which is the case if $X_1, \ldots, X_m$ are i.i.d. observations 
+[^LLN]: Which is the case if $X_1, \ldots, X_v$ are i.i.d. observations
 with the same distribution as $X$ by the law of large numbers.
 
 ## Error estimates {#sec-err-est}
 
 Practical model assessment requires that we can compute
-the generalization error $\mathrm{Risk}(\hat{P})$ for the model, $\hat{P}$,
-that has been fitted to data. Since $P_0$ is unknown the theoretical formulas 
+the generalization error $\mathrm{Risk}(\hat{P})$ for the model, $\hat{P},$
+that has been fitted to data. Since $P^0$ is unknown the theoretical formulas 
 in the preceding section are of little value. The generalization error has to be estimated somehow. This section
 deals with the estimation of the generalization error.
 
 Risk estimation is not straightforward because the data is already used once for 
 fitting the model. If $\hat{P}$ denotes the 
-fitted model based on the data $(X_1, Y_1), \ldots, (X_n, Y_n)$, its average 
+fitted model based on the data $(X_1, Y_1), \ldots, (X_n, Y_n),$ its average 
 loss on the dataset is 
 [For the squared error loss 
 $$
@@ -668,7 +671,7 @@ $$
 $$
 where $\chi^2$ is the $\chi^2$-statistic.]{.aside}
 $$
-    \mathrm{err} = \frac{1}{n} \sum_{i=1}^n \mathrm{Loss}(Y_i, \hat{P}(X_i)).
+    \mathrm{err} = \frac{1}{n} \sum_{i=1}^n \mathrm{Loss}(Y_i, \hat{P}_{X_i}).
 $$ {#eq-err}
 This number is also known as the *training error*. \index{training error}
 It is **not** a good estimate of neither the average risk nor 
@@ -677,14 +680,14 @@ because $(Y_i, X_i)$ and $\hat{P}$ are dependent. It will typically have a
 downward bias, that is, it underestimates the generalization error and 
 is thus too optimistic about the predictive strength of the model. 
 As a rule of thumb, the more complex and flexible the model is, the more will
-$\mathrm{err}$ underestimate the generalization error of $\hat{P}$. 
+$\mathrm{err}$ underestimate the generalization error of $\hat{P}.$ 
 
 It is possible that a complex model with a small training error is both a 
 better fit to data and a better predictive model than a simple model. But it is 
 also possible that the complex model *overfits* the data and is worse as a predictive model.
 For the linear model used in the bike rent example,
 the inclusion of a more flexible nonlinear expansion of a predictor variable appears to improve the 
-model fit -- up to some point -- but eventually the model appears to pick up specific 
+model fit---up to some point---but eventually the model appears to pick up specific 
 fluctuations in the data. 
 
 An overfitted model captures properties of the data that are specific to the given dataset,
@@ -700,35 +703,35 @@ for their optimism.
 To obtain an unbiased estimate of the risk of $\hat{P}$ an independent *validation dataset* \index{validation data} 
 is required. That is, 
 in addition to the data used for fitting $\hat{P}$ we need an independent dataset
-$$(X_1^{\mathrm{new}}, Y_1^{\mathrm{new}}), \ldots, (X_m^{\mathrm{new}}, Y_m^{\mathrm{new}})$$ 
+$$(X_1^{\mathrm{new}}, Y_1^{\mathrm{new}}), \ldots, (X_v^{\mathrm{new}}, Y_v^{\mathrm{new}})$$
 with 
 the $Y_i^{\mathrm{new}}$-s conditionally independent given the predictors and with 
-$Y_i^{\mathrm{new}}$ having conditional distribution $P_0(X_i^{\mathrm{new}})$.
+$Y_i^{\mathrm{new}}$ having conditional distribution $P^0_{X_i^{\mathrm{new}}}.$
 In this case we define the estimator 
 $$
-    \widehat{\mathrm{Risk}} = \frac{1}{m} \sum_{i=1}^m 
-    \mathrm{Loss}( Y_i^{\mathrm{new}}, \hat{P}(X_i^{\mathrm{new}})).
+    \widehat{\mathrm{Risk}} = \frac{1}{v} \sum_{i=1}^v
+    \mathrm{Loss}( Y_i^{\mathrm{new}}, \hat{P}_{X_i^{\mathrm{new}}}).
 $$
 It follows by the independence between $\hat{P}$ and the validation data
 that $\widehat{\mathrm{Risk}}$ is an unbiased estimate of 
 the average risk, in the sense that 
 $$
     \begin{align*}
-        \mathbf{E}(\widehat{\mathrm{Risk}} \mid \hat{P}, \mathbf{X}^{\mathrm{new}}) & = \frac{1}{m} \sum_{i=1}^m 
-        \mathbf{E}(\mathrm{Loss}( Y_i^{\mathrm{new}}, \hat{P}(X_i^{\mathrm{new}})) \mid \hat{P}, X_i^{\mathrm{new}})\\
-        & = \frac{1}{m} \sum_{i=1}^m 
-        \mathrm{Risk}_i(\hat{P}(X_i^{\mathrm{new}}))\\
+        \mathbf{E}(\widehat{\mathrm{Risk}} \mid \hat{P}, \mathbf{X}^{\mathrm{new}}) & = \frac{1}{v} \sum_{i=1}^v
+        \mathbf{E}(\mathrm{Loss}( Y_i^{\mathrm{new}}, \hat{P}_{X_i^{\mathrm{new}}}) \mid \hat{P}, X_i^{\mathrm{new}})\\
+        & = \frac{1}{v} \sum_{i=1}^v
+        \mathrm{Risk}_i(\hat{P}_{X_i^{\mathrm{new}}})\\
         & = \mathrm{Risk}_{\mathrm{avg}}(\hat{P}).
     \end{align*}
 $$
 Whether $\widehat{\mathrm{Risk}}$ can be regarded as an unbiased estimate of the generalization 
-error depends -- as in the discussion above -- on whether the empirical 
-distribution of $X_1^{\mathrm{new}}, \ldots, X_m^{\mathrm{new}}$ is representative of 
+error depends---as in the discussion above---on whether the empirical 
+distribution of $X_1^{\mathrm{new}}, \ldots, X_v^{\mathrm{new}}$ is representative of
 the distribution of future $X$-s. 
 
 Error estimation using validation data is fairly straightforward. 
 It is, however, important not to make the mistake of peeping at the validation 
-data while estimating $P$. We should, for example, 
+data while estimating $P.$ We should, for example, 
 avoid preprocessing steps, such as data standardization, that use the validation 
 data. While the inclusion of the validation data for standardization is 
 a small blunder, it is a major mistake to include the validation data in a 
@@ -740,7 +743,7 @@ is used for model fitting. If the dataset is small, setting aside a part of the 
 be used for model assessment only is not a viable option. And we can in all 
 cases argue that we could fit a better model if we used all data for the model fitting. 
 The following section treats data splitting techniques that allow us to use all 
-data for model fitting while still giving good estimates of predictive strength -- with 
+data for model fitting while still giving good estimates of predictive strength---with 
 some extra computational costs.
 [What we call "validation data" is also known as "test data". Sometimes, data is split 
 in three parts with "training data" used to fit models, "test data" used to 
@@ -754,7 +757,7 @@ Data splitting techniques comprise a collection of
 procedures that mimic setting aside a validation dataset while not actually doing so. Hence 
 the full dataset is used for fitting the model while the model assessment is 
 based on the data splitting procedure. The data splitting procedures discussed 
-in this section are all base on Assumption A6, that is, we assume that 
+in this section are all based on Assumption A6, that is, we assume that 
 the observations $(X_1, Y_1), \ldots, (X_n, Y_n)$ are i.i.d.
 
 #### Expected generalization error {.unnumbered}
@@ -767,7 +770,7 @@ we will not directly estimate the generalization error of the model $\hat{P}$ th
 With $(Y^{\mathrm{new}}, X^{\mathrm{new}})$ independent of $\hat{P}$ the
 expected generalization error is defined as 
 $$
-    \mathrm{Err} = E \big(\mathrm{Loss}(Y^{\mathrm{new}}, \hat{P}(X^{\mathrm{new}}))\big).
+    \mathrm{Err} = \mathbf{E}\big(\mathrm{Loss}(Y^{\mathrm{new}}, \hat{P}_{X^{\mathrm{new}}})\big).
 $$
 [Observe that $\hat{P}$ is random as a function of the data, thus by convention the expectation defining the generalization error is an expectation over the data as well.]{.aside}
 :::
@@ -775,8 +778,8 @@ $$
 It follows from the definition of the generalization error and the tower property 
 of conditional expectations that
 $$
-    \mathrm{Err} = E\Big( E \big(\mathrm{Loss}(Y^{\mathrm{new}}, \hat{P}(X^{\mathrm{new}})) \bigm| \hat{P} \big) \Big) 
-    = E \big( \mathrm{Risk}(\hat{P}) \big).
+    \mathrm{Err} = \mathbf{E}\Big( \mathbf{E}\big(\mathrm{Loss}(Y^{\mathrm{new}}, \hat{P}_{X^{\mathrm{new}}}) \bigm| \hat{P} \big) \Big)
+    = \mathbf{E}\big( \mathrm{Risk}(\hat{P}) \big).
 $$
 The hierarchy of error measures and estimates can be quite mind-boggling, but think about 
 $\mathrm{Err}$ as an assessment of the *estimation method* used for computing 
@@ -787,28 +790,28 @@ $\hat{P}$ rather than an assessment of $\hat{P}$ *per se*.
 ## Squared error loss
 
 For the squared error loss and any estimator $\hat{m}$ of the 
-regression function, we first condition on $X^{\mathrm{new}} = x$. 
+regression function, we first condition on $X^{\mathrm{new}} = x.$ 
 Then with 
 $$
     \begin{align*}
         m(x) & \coloneqq \mathbf{E}(\hat{m}(x)) \\ 
-        m_0(x) & \coloneqq \mathbf{E}(Y^{\mathrm{new}} \mid X^{\mathrm{new}} = x) \\
+        m^0(x) & \coloneqq \mathbf{E}(Y^{\mathrm{new}} \mid X^{\mathrm{new}} = x) \\
         \sigma^2(x) & \coloneqq \mathbf{V}(Y^{\mathrm{new}} \mid X^{\mathrm{new}} = x)
     \end{align*}
 $$
 we have 
 $$
-    \mathrm{Risk}(\hat{m}(x)) = \mathrm{MSE}(\hat{m}(x)) = (m_0(x) - \hat{m}(x))^2 +  \sigma^2(x), 
+    \mathrm{Risk}(\hat{m}(x)) = \mathrm{MSE}(\hat{m}(x)) = (m^0(x) - \hat{m}(x))^2 +  \sigma^2(x), 
 $$
 and we get the decomposition
 $$
     \begin{align*}
         \mathbf{E}( \mathrm{MSE}(\hat{m}(x)) )
-        & = \mathbf{E}((m_0(x) - \hat{m}(x))^2) + \sigma^2(x) \\
-        & = (m_0(x) - m(x))^2 + \mathbf{E}((m(x) - \hat{m}(x))^2) 
-        \\ & \quad + 2 (\mu_0(x) - m(x)) \mathbf{E}(m(x) - \hat{m}(x))+ \sigma^2(x) \\
-        & = (m_0(x) - m(x))^2 + \mathbf{V}(\hat{m}(x)) + \sigma^2(x) \\
-        & = \mathrm{bias}(x)^2 + \mathrm{variance}(x) + \sigma^2(x). 
+        & = \mathbf{E}((m^0(x) - \hat{m}(x))^2) + \sigma^2(x) \\
+        & = (m^0(x) - m(x))^2 + \mathbf{E}((m(x) - \hat{m}(x))^2) 
+        \\ & \quad + 2 (m^0(x) - m(x)) \mathbf{E}(m(x) - \hat{m}(x))+ \sigma^2(x) \\
+        & = (m^0(x) - m(x))^2 + \mathbf{V}(\hat{m}(x)) + \sigma^2(x) \\
+        & = \mathrm{bias}(x)^2 + \mathrm{variance}(x) + \sigma^2(x),
     \end{align*}
 $$
 where we have used that $\mathbf{E}(m(x) - \hat{m}(x)) = 0$ for the third identity. From this 
@@ -819,17 +822,17 @@ $$ {#eq-bias-variance}
 where 
 $$
     \begin{align*}
-        \mathrm{bias}^2 & = \mathbf{E}(\mathrm{bias}^2(X)) \\
-        \mathrm{variance} & = \mathbf{E}(\mathrm{variance}(X)) \\
-        \sigma^2 & = \mathbf{E}(\sigma^2(X)).
+        \mathrm{bias}^2 & \coloneqq \mathbf{E}(\mathrm{bias}^2(X)) \\
+        \mathrm{variance} & \coloneqq \mathbf{E}(\mathrm{variance}(X)) \\
+        \sigma^2 & \coloneqq \mathbf{E}(\sigma^2(X)).
     \end{align*}
 $$
 Thus the expected generalization error decomposes into a sum of three non-negative 
 terms. The term $\sigma^2$ is called the *irreducible error*, sometimes also known 
 as the *Bayes risk*. It does not depend on the model or the estimator and lower bounds 
 the expected generalization error for all models and estimators. The two 
-other terms are the expected variance and the expected squared bias of the estimator -- the 
-expectation being over the marginal distribution of the predictor $X$.  
+other terms are the expected variance and the expected squared bias of the estimator---the 
+expectation being over the marginal distribution of the predictor $X.$  
 :::
 
 The decomposition given by @eq-bias-variance is conceptually useful. It provides
@@ -839,14 +842,14 @@ the squared bias and the variance of the model/estimator. We generally expect
 that the more complex a model is, the smaller is the bias, but the larger is the 
 variance of the estimator. Thus there is a *bias-variance* tradeoff. 
 In practice it can be difficult to directly estimate the two terms $\mathrm{bias}^2$ 
-and $\mathrm{variance}$, and the decomposition is therefore less useful 
+and $\mathrm{variance},$ and the decomposition is therefore less useful 
 for estimating the expected generalization error.
 
 #### Data splitting procedures {.unnumbered}
 
 To estimate $\mathrm{Err}$ we turn to *data splitting*. Besides 
 leading to estimators of the expected generalization error, 
-these procedures also work for any choice of loss function -- not 
+these procedures also work for any choice of loss function---not 
 just the squared error loss, say. 
 
 The three main data splitting procedures we describe below
@@ -856,16 +859,16 @@ the model and the other works as an independent validation dataset. In round $b$
 $b = 1,\ldots, B$ the index set $\{1, \ldots, n\}$ is divided 
 into two disjoint subsets $I(b)$ and $J(b)$ followed by two steps:
 
-1. The model $\hat{P}_b$ is fitted based on data with indices in $I(b)$.
-2. The losses $\mathrm{L}(b,i) = \mathrm{Loss}(Y_i, \hat{P}_b(X_i))$ are computed for $i \in J(b)$. 
+1. The model $x \mapsto \hat{P}_x(b)$ is fitted based on data with indices in $I(b).$
+2. The losses $\mathrm{L}(b,i) \coloneqq \mathrm{Loss}(Y_i, \hat{P}_{X_i}(b))$ are computed for $i \in J(b).$ 
 
 After the $B$ rounds of model fitting and loss computation the average loss
 is computed as 
 $$
     \widehat{\mathrm{Err}} = \frac{1}{N} \sum_{b=1}^B \sum_{i \in J(b)} \mathrm{L}(b,i)
 $$ {#eq-gen-err-est}
-with $N = \sum_{b=1}^B |J(b)|$. It is essential 
-that the model $\hat{P}_b$ is fitted to the data given by the index
+with $N = \sum_{b=1}^B |J(b)|.$ It is essential 
+that the model $\hat{P}(b)$ is fitted to the data given by the index
 set $I(b)$ in *exactly* the same way as $\hat{P}$ is fitted to the full dataset. This includes any kind of 
 variable selection, parameter tuning or the like that might be carried out as part of 
 the model fitting. Otherwise $\widehat{\mathrm{Err}}$ could be overly optimistic. 
@@ -873,34 +876,34 @@ the model fitting. Otherwise $\widehat{\mathrm{Err}}$ could be overly optimistic
 A complete specification of a data splitting procedure requires that the 
 division of the index set is specified. The following three are the most used:
 
-**Subsampling:** Subset $I$ of size $m < n$ is sampled *without replacement* 
-    from $\{1, \ldots, n\}$ and $J$ is the complement of $I$. \index{subsampling}
+**Subsampling:** Subset $I$ of size $v < n$ is sampled *without replacement*
+    from $\{1, \ldots, n\}$ and $J$ is the complement of $I.$ \index{subsampling}
 
 **Cross-validation ($K$-fold):** The index set $\{1, \ldots, n\}$ is randomly divided into $K$ disjoint 
-    sets $H_1, \ldots, H_K$ of roughly equal size $\approx n/K$. This defines $K$ rounds of data splitting 
-    with $I(k) = \{1, \ldots, n\} \backslash H_k$ and $J(k) = H_k$ for $k = 1, \ldots, K$. \index{cross-validation}
-[For cross-validation, $B = MK$ is always an integer multiple $M \in \mathbb{N}$ of $K$.]{.aside}
+    sets $H_1, \ldots, H_K$ of roughly equal size $\approx n/K.$ This defines $K$ rounds of data splitting 
+    with $I(k) = \{1, \ldots, n\} \backslash H_k$ and $J(k) = H_k$ for $k = 1, \ldots, K.$ \index{cross-validation}
+[For cross-validation, $B = MK$ is always an integer multiple $M \in \mathbb{N}$ of $K.$]{.aside}
 
 **Bootstrapping:** Subset $I$ of size $n$ (replicates counted with multiplicities) 
-    is sampled *with replacement* from $\{1, \ldots, n\}$ and $J$ is the complement of $I$. 
+    is sampled *with replacement* from $\{1, \ldots, n\}$ and $J$ is the complement of $I.$ 
     \index{Bootstrap!error estimation}
 
 Remember that the estimate $\hat{P}$ is computed using all $n$ observations in the dataset, but that
 the data splitting procedures result in an average of losses computed for different 
 estimates based on different subsets of the full dataset. We can therefore not regard
-$\widehat{\mathrm{Err}}$ as an estimate of the generalization error[^gen-est] $\mathrm{Risk}(\hat{P})$.
+$\widehat{\mathrm{Err}}$ as an estimate of the generalization error[^gen-est] $\mathrm{Risk}(\hat{P}).$
 It is, however, fairly clear that the data splitting procedures 
 are empirically mimicking the definition of the *expected* 
 generalization error $\mathrm{Err}$: the model is fitted on 
 one part of the data and the loss is computed on an independent part, and the losses 
-are the averaged. Intuitively, $\widehat{\mathrm{Err}}$ is therefore an estimate of $\mathrm{Err}$.
+are then averaged. Intuitively, $\widehat{\mathrm{Err}}$ is therefore an estimate of $\mathrm{Err}.$
 
 [^gen-est]: To estimate $\mathrm{Risk}(\hat{P})$ we really need an independent validation dataset.
 
 Since $\mathrm{Err}$ is a quantification of the estimation procedure rather 
-than the specific estimate $\hat{P}$, it is essential that the *entire* model 
+than the specific estimate $\hat{P},$ it is essential that the *entire* model 
 fitting process is properly accounted for.
-To avoid overly optimistic error estimates, the estimation procedure should preferable 
+To avoid overly optimistic error estimates, the estimation procedure should preferably
 be completely specified prior to seeing data, and $\hat{P}$ should then be computed according 
 to that procedure. The estimates computed in the data splitting process can then 
 be computed in exactly the same way. This can be difficult to do in practice, 
@@ -944,7 +947,7 @@ cv <- function(form, data, K = 10, M = 20) {
 ```
 
 We then run cross-validation for the sequence of models with $\mathrm{df}$ 
-ranging from $1$ to $12$, and we also compute the training MSE. We use the 
+ranging from $1$ to $12,$ and we also compute the training MSE. We use the 
 default settings with $K = 10$ and $M = 20$ in the implementation of `cv()` 
 above. That is, we do $10$-fold cross-validation for $20 \cdot 10 = 200$ rounds.
 
@@ -977,14 +980,14 @@ ggplot(cv_bike, aes(df, cv)) +
 @fig-cv-bike shows the resulting training MSE and cross-validated MSE. We make 
 the following three observations:
 
-1. The traning MSE (red) is monotonely decreasing with model complexity. This 
+1. The training MSE (red) is monotonely decreasing with model complexity. This 
     is in accordance with our previous observations.
 2. The cross-validated MSE (blue) is always larger than the training MSE. This 
     is expected and reflects the optimism of the training error. We note that 
     this optimism increases with model complexity.
-3. The cross-validated MSE (blue) attains a minimum for $\mathrm{df} = 4$. This
+3. The cross-validated MSE (blue) attains a minimum for $\mathrm{df} = 4.$ This
     shows that the model with optimal (expected) predictive performance is the model 
-    with $\mathrm{df} = 4$.
+    with $\mathrm{df} = 4.$
 ::: 
 
 #### Properties of data splitting estimators {.unnumbered}
@@ -999,32 +1002,32 @@ needed. The graph of $\mathrm{Err}(n)$ as a function of $n$ is known as the
 error curve[^learning]. \index{error curve} It will typically be monotonely decreasing 
 and bounded below. If the sets $I(b)$ 
 in the data splitting procedure are all of roughly equal size, 
-$|I(b)| \approx m$ for all $b$, say, 
-it is appropriate[^not-boot] to regard $\widehat{\mathrm{Err}}$ as an estimate of $\mathrm{Err}(m)$
-rather than $\mathrm{Err}(n)$. 
-If $m < n$ and the error curve is steep around $m$, $\widehat{\mathrm{Err}}$ will overestimate 
-$\mathrm{Err}(n)$. 
+$|I(b)| \approx v$ for all $b,$ say,
+it is appropriate[^not-boot] to regard $\widehat{\mathrm{Err}}$ as an estimate of $\mathrm{Err}(v)$
+rather than $\mathrm{Err}(n).$
+If $v < n$ and the error curve is steep around $v,$ $\widehat{\mathrm{Err}}$ will overestimate
+$\mathrm{Err}(n).$ 
 
-[^learning]: A close relative to the *learning curve*, which is given by $c - \mathrm{Err}(n)$ for some suitable constant $c$.
+[^learning]: A close relative to the *learning curve*, which is given by $c - \mathrm{Err}(n)$ for some suitable constant $c.$
 [^not-boot]: For subsampling and cross-validation but not bootstrapping.
 
 For subsampling it follows directly that 
 $$
-    E\big(\widehat{\mathrm{Err}}\big) = \mathrm{Err}(m) \qquad \text{(subsampling)}
+    \mathbf{E}\big(\widehat{\mathrm{Err}}\big) = \mathrm{Err}(v) \qquad \text{(subsampling)}
 $$ 
 and for $K$-fold cross-validation 
 $$
-    E \big(\widehat{\mathrm{Err}}\big) \approx \mathrm{Err}((1 - 1/K) n) \qquad \text{(cross-validation).}
+    \mathbf{E}\big(\widehat{\mathrm{Err}}\big) \approx \mathrm{Err}((1 - 1/K) n) \qquad \text{(cross-validation).}
 $$ 
-For small datasets the error curve may be rather steep in a neighborhood of $n$, and 
-it is recommended to take $K = 10$ to obtain an estimate of $\mathrm{Err}(0.9 n)$. 
+For small datasets the error curve may be rather steep in a neighborhood of $n,$ and 
+it is recommended to take $K = 10$ to obtain an estimate of $\mathrm{Err}(0.9 n).$ 
 For large datasets the error curve may be less steep and taking $K = 5$ to 
 obtain an estimate of $\mathrm{Err}(0.8 n)$ will suffice.
 
-The situation for bootstrapping is more complicated. Even though $|I(b)| = n$,
+The situation for bootstrapping is more complicated. Even though $|I(b)| = n,$
 some of the data points appear
 multiple times due to the sampling with replacement. @Efron:1983 showed that 
-$E \big(\widehat{\mathrm{Err}}\big)$ agrees with $\mathrm{Err}(n/2)$ up 
+$\mathbf{E}\big(\widehat{\mathrm{Err}}\big)$ agrees with $\mathrm{Err}(n/2)$ up 
 to second order, which makes the bootstrap method comparable with 
 $2$-fold cross-validation. This gives a potential
 bias of the method. Several corrections exist 
@@ -1033,7 +1036,7 @@ but they will not be pursued here, see @Efron:1997.
 There is some instability of $\widehat{\mathrm{Err}}$ caused by the random 
 splitting. This can be reduced by replicating the data splitting procedure 
 to give as many rounds as is computationally feasible. For $K$-fold cross-validation the number of rounds 
-are integer multiples $M$ of $K$. Cross-validation can sensibly be used 
+are integer multiples $M$ of $K.$ Cross-validation can sensibly be used 
 with $M = 1$ giving the minimal number of $K$ rounds, which makes it only moderately computationally demanding.
 Among the three data splitting procedures, cross-validation with $K = 5$ or $K=10$ 
 is the most widely used and recommended as it usually strikes a good balance between computation time and 
@@ -1054,28 +1057,28 @@ from the original model fit. In this case leave-one-out cross-validation can be 
 computationally cheap alternative to the other data splitting procedures. 
 
 Irrespectively of the data splitting procedure used, it is difficult to 
-quantify the uncertainty of $\widehat{\mathrm{Err}}$ as an estimator of $\mathrm{Err}$.
+quantify the uncertainty of $\widehat{\mathrm{Err}}$ as an estimator of $\mathrm{Err}.$
 The estimator is an average of dependent variables and we cannot easily estimate 
 its variance, say. It is common for cross-validation with $B = K$ (that is, $M = 1$) to 
 pretend that the terms in ([-@eq-gen-err-est]) are i.i.d. and 
 compute standard errors under this assumption. This is an acceptable 
 heuristic, but generally we don't have any good finite sample approximations of 
-the distribution of $\widehat{\mathrm{Err}}$. The distributions of the
+the distribution of $\widehat{\mathrm{Err}}.$ The distributions of the
 different error estimators are explored empirically in a simulation study in 
 @sec-data-split-comp.
 
 ### Analytic error estimates
 
-In the previous section the training error, $\mathrm{err}$, was discarded 
+In the previous section the training error, $\mathrm{err},$ was discarded 
 as a valid error estimate. Alternatives were described
 based on the idea of using independent validation data for error estimation.
 This section gives analytic error estimates that can be understood as bias corrections 
-of $\mathrm{err}$. These analytic estimates do not rely on independent validation 
+of $\mathrm{err}.$ These analytic estimates do not rely on independent validation 
 or repeated data splitting and refitting of the model, and they
 can typically be computed efficiently. This comes at the price 
 of added model assumptions, and the analytic error estimates are unfortunately 
-estimates of yet another error quantity closely related to -- but not exactly the same as --
-the average risk.
+estimates of yet another error quantity closely related to---but not exactly the same
+as---the average risk.
 
 ::: {#def-in-sample-err}
 With $Y_1^{\mathrm{new}}, \ldots, Y_n^{\mathrm{new}}$ conditionally independent of
@@ -1083,7 +1086,7 @@ $\hat{P}$ given $\mathbf{X}$ and with the same conditional distribution as $Y_1,
 the in-sample error is defined as 
 $$
     \mathrm{Err}_{\mathrm{in}} = \frac{1}{n} \sum_{i=1}^n 
-    E \big(\mathrm{Loss}(Y_i^{\mathrm{new}}, \hat{P}(X_i)) \mid \mathbf{X}\big).
+    \mathbf{E}\big(\mathrm{Loss}(Y_i^{\mathrm{new}}, \hat{P}_{X_i}) \mid \mathbf{X}\big).
 $$
 [Observe that $\mathbf{E}(\mathrm{Err}_{\mathrm{in}})$ is *not* equal to 
 $\mathrm{Err}$ in general. There is a difference between reusing the $X_i$-s 
@@ -1091,11 +1094,11 @@ or using independent $X_i^{\mathrm{new}}$-s for the prediction.]{.aside}
 ::: 
 
 The general definition above of the in-sample error is based on 
-Assumption A5 of conditionally independence of the response variables 
+Assumption A5 of conditional independence of the response variables 
 given the predictors, which is weaker than Assumption A6. 
 This is sensible as the in-sample error fixes the predictors to be 
 the observed predictions, and it is therefore also a weaker quantification 
-of predictive stength than the (expected) generalization error. It can, 
+of predictive strength than the (expected) generalization error. It can, 
 nevertheless, still be useful for model comparisons. 
 
 The main reason we consider the in-sample error is that we can 
@@ -1123,7 +1126,7 @@ estimated.]{.aside}
 
 ::: {.proof}
 From @def-exp-deviance of the deviance, or rather @eq-exp-deviance,
-[The proof is base on the deviance formula in @eq-exp-deviance, which always holds for $Y_i \in J$, but was shown to hold also for $Y_i \in \overline{J} \backslash J$ for some specific cases, including the binomial and Poisson models.]{.aside}
+[The proof is base on the deviance formula in @eq-exp-deviance, which always holds for $Y_i \in J,$ but was shown to hold also for $Y_i \in \overline{J} \backslash J$ for some specific cases, including the binomial and Poisson models.]{.aside}
 $$
     d_i^{\mathrm{new}} \coloneqq d(Y_i^{\mathrm{new}}, \hat{\mu}_i) = 
     r(Y_i^{\mathrm{new}}) - 2 g(\hat{\mu}_i) Y_i^{\mathrm{new}} + 2 \kappa(g(\hat{\mu}_i))
@@ -1132,13 +1135,13 @@ and
 $$
     d_i \coloneqq d(Y_i, \hat{\mu}_i) = r(Y_i) - 2 g(\hat{\mu}_i) Y_i + 2 \kappa(g(\hat{\mu}_i))
 $$
-for some function $r$. Subtracting these two quantities and 
+for some function $r.$ Subtracting these two quantities and 
 taking conditional expectation given $\mathbf{X}$ yields
 $$
     \mathbf{E}(d_i^{\mathrm{new}} - d_i \mid \mathbf{X}) = 2  \mathbf{E}(g(\hat{\mu}_i)(Y_i - Y_i^{\mathrm{new}}) \mid \mathbf{X})
 $$
 since $Y_i$ and $Y_i^{\mathrm{new}}$ are assumed to have the same conditional distribution. 
-This implies, additional, that $Y_i - Y_i^{\mathrm{new}}$ has conditional mean $0$, and the right hand side above 
+This implies, additional, that $Y_i - Y_i^{\mathrm{new}}$ has conditional mean $0,$ and the right hand side above 
 is a covariance. Thus 
 $$
     \begin{align*}
@@ -1146,7 +1149,7 @@ $$
         & =  2 \mathrm{cov}(g(\hat{\mu}_i), Y_i \mid \mathbf{X})
     \end{align*}
 $$
-since $Y_i^{\mathrm{new}}$ is conditionally independent of $\hat{\mu}_i$. This gives that 
+since $Y_i^{\mathrm{new}}$ is conditionally independent of $\hat{\mu}_i.$ This gives that 
 $$
     \begin{align*}
         \mathrm{Err}_{\mathrm{in}} & = \frac{1}{n} \sum_{i=1}^n 
@@ -1159,9 +1162,9 @@ $$
 
 
 @eq-insampleformula may appear intimidating at first, but it is really 
-quite interpretable. Clearly, $\mathrm{err}$ is an unbiased estimate of $\mathbf{E}(\mathrm{err} \mid \mathbf{X})$,
+quite interpretable. Clearly, $\mathrm{err}$ is an unbiased estimate of $\mathbf{E}(\mathrm{err} \mid \mathbf{X}),$
 but ([-@eq-insampleformula]) shows that it is biased as an estimate of the in-sample error.
-The bias is expressed in terms of the covariances between $g(\hat{\mu}_i)$ and $Y_i$, 
+The bias is expressed in terms of the covariances between $g(\hat{\mu}_i)$ and $Y_i,$ 
 which makes good sense. A large positive correlation between the response $Y_i$ and the 
 value $g(\hat{\mu}_i)$ for $i = 1, \ldots, n$ indicates that the $\hat{\mu}_i$-s will be somewhat worse 
 at predicting independent $Y_i^{\mathrm{new}}$-s than $\mathrm{err}$ suggests. 
@@ -1171,11 +1174,11 @@ at predicting independent $Y_i^{\mathrm{new}}$-s than $\mathrm{err}$ suggests.
 
 ::: {#def-eff-df}
 For a canonical link function $g$ the corresponding *effective degrees of freedom* 
-of the estimator $\hat{\mu}_i$, $i = 1, \ldots, n$, is defined as 
+of the estimator $\hat{\mu}_i,$ $i = 1, \ldots, n,$ is defined as 
 $$
     \mathrm{df} = \frac{1}{\varphi} \sum_{i=1}^n \mathrm{cov}(g(\hat{\mu}_i), Y_i \mid \mathbf{X}).
 $$
-[The effective degrees of freedom only makes sense when using the deviance corresponding to the canonical link $g$ as loss. However, it makes sense for any choice of estimator $\hat{\mu}_i$.]{.aside}
+[The effective degrees of freedom only makes sense when using the deviance corresponding to the canonical link $g$ as loss. However, it makes sense for any choice of estimator $\hat{\mu}_i.$]{.aside}
 ::: 
 
 If $\hat{\mathrm{df}}$ denotes a suitable estimator of the effective degrees of freedom we can 
@@ -1190,7 +1193,7 @@ $$
 $$
 of the dispersion parameter, where $\mathcal{X}^2$ is the Pearson $\mathcal{X}^2$-statistic 
 for the model with $p$ parameters. If $\widehat{\mathrm{Err}}_{\mathrm{in}}$ is used for comparing 
-multiple models, we should use a single model with a small bias (large $p$) to estimate $\varphi$. 
+multiple models, we should use a single model with a small bias (large $p$) to estimate $\varphi.$ 
 A closely related quantity is Mallows's $C_p$-statistic, which is defined as 
 $$
     C_p = n \, \widehat{\mathrm{Err}}_{\mathrm{in}} = n \, \mathrm{err} + 2 \hat{\varphi} \ \hat{\mathrm{df}}.
@@ -1213,7 +1216,7 @@ for an $n \times n$ matrix $\mathbf{S}$ (which depends on $\mathbf{X}$ but *not*
 Such an estimator is called linear. The projection estimator 
 derived in @sec-estimation-theory for the linear model is a linear estimator given by
 [Many so-called *smoothers* \index{smoother}
-are, in fact, linear estimators for a suitable choice of matrix $\mathbf{S}$ -- 
+are, in fact, linear estimators for a suitable choice of matrix $\mathbf{S}$---
 hence the notation $\mathbf{S}$ for smoother. ]{.aside}
 $$
     \mathbf{S} = \mathbf{X} (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T.
@@ -1256,7 +1259,7 @@ $$ {#eq-linear-in-sample-est}
 All the models considered for the bike rental example are linear models, and we 
 can use ([-@eq-linear-in-sample-est]) to estimate the in-sample error. Doing so,
 we also add cross-validation errors estimated using either $5$-fold or $20$-fold 
-cross-validation -- in addition to $10$-fold cross-validation already considered in 
+cross-validation---in addition to $10$-fold cross-validation already considered in 
 @exm-bike. 
 
 ```{r}
@@ -1292,10 +1295,13 @@ errors depending on the folds, all the error estimates have a similar shape and
 agree that models with $\mathrm{df} = 3$ or $\mathrm{df} = 4$ are best. 
 
 As discussed in @sec-err-est, $5$-fold cross-validation is in this case effectively estimating 
-$\mathrm{Err}(40)$, corresponding to a sample size of 
-$n = 40$. Since $10$-fold and $25$-fold cross-validation correspond to 
-estimating $\mathrm{Err}(45)$ and $\mathrm{Err}(48)$, respectively, 
-and since we expect $\mathrm{Err}(40) > \mathrm{Err}(45)  > \mathrm{Err}(48)  > \mathrm{Err}(50)$,
+$\mathrm{Err}(40),$ corresponding to a sample size of 
+$40$ rather than $50.$ Since $10$-fold and $25$-fold cross-validation correspond to 
+estimating $\mathrm{Err}(45)$ and $\mathrm{Err}(48),$ respectively, 
+and since we expect 
+$$
+    \mathrm{Err}(40) > \mathrm{Err}(45)  > \mathrm{Err}(48)  > \mathrm{Err}(50),
+$$
 the ordering of the cross-validated error estimates is unsurprising.
 We note that the in-sample error is generally smaller than the cross-validated errors, but it 
 resembles $25$-fold cross-validation more than $5$-fold cross-validation. 
@@ -1308,7 +1314,7 @@ function is canonical.
 ::: {#exm-oracle}
 Assume that $\hat{\mu}_i = \mu(X^T_i \hat{\beta}^{\mathrm{oracle}})$ with 
 $\hat{\beta}^{\mathrm{oracle}}$ the oracle weighted least squares estimator introduced in @sec-oracle,
-and the $\mu = g^{-1}$ is the inverse of the canonical link $g$. Then $g(\hat{\mu}_i) = (\mathbf{S} \mathbf{Z})_i$ for 
+and the $\mu = g^{-1}$ is the inverse of the canonical link $g.$ Then $g(\hat{\mu}_i) = (\mathbf{S} \mathbf{Z})_i$ for 
 $$
     \mathbf{S} = \mathbf{X} (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} \mathbf{X}^T \mathbf{W}.
 $$
@@ -1316,7 +1322,7 @@ Under the distributional assumptions **GA2** and **A4**, $Z_i$ is conditionally 
 $$
     \mathrm{cov}(Z_i, Y_i \mid \mathbf{X}) = \frac{\varphi \mathcal{V}(\mu_i)}{\mu_i'} = \varphi,
 $$
-since $\mu = g^{-1}$. As in @exm-trace we conclude that 
+since $\mu = g^{-1}.$ As in @exm-trace we conclude that 
 $$
     \sum_{i=1}^n \mathrm{cov}(\hat{\mu}_i, Y_i \mid \mathbf{X})  = \varphi \mathrm{trace}(\mathbf{S}).
 $$
@@ -1337,16 +1343,16 @@ where $\mathbf{I}_p$ denotes the $p \times p$ identity matrix.
 
 In addition to the estimate of the in-sample error or Mallows's $C_p$ above, 
 AIC must be mentioned as another classical analytic way to quantify a model's predictive 
-stength. As stated below, AIC is up to scaling by the dispersion parameter identical to 
+strength. As stated below, AIC is up to scaling by the dispersion parameter identical to 
 Mallows's $C_p$ if the deviance loss is used. 
 
 \index{AIC}
 
 ::: {#def-aic} 
-Assume that $P_i = P_i(\beta)$ for $\beta \in \mathbb{R}^p$ a $p$-dimensional parameter
-$\beta$. With $\ell$ the negative log-likelihood loss we define Akaike's information criteria as 
+Assume that $P_i = P_{\beta, i}$ for $\beta \in \mathbb{R}^p$ a $p$-dimensional parameter.
+With $\ell$ the negative log-likelihood loss we define Akaike's information criteria as 
 $$
-    \mathrm{AIC} = 2 \sum_{i=1}^n \ell(\hat{P}_i) + 2 p.
+    \mathrm{AIC} \coloneqq 2 \sum_{i=1}^n \ell(\hat{P}_i) + 2 p.
 $$  
 [The factor "2" in the definition of AIC is a somewhat arbitrary convention.]{.aside}
 ::: 
@@ -1362,17 +1368,17 @@ $$
     \frac{1}{2n} \mathrm{AIC}.
 $$
 
-[^disp-est]: Either assuming that we know the dispersion parameter or that we just plainly ignore that it is estimated too. If it is estimated we should use a single value for all models as discussed above in relation to Mallows's $C_p$.
+[^disp-est]: Either assuming that we know the dispersion parameter or that we just plainly ignore that it is estimated too. If it is estimated we should use a single value for all models as suggested above for Mallows's $C_p.$
 
 The justification of AIC hinges on a number of assumptions, and its justification is 
-asymptotic for $n \to \infty$. We will not pursue 
+asymptotic for $n \to \infty.$ We will not pursue 
 the arguments in any detail, but just mention three important assumptions for $\mathrm{AIC}$ to
 be justifiable:
 
-1. The estimator must be $\hat{P}_i = P_i(\hat{\beta})$ with $\hat{\beta}$ the 
+1. The estimator must be $\hat{P}_i = P_{\hat{\beta},i}$ with $\hat{\beta}$ the 
     *maximum likelihood estimator.*
-2. The data generating model must be of the form $P(\beta)$ for some $\beta$, thus AIC
-    is invalid if the model is misspecified.
+2. The data generating model must be of the form $P^0_i = P_{\beta^0,i}$ for some $\beta^0,$ 
+   thus AIC is invalid if the model is misspecified.
 3. For comparability of AIC between two models it is essential that the same reference measure is 
     used for the definition of the likelihood. 
     
@@ -1459,7 +1465,7 @@ we simulate from the model with
 $$
     Y \mid X \sim \mathcal{N}(0, \sigma^2).
 $$
-In the simulations we fix $p_0 = 20$ and $\sigma^2 = 1$. 
+In the simulations we fix $p_0 = 20$ and $\sigma^2 = 1.$
 
 ```{r}
 #| label: sim-setup  
@@ -1502,7 +1508,7 @@ in @tbl-sim-1 are larger, and the bootstrap estimate is notably larger than the
 two others. 
 
 In this example we can actually compute the expected training error[^uncond]. 
-Since $\mathrm{err} = \hat{\sigma}^2 \frac{n - p}{n}$, it follows from @thm-OLS-moments that 
+Since $\mathrm{err} = \hat{\sigma}^2 \frac{n - p}{n},$ it follows from @thm-OLS-moments that 
 $$
     \mathbf{E}(\mathrm{err}) = \mathbf{E}(\mathrm{err} \mid \mathbf{X}) = \sigma^2(1 - \frac{p}{n}) = 1 - 21/100 = 0.79.
 $$
@@ -1513,11 +1519,11 @@ $$
 
 For subsampling with $q = 0.9$ and for $10$-fold cross-validation, the error estimates have 
 mean $\mathrm{Err}(90)$ and the bootstrapping error estimate has approximately mean 
-$\mathrm{Err}(50)$. Though these numbers are not exactly the same as the corresponding in-sample 
-errors for $n = 90$ and $n = 50$, which are $1.23$ and $1.42$, respectively, they turn out to 
+$\mathrm{Err}(50).$ Though these numbers are not exactly the same as the corresponding in-sample 
+errors for sample sizes $90$ and $50,$ which are $1.23$ and $1.42,$ respectively, they turn out to 
 be relatively close. 
 
-[^uncond]: Unconditionally as well as conditionally on $\mathbf{X}$.
+[^uncond]: Unconditionally as well as conditionally on $\mathbf{X}.$
 
 In the simulation above a large number of rounds ($B = 200$) were used. In real applications this may be 
 computationally prohibitive as this requires a large number of refits of the model. 
@@ -1588,7 +1594,7 @@ exactly to the training error plus $2 p / n = 42 / 100 = 0.42$ in this case.
 
 The different estimates of risk show a considerable variation. A fraction of this 
 variation is due to a random data splitting. By increasing $B$ we can decrease 
-the variance. @fig-data-split-50 shows the result of increasing the number of rounds by a factor $5$ to $B = 50$. 
+the variance. @fig-data-split-50 shows the result of increasing the number of rounds by a factor $5$ to $B = 50.$ 
 
 ```{r}
 #| label: sim-2
@@ -1654,15 +1660,15 @@ err_hat |> group_by(Method) |>
 ## Binary model assessment
 
 The framework of risk, generalization error, in-sample error etc. was introduced
-for a general loss function in the previous sections. The deviance loss -- or negative log-likelihood loss --
-was treated in detail. With a binary response variable there are alternative
+for a general loss function in the previous sections. The deviance loss---or negative log-likelihood 
+loss---was treated in detail. With a binary response variable there are alternative
 and widely used methods for assessing the predictive strength of a regression model. This
 section treats some of the most important ones.
 
 ### Concordance parameters
 
 A probability model of a binary variable is completely characterized by the probability
-$p = \mathbf{P}(Y=1)$. For a regression model, this probability will be a function of the 
+$p = \mathbf{P}(Y=1).$ For a regression model, this probability will be a function of the 
 predictor, 
 $$
     p(x) = \mathbf{P}(Y = 1 \mid X= x) = \mathbf{E}(Y \mid X = x).
@@ -1670,23 +1676,23 @@ $$
 This is simply the regression function for a binary response.  
 
 To give a prediction in the sample space $\{0,1\}$ we can,
-for instance, choose a threshold like $0.5$ and predict that $Y = 1$ if $p(X) > 0.5$. It is,
-however, more informative to know $p(x)$ than just to know if $p(x) > 0.5$. The focus 
-is therefore typically on modeling $p(x)$ rather than just if $p(x) > 0.5$. 
+for instance, choose a threshold like $0.5$ and predict that $Y = 1$ if $p(X) > 0.5.$ It is,
+however, more informative to know $p(x)$ than just to know if $p(x) > 0.5.$ The focus 
+is therefore typically on modeling $p(x)$ rather than just if $p(x) > 0.5.$ 
 It is, moreover, of considerable interest to study predictions generated by 
 a probability model for a range of different values of the threshold instead of 
-just choosing a fixed threshold such as $0.5$.
+just choosing a fixed threshold such as $0.5.$
 
 For a generalized linear model, $p(x) = \mu(x^T\beta)$ where $\mu$ is the mean value 
 function and $x^T \beta$ is the linear predictor. 
 In this section we will study general prediction models being real valued 
-functions, $x \mapsto \eta(x) \in \mathbb{R}$, of the predictor. 
+functions, $x \mapsto \eta(x) \in \mathbb{R},$ of the predictor. 
 In combination with a choice of mean value function $\mu : \mathbb{R} \to [0,1]$ a 
 prediction model gives rise to a probability model 
 $$
     p(x) = \mu(\eta(x)).
 $$
-If the mean value function is strictly monotonely increasing with inverse, $g$, 
+If the mean value function is strictly monotonely increasing with inverse, $g,$ 
 being the corresponding link function, we observe that 
 $$
     p(x) > t \quad \Leftrightarrow \quad \eta(x) > g(t).
@@ -1711,7 +1717,7 @@ $$
 
 The parameter $\mathrm{AUC}$ is a *concordance parameter*, \index{concordance parameter}
 which measures concordance between the distributions of the 
-variables $\eta_0$ and $\eta_1$. For $\mathrm{AUC}$ around $0.5$ the two distributions 
+variables $\eta_0$ and $\eta_1.$ For $\mathrm{AUC}$ around $0.5$ the two distributions 
 are overlapping or in concordance. For  $\mathrm{AUC}$ close to $1$ or $0$ the two 
 distributions are well separated. 
 
@@ -1723,21 +1729,21 @@ $$
 One interpretation of $\mathrm{AUC}$ is as a quantification of 
 how separated the conditional distributions of $\eta(X) \mid Y = 0$ and 
 $\eta(X) \mid Y = 1$ are. A predictor model with $\mathrm{AUC} \approx 0.5$
-will not give accurate predictions of $Y$ by thresholding $\eta(X)$. 
+will not give accurate predictions of $Y$ by thresholding $\eta(X).$ 
 If $\mathrm{AUC} \approx 1$ it is possible to choose a threshold $t$ that almost 
  separates the two distributions, so that $Y$ can be accurately predicted as 
- $1(\eta(X) > t)$. 
+ $1(\eta(X) > t).$ 
  
 Changing the threshold will always change the tradeoff 
  between the type of errors we will make, 
-but the specific choice of threshold does not affect $\mathrm{AUC}$. This is 
-one of the attractive properties of $\mathrm{AUC}$. If $\mathrm{AUC} \approx 0$,
-the threshold predictor $1(\eta(X) < t)$ will be an accurate predictor of $Y$, but we prefer in this case 
-to replace $\eta(X)$ by $-\eta(X)$. We will thus always assume that the sign 
-of $\eta$ is chosen so that larger values of $\eta(X)$ indicate that $Y = 1$. 
+but the specific choice of threshold does not affect $\mathrm{AUC}.$ This is 
+one of the attractive properties of $\mathrm{AUC}.$ If $\mathrm{AUC} \approx 0,$
+the threshold predictor $1(\eta(X) < t)$ will be an accurate predictor of $Y,$ but we prefer in this case 
+to replace $\eta(X)$ by $-\eta(X).$ We will thus always assume that the sign 
+of $\eta$ is chosen so that larger values of $\eta(X)$ indicate that $Y = 1.$ 
 
 If the distribution functions for $\eta_0$ and $\eta_1$ are 
-denoted $F_0$ and $F_1$, respectively, then 
+denoted $F_0$ and $F_1,$ respectively, then 
 $$
     \begin{align*} 
     \mathrm{AUC} & = \int F_0(t) \mathrm{d}F_1(t) - \frac{1}{2} \sum_{t} \Delta F_0(t) \Delta F_1(t) \\
@@ -1778,11 +1784,11 @@ $$
 $$
 where $m$ is a natural cubic spline. When answering the questions below, use the squared error loss function.
 
-1. Fit the above model with $1$, $2$, $4$, $8$, and $16$ degrees of freedom to the gapminder data. Compute the training
+1. Fit the above model with $1,$ $2,$ $4,$ $8,$ and $16$ degrees of freedom to the gapminder data. Compute the training
     error for each of the fitted models. Based on a visual inspection of the fitted models, is there any
     indication of underfitting and overfitting?
 
-2. Compute an estimate of the expected generalisation error using $10$-fold cross-validation (with $M = 1$). 
+2. Compute an estimate of the expected generalization error using $10$-fold cross-validation (with $M = 1$). 
     Which model has the best predictive performance?
 
 3. For the model selected above, repeat $10$-fold cross-validation $100$ times and visualize the
@@ -1795,15 +1801,15 @@ where $m$ is a natural cubic spline. When answering the questions below, use the
 :::
 
 ::: {#exr-ridge-in-sample}
-Recall from @exm-sqloss that a linear estimator is of the form 
+Recall from @exm-trace that a linear estimator is of the form 
 $$
     \hat{\boldsymbol{\mu}} = \mathbf{S} \mathbf{Y}
 $$
-for an $\mathbf{X}$-dependent matrix $\mathbf{S}$. Here $\boldsymbol{\mu} = \mathbf{E}(\mathbf{Y} \mid \mathbf{X}) \in \mathbb{R}^n$ 
+for an $\mathbf{X}$-dependent matrix $\mathbf{S}.$ Here $\boldsymbol{\mu} = \mathbf{E}(\mathbf{Y} \mid \mathbf{X}) \in \mathbb{R}^n$ 
 is the vector of conditional expectations of the response given the predictors.
 
 1. Show that the penalized and weighted least squares estimator, solving the normal equation in @thm-normal, 
-    is linear and identify the matrix $\mathbf{S}$. 
+    is linear and identify the matrix $\mathbf{S}.$ 
 
 For the rest of this exercise we assume that the weight matrix is $\mathbf{W} = \mathbf{I}$ and 
 the penalty matrix is diagonal and of the form
@@ -1819,19 +1825,19 @@ $$
         \right)
 $$
 
-where $\lambda > 0$. You should think about $\lambda$ as a *tuning parameter* that we want to 
+where $\lambda > 0.$ You should think about $\lambda$ as a *tuning parameter* that we want to 
 optimize over, while $\omega_1, \ldots, \omega_p \geq 0$ are fixed penalty weights determining 
 the relative distribution of penalization on the different parameters. We also let $\hat{\beta}$
 and $\hat{\boldsymbol{\mu}}$ denote the (unpenalized) least squares estimator of $\beta$ and 
-$\boldsymbol{\mu}$, respectively. 
+$\boldsymbol{\mu},$ respectively. 
 
 2. Show that if the model matrix $\mathbf{X}$ has orthogonal columns[^orthogonal], then 
     with 
     $$
         \gamma_j = \sum_{i=1}^n X_{ij}^2 = \| \mathbf{X}_{\cdot, j} \|^2
     $$
-    the squared 2-norm of the $j$-th column of $\mathbf{X}$, 
-    the penalized least squares estimator, $\hat{\beta}_\lambda$, is given by 
+    the squared 2-norm of the $j$-th column of $\mathbf{X},$ 
+    the penalized least squares estimator, $\hat{\beta}_\lambda,$ is given by 
     $$
         \hat{\beta}_{\lambda,j} = \frac{\gamma_j}{\gamma_j + \lambda \omega_j} \hat{\beta}_j
     $$
@@ -1845,12 +1851,12 @@ $\boldsymbol{\mu}$, respectively.
     $$
         \mathrm{df}_\lambda = \sum_{j=1}^p \frac{\gamma_j}{\gamma_j + \lambda}.
     $$
-    where $\gamma_1, \ldots, \gamma_p \geq 0$ are the eigenvalues of $\mathbf{X}^T \mathbf{X}$.
+    where $\gamma_1, \ldots, \gamma_p \geq 0$ are the eigenvalues of $\mathbf{X}^T \mathbf{X}.$
 
 For the remaining part of this exercise we consider the bike rental data introduced in 
 @sec-bike. Using the `poly()` function we construct a model matrix with $p = 7$ orthogonal columns, 
 corresponding to expanding the regression function using orthogonal polynomials of degree
-$6$.
+$6.$
 
 ```{r}
 #| label: bike-exr
@@ -1877,23 +1883,23 @@ ggplot(bike_aug, aes(Temperature, Count)) +
 
 The least squares estimate is computed above as `beta_hat`, and the corresponding 
 fitted values are shown in @fig-bike-poly. For the following questions we take 
-$\omega_1 = \omega_2 = 0$ and $\omega_3 = \ldots = \omega_{7} = 1$.
+$\omega_1 = \omega_2 = 0$ and $\omega_3 = \ldots = \omega_{7} = 1.$
 
 
 4. Check numerically that `X` (approximately) has *orthogonal* columns.
-5. Compute an estimate of $\sigma^2$ based on the least squares estimate $\hat{\beta}$ of $\beta$.
-6. Implement the computation of $\hat{\boldsymbol{\mu}}_\lambda$ and $\mathrm{df}_\lambda$ for a sequence[^lambda] of values of $\lambda$.
+5. Compute an estimate of $\sigma^2$ based on the least squares estimate $\hat{\beta}$ of $\beta.$
+6. Implement the computation of $\hat{\boldsymbol{\mu}}_\lambda$ and $\mathrm{df}_\lambda$ for a sequence[^lambda] of values of $\lambda.$
 7. Compute $\mathrm{err}$ for the sequence of $\lambda$-values and compute then a sequence of estimates of the in-sample error. Plot the 
     in-sample error against the effective degrees of freedom. What is the best model according to the in-sample error?
 8. Implement cross-validation to estimate the expected generalization error. Compare graphically 
-    $\mathrm{err}$, $\widehat{\mathrm{Err}}_{\mathrm{in}}$ and $\widehat{\mathrm{Err}}$ as a function of the 
+    $\mathrm{err},$ $\widehat{\mathrm{Err}}_{\mathrm{in}}$ and $\widehat{\mathrm{Err}}$ as a function of the 
     effective degrees of freedom.
 
 *Note: There is a subtle difference between the following two procedures: i) splitting the data and recomputing the model matrix using `poly()` on a subset of the data; and ii) subsetting the model matrix `X` that is computed from all data. You may want to explore this difference and think about which of the two procedures is most appropriate.* 
 
-[^orthogonal]: An $n \times p$ matrix $\mathbf{X}$ with *orthonormal* columns satifies that $\mathbf{X}^T \mathbf{X} = \mathbf{I}$, and we may call $\mathbf{X}$ *orthogonal* even though it is typically not square $(n > p)$. Here we only assume that the columns are orthogonal implying that $\mathbf{X}^T \mathbf{X}$ is diagonal. 
+[^orthogonal]: An $n \times p$ matrix $\mathbf{X}$ with *orthonormal* columns satisfies that $\mathbf{X}^T \mathbf{X} = \mathbf{I},$ and we may call $\mathbf{X}$ *orthogonal* even though it is typically not square $(n > p).$ Here we only assume that the columns are orthogonal implying that $\mathbf{X}^T \mathbf{X}$ is diagonal. 
 
-[^lambda]: It can be a little tricky to find a suitable sequence. Note that $\lambda = 0$ gives the least squares estimate and a large value of $\lambda$ effectively makes $\hat{\beta}_\lambda = (\hat{\beta}_0, \hat{\beta}_1, 0, \ldots, 0)^T$. 
+[^lambda]: It can be a little tricky to find a suitable sequence. Note that $\lambda = 0$ gives the least squares estimate and a large value of $\lambda$ effectively makes $\hat{\beta}_\lambda = (\hat{\beta}_0, \hat{\beta}_1, 0, \ldots, 0)^T.$ 
 :::
 
 ::: {#exr-gauss-auc}
@@ -1901,9 +1907,9 @@ Let $\eta_0$ and $\eta_1$ be independent real valued random variables fulfilling
 $$
     \eta_1 \overset{\mathcal{D}}{=} \eta_0 + \xi
 $$ 
-for $\xi \in \mathbb{R}$. That is, the distribution of $\eta_1$ is a translation by $\xi$ 
-of the distribution of $\eta_0$. Assume 
-also that the distribution function, $F_0$, for $\eta_0$ is continuous. 
+for $\xi \in \mathbb{R}.$ That is, the distribution of $\eta_1$ is a translation by $\xi$ 
+of the distribution of $\eta_0.$ Assume 
+also that the distribution function, $F_0,$ for $\eta_0$ is continuous. 
 
 1. Show that 
     $$
@@ -1913,12 +1919,12 @@ also that the distribution function, $F_0$, for $\eta_0$ is continuous.
     $$
         G(z) = \int F_0(z + x) \mathrm{d}F_0(x).
     $$
-2. Argue that $G$ is the distribution function for the distribution of $\eta_0 - \tilde{\eta}_0$, where 
+2. Argue that $G$ is the distribution function for the distribution of $\eta_0 - \tilde{\eta}_0,$ where 
     $\tilde{\eta}_0$ is independent of $\eta_0$ with the same distribution. 
 3. Show that if $\eta_0 \sim \mathcal{N}(\mu, \sigma^2)$ then 
     $$
         \mathrm{AUC} = \Phi\Big(\frac{\xi}{\sqrt{2}\sigma}\Big).
     $$
 [This exercise shows that for Gaussian distributions with the same variance, $\mathrm{AUC}$ is a monotonely increasing function 
-of the *signal-to-noise ratio* $\xi/\sigma$.]{.aside}
+of the *signal-to-noise ratio* $\xi/\sigma.$]{.aside}
 :::

@@ -1559,7 +1559,7 @@ seen in a figure are actually statistically significant.
 
 ::: {#exr-formulas-spline-expansions}
 
-This is a continuation of Exercise @exr-formulas.
+This is a continuation of @exr-formulas.
 
 ```{r}
 #| label: formula-sim-data
@@ -1683,3 +1683,65 @@ $$
     \mathrm{cov}(\varepsilon_{-j}, X_j) = \mathbf{E}(\beta_j(X_{-j})v_j(X_{-j})),
 $$
 where $v_j(X_{-j}) = \mathbf{V}(X_j - r_j(X_{-j}) \mid X_{-j})$ is a conditional variance.
+
+::: {#exr-logistic-regression}
+This exercise is based on the `TitanicSurvival` dataset from the carData
+package, which records the survival status, sex, age and passenger class
+of the 1309 passengers aboard the Titanic; see 
+
+`?carData::TitanicSurvival`
+
+for details. If the carData package is not installed on your computer, 
+you need to install it first.
+
+Age is missing for around 20% of the passengers in the dataset, and these
+should be excluded for this analysis.
+
+```{r}
+#| label: titanic-data
+#| code-fold: show
+data(TitanicSurvival, package = "carData")
+titanic <- filter(TitanicSurvival, !is.na(age))
+```
+
+@fig-titanic-age shows the empirical survival proportion within age bins,
+which suggests a nonlinear relation between age and the probability of
+survival.
+
+```{r}
+#| label: fig-titanic-age
+#| fig-cap: "Empirical survival proportion within 5-year age bins."
+#| column: margin
+ggplot(titanic, aes(age, as.numeric(survived) - 1)) +
+    stat_summary_bin(fun = mean, binwidth = 5, geom = "point") +
+    ylab("Survival proportion")
+```
+
+:::
+
+1. Fit an additive logistic regression model of `survived` on `sex`,
+    `age` and `passengerClass`, treating `age` as linear on the logit
+    scale. Interpret the estimated coefficients.
+
+2. Assess whether the model fits the data by a residual plot (residuals against
+   fitted values). Use `simulate()` to simulate a few datasets from the fitted model,
+   refit and compare their smoothed residual plots. Does the additive model 
+   seem adequate?
+
+3. Now fit an extended model by including second order interactions, 
+   
+   `survived ~ sex*passengerClass*age`. 
+   
+   Assess if this model fits the data better.
+
+4. Use `anova()` to compute an "Analysis of Deviance Table" 
+   containing sequential deviance tests of a sequence of nested models. 
+   Explain the different models in the table and interpret the 
+   table. 
+
+5. Extend the model further by expanding `age` using natural cubic splines 
+   (`ns(age, df = 3)`) and refit the model. Visualize the fitted model 
+    by plotting the predicted
+    survival probability against `age`, separately for each combination
+    of `sex` and `passengerClass`, together with pointwise confidence
+    bands. Compare with the model from Question 3.
