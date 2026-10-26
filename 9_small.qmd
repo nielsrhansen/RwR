@@ -4,11 +4,12 @@
 source("_common.R")
 ```
 
-# Small for gestational age -- a case study {#sec-small}
+# Small for gestational age---a case study {#sec-small}
 
-::: {.callout-important}
-This chapter is still under development and certain parts are still a bit rough. 
-Notable changes will be made without notice, but the core structure of the 
+
+::: {.callout-warning}
+This chapter is still a draft and certain parts are a bit rough, particularly 
+Section 9.3.4. Some changes can be made without notice, but the core structure of the 
 chapter and the analyses and code are in place.
 :::
 
@@ -16,7 +17,7 @@ This chapter is a continuation of the case study on birth weight in
 @sec-birth. In that chapter the focus is on models of the *expected* 
 birth weight. In this chapter the focus is on 
 models of quantiles and more extreme cases, and on regression models 
-with a binary response. Specifically, we will 
+with a binary outcome. Specifically, we will 
 develop a model of a binary variable that we construct from the 
 data and call *small for gestational age*. It will represent cases where
 the birth weight is relatively extreme among births for the same 
@@ -44,9 +45,9 @@ as the indicator that birth weight is smaller than the 10% quantile.
 In @sec-binary we cover a number of binary regression models, 
 most notably logistic regression. The section covers both 
 standard applications of the general theory and methodology 
-for generalized linear models to this particular response
+for generalized linear models to this particular outcome
 distribution, and it covers some specific methods for 
-binary responses, in particular in terms of measuring predictive 
+binary outcomes, in particular in terms of measuring predictive 
 performance and special model diagnostic tools such as calibration 
 plots. 
 
@@ -119,7 +120,7 @@ p_box +
 ```
 
 It is clear from @fig-emp-quantiles that the empirical quantiles are rather 
-poorly determined for early and late births -- dues of the smaller number of 
+poorly determined for early and late births---due of the smaller number of 
 cases. We therefore turn to a spline based regression model of the conditional 
 mean, and then based on the model we can compute quantiles using two different 
 methods. Either as if the residuals were normally distributed, or by computing 
@@ -213,7 +214,7 @@ birth_weight <- mutate(
 
 When the reponse variable can only take two possible values we refer to 
 a corresponding regression model as a binary regression model. Usually we 
-encode the two possible outcomes of a binary response variable as $0$ (zero)
+encode the two possible outcomes of a binary outcome variable as $0$ (zero)
 and $1$ (one)[^encode]. This is convenient since for $Y \in \{0, 1\}$ it holds 
 that the (conditional) probability that $Y = 1$ given $X = x$ can be written as 
 $$
@@ -225,7 +226,7 @@ is a probability.
 
 [^encode]: It is also common to encode the binary outcomes as $\pm 1$. If the two outcomes represent asymmetric numerical values, e.g., a gain and loss in a game, we can also consider using that encoding.
 
-In the remaining part of this chapter, the response variable will be the 
+In the remaining part of this chapter, the outcome variable will be the 
 binary indicator `small` that was constructed in the section above. The 
 following two questions will drive our analysis:
 
@@ -233,7 +234,7 @@ following two questions will drive our analysis:
 * How good a predictive model of `small` can we fit to the data?
 
 Seeking answers to these two questions will get us around many aspects of 
-modeling a binary response variable using a regression model.
+modeling a binary outcome variable using a regression model.
 
 We note that we will not redo any exploratory data analysis in this chapter. All 
 the predictor variables in the dataset are the same as in @sec-birth and we
@@ -246,7 +247,7 @@ as predictors of the indicator variable `small`. The first model we fit is a
 logistic regression model with all variables entering additively and with the 
 numerical variables `age`, `alcohol` and `feverEpisodes` entering linearly 
 (on the link scale). The logistic regression model is the model with a binomial 
-response distribution and logit link function (the canonical link for the binomial model).
+outcome distribution and logit link function (the canonical link for the binomial model).
 
 ```{r}
 #| label: small-glm
@@ -307,7 +308,7 @@ gridExtra::grid.arrange(p1, p2, p3, p4, ncol = 4)
 ```
 
 What about the variance function and the dispersion parameter? Note first 
-that since the response is binary, its (conditional) distribution is completely 
+that since the outcome is binary, its (conditional) distribution is completely 
 determined by $p(x)$ and its (conditional) variance equals 
 $$
     \mathbf{V}(Y \mid X = x) = p(x) (1 - p(x)).
@@ -318,7 +319,7 @@ $$
     \mathcal{V}(\mu) = \mu (1 - \mu),
 $$
 is *automatically* correct, and the dispersion parameter equals $\varphi = 1$. 
-For binary response variables there is no such phenomenon as "overdispersion" -- 
+For binary outcome variables there is no such phenomenon as "overdispersion"---
 but the mean value model can still be misspecified, which will then also lead to 
 a misspecification of the variance. 
 
@@ -380,7 +381,7 @@ tidy(small_glm)[-1, "estimate"] |>
 in the model. We note that these are generally in corcordance with the conclusions 
 from the tests above. That is, for they do not contain $0$ for any of the parameters 
 related to the variables `children`, `smoking` and `coffee`, while they do contain $0$ 
-for the remaining variables -- except `abortions3` where the interval just misses $0$ 
+for the remaining variables---except `abortions3` where the interval just misses $0$ 
 to the left. 
 
 What is perhaps more important is that @tbl-small-confint allows us to 
@@ -485,7 +486,7 @@ tibble(
 
 The logarithm and the identity are occasionally also used as link functions. 
 They do not map $\mathbb{R}$ into $(0, 1)$, which can 
-lead to various issues -- both numerical issues and issues with interpretations and applications. 
+lead to various issues---both numerical issues and issues with interpretations and applications. 
 But they may sometimes be better choices if the effects of the predictors are better captured this way. 
 If we want to use the identity link, we can consider using `lm()` instead of 
 `glm(family = binomial(link = "identity"))`. The former will fit the model using least 
@@ -599,7 +600,45 @@ $p$. We say that the predictions are *well calibrated* if that is true.
 For a binary regression model this means that $Y = 1$ happens 
 in about $p(x)$ of the cases where $X = x$. 
 
-![Calibration plot (flipped) showing how well (or poorly) calibrated probabilistic predictions of rain are.  Source: "The Signal and the Noise" by Nate Silver.](weather-forecast-accuracy-flipped.png){#fig-calibration width="90%" fig-align="center" fig-cap-location="margin"}
+```{r}
+#| label: fig-calibration
+#| fig-cap: "Calibration plot showing how well (or poorly) calibrated probabilistic predictions of rain are. Source: *The Signal and the Noise* by Nate Silver."
+#| fig-cap-location: margin
+#| echo: false
+forecast_calibration <- tibble(
+    service = factor(
+        rep(c("Local TV meteorologist", "The Weather Channel",
+              "National Weather Service"), each = 11),
+        levels = c("Local TV meteorologist", "The Weather Channel",
+                   "National Weather Service")
+    ),
+    predicted = rep(seq(0, 1, 0.1), 3),
+    observed = c(
+        0.090, 0.060, 0.110, 0.190, 0.271, 0.280,  # Local TV meteorologist
+        0.470, 0.591, 0.591, 0.631, 0.680,
+        0.022, 0.031, 0.060, 0.251, 0.389, 0.510,  # The Weather Channel
+        0.620, 0.731, 0.801, 0.904, 0.921,
+        0.012, 0.087, 0.187, 0.288, 0.351, 0.450,  # National Weather Service
+        0.620, 0.671, 0.720, 0.861, 0.980
+    )
+)
+
+pct <- function(x) paste0(100 * x, "%")
+
+ggplot(forecast_calibration,
+       aes(predicted, observed, color = service, shape = service)) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2.5) +
+    scale_color_manual(values = c("#ABABAB", "#FF800E", "#006BA4")) +
+    scale_shape_manual(values = c(18, 16, 15)) +
+    scale_x_continuous(breaks = seq(0, 1, 0.2), labels = pct) +
+    scale_y_continuous(breaks = seq(0, 1, 0.2), labels = pct) +
+    coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
+    xlab("predicted probability of rain") +
+    ylab("observed frequency of rain") +
+    theme(legend.position = "top", legend.title = element_blank())
+```
 
 @fig-calibration shows a plot of predicted probabilities of rain against 
 observed probabilities for three different kinds of weather forecasting 
@@ -607,7 +646,7 @@ service. We see that on local TV the risk of rain is exaggerated for most
 of the scale of actual probabilities. The Weather Channel exaggerates the 
 risk when the probabilities are small. For example, when they report a 20% 
 risk of rain, it actually only rains in about 5% of the cases. However, from 
-30% and up, the The Weather Channel's predictions are well calibrated, and
+30% and up, The Weather Channel's predictions are well calibrated, and
 The National Weather Service makes well calibrated probabilistic predictions 
 on the entire scale. 
 
@@ -671,9 +710,9 @@ cal_plot <- ggplot(mapping = aes(p_local, obs_local)) +
 #| opts.label: widefigure
 #| message: false
 gridExtra::grid.arrange(
-    cal_plot %+% group_p(birth_weight$small, fitted(small_glm), n_probs = 50) + 
+    cal_plot + group_p(birth_weight$small, fitted(small_glm), n_probs = 50) + 
         coord_cartesian(xlim = c(0, 0.35), ylim = c(0, 0.35)),
-    cal_plot %+% group_p(birth_weight$small, fitted(small_glm), n_probs = 100) + 
+    cal_plot + group_p(birth_weight$small, fitted(small_glm), n_probs = 100) + 
         coord_cartesian(xlim = c(0, 0.35), ylim = c(0, 0.35)),
     ncol = 2
 )                     
@@ -681,7 +720,7 @@ gridExtra::grid.arrange(
 
 @fig-cal-plot-small shows the calibration plot for the logistic regression 
 model. The predictions are not poorly calibrated, but they are not
-perfect either. The predicted probabilities slightly underpredicts 
+perfect either. The predicted probabilities slightly underpredict 
 the observed probabilities in the range between 0.1 and 0.2.
 
 One way to potentially improve the model is to include interactions. 
@@ -701,7 +740,7 @@ small_glm_int <- glm(form_int, data = birth_weight, family = "binomial")
 #| fig-cap: "Calibration plot for the logistic regression model including all first order interaction terms."
 #| fig-cap-location: margin
 #| message: false
-cal_plot %+% group_p(birth_weight$small, fitted(small_glm_int)) + 
+cal_plot + group_p(birth_weight$small, fitted(small_glm_int)) + 
     coord_cartesian(xlim = c(0, 0.35), ylim = c(0, 0.35))             
 ```
 
@@ -712,11 +751,11 @@ interaction model is a more complex model, and the
 model is fitted by maximizing the likelihood, which is an 
 attempt to make the model well calibrated. Thus we should 
 expect a more complex model to *appear* better calibrated 
-on the training data than a less complex one -- just as 
+on the training data than a less complex one---just as 
 the training error underestimates the generalization 
 error for a complex model. 
 
-The solution is to the optimism of the calibration plot 
+The solution to the optimism of the calibration plot 
 on training data is again to use data splitting. Here 
 we implement a simple $K$-fold cross-validation procedure 
 with just $K$ rounds. It returns the predicted values 
@@ -727,7 +766,7 @@ on the probability scale.
 #| code-fold: show
 cv <- function(form, data, K = 10) {
     n <- nrow(data)
-    response <- all.vars(form)[1]
+    outcome <- all.vars(form)[1]
     mu_hat <- numeric(n)
     group <- sample(rep(1:K, length.out = n))
     for(i in 1:K) {
@@ -850,7 +889,7 @@ in the rather small value of (training) AUC for both models.
 ```{r}
 #| label: fig-small-eta-distributions
 #| opts.label: widefigure2
-#| fig-cap: "Distribution of linear predictors for the additive model and the interaction model stratified according to the value of the response variable."
+#| fig-cap: "Distribution of linear predictors for the additive model and the interaction model stratified according to the value of the outcome variable."
 #| fig-cap-location: margin
 p1 <- augment(small_glm) |> 
     ggplot(aes(.fitted, fill = factor(small))) +
@@ -917,7 +956,9 @@ almost identical in terms of both deviance and in terms of AUC.
 
 #### GLMNET 
 
-Explanations of what glmnet does are outstanding.
+Below follows code for penalized estimation of the interaction model using 
+glmnet, with a selection of the optimal tuning paramter using cross-validated 
+binomial deviance. 
 
 ```{r}
 #| label: small-glmnet
@@ -937,6 +978,9 @@ small_glmnet <- cv.glmnet(
 plot(small_glmnet)
 abline(h = 0.644, col = "blue")
 ```
+
+We compare the probability predictions made by the additive, the interaction and the 
+penalized models. 
 
 ```{r}
 #| label: fig-int-model-comp

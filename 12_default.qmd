@@ -4,7 +4,7 @@
 source("_common.R")
 ```
 
-# Company default -- a case study {#sec-default}
+# Company default---a case study {#sec-default}
 
 ::: {.callout-important}
 This chapter is still a rough draft of a case study on modeling time to company default 

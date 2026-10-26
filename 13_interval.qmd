@@ -6,28 +6,22 @@ source("_common.R")
 
 # Interval estimation {#sec-interval}
 
-::: {.callout-warning}
-This chapter is still a draft and minor changes are made without notice.
-:::
-
-
 This chapter gives a treatment of the theory and methodology behind interval estimation. 
-While most of the preceeding chapters focus on point estimation of 
+While most of the preceding chapters focus on point estimation of 
 the parameters, the focus of this chapter is on interval estimation 
 of a univariate parameter of interest. The purpose of an interval estimate
 is to communicate a *range* of plausible parameter values for the given 
-data rather than a single parameter -- and in this way also quantify 
+data rather than a single parameter value---and in this way also quantify 
 the uncertainty about a parameter estimate. 
-
 
 ## Outline and prerequisites 
 
 
-Standard confidence intervals based on $Z$-scores is one way 
+Standard confidence intervals based on $Z$-scores are one way 
 to construct interval estimates, and this method will be 
 treated here in a general context of interval estimation. 
 Likelihood based interval estimation is a different approach to constructing 
-intervals, which will be treated in some detail, and their 
+intervals, which will be treated in some detail, and its 
 connection to the standard confidence intervals will be 
 established. 
 
@@ -67,7 +61,7 @@ we will denote such a parameter generically by $\gamma$. It is, in general,
 a function of the distribution of $\mathbf{Y}$, which we denote $P$. 
 We can thus abstractly write $\gamma = \gamma(P)$ as a function of $P$. 
 For a particular model, the parameter of interest will often be a very explicit
-function and it may depend on only aspects of the distribution of $\mathbf{Y}$. 
+function and it may depend only on some aspects of the distribution of $\mathbf{Y}$. 
 
 ::: {#exm-glm-par}
 
@@ -84,8 +78,8 @@ $$
     \hat{\gamma} = \gamma(\hat{\beta}).
 $$ {#eq-glm-plugin}
 
-[^ex-q]: Examples that only rely on the semiparametric mean-variance specification given by GA1 and GA2. 
-If the parameter of interest is a quantile of $Y \mid X$, say, it is still a function of $\beta$, but a plug-in estimator then also relies on GA3.
+[^ex-q]: Examples that only rely on the semiparametric mean-variance specification given by **GA1** and **GA2**. 
+If the parameter of interest is a quantile of $Y \mid X$, say, it is still a function of $\beta$, but a plug-in estimator then also relies on **GA3**.
 :::
 
 If $\hat{\gamma}$ denotes an estimate of $\gamma$, a simple *interval estimate* 
@@ -107,8 +101,8 @@ $$
     \mathbf{P}( (\hat{\gamma} - z, \hat{\gamma} - w) \ni \gamma ) = 
     \mathbf{P}(\hat{\gamma} - \gamma \in (w, z)).
 $$
-The probablity[^cover] $\mathbf{P}( (\hat{\gamma} - z, \hat{\gamma} - w) \ni \gamma )$ is a 
-*coverage probablity* of the random interval containing the parameter $\gamma$. 
+The probability[^cover] $\mathbf{P}( (\hat{\gamma} - z, \hat{\gamma} - w) \ni \gamma )$ is a 
+*coverage probability* of the random interval containing the parameter $\gamma$. 
 As shown above, this probability can be expressed in terms of the 
 distribution of $\hat{\gamma} - \gamma$. 
 
@@ -124,7 +118,7 @@ as above.
 
 For a fixed $\gamma = \gamma_0$, the random variable $R(\mathbf{Y}, \gamma_0)$ *is* a statistic, and it is 
 typically a test statistic of the simple hypothesis $H_0: \gamma = \gamma_0$. 
-We will subsequently refer to $R$ interchangably as a combinant statistic or just as a statistic, 
+We will subsequently refer to $R$ interchangeably as a combinant statistic or just as a statistic, 
 where we use the former when we want to emphasize that $R$ combines the data and 
 the parameter of interest.
 
@@ -236,7 +230,7 @@ we choose $c = z^2$ we arrive at the same symmetric interval as above.
 [^se]: Either as an analytic formula as in @exm-Z-score-pivot or computed via bootstrapping as in @exm-boot-se.
 
 ::: {#exm-Z-score-pivot}
-Consider the linear model under the strong modeling assumptions A3 and A5. 
+Consider the linear model under the strong modeling assumptions **A3** and **A5**. 
 That is, the joint distribution of the responses given the predictors is 
 a normal distribution. If the parameter of interest is $\gamma = a^T \beta$, 
 the corresponding $Z$-statistic is 
@@ -245,8 +239,8 @@ $$
     \sqrt{a^T(\mathbf{X}^T\mathbf{X})^{-1}a}}.
 $$
 @thm-pardisnorm implies that its distribution is a $t_{n-p}$-distribution, which 
-does not depend on the distribution of $\mathbf{Y}$ -- as long as A3 and A5 are fulfilled. 
-Thus for the model specified by A3 and A5, $Z_a$ is a pivot and we know its 
+does not depend on the distribution of $\mathbf{Y}$---as long as **A3** and **A5** are fulfilled. 
+Thus for the model specified by **A3** and **A5**, $Z_a$ is a pivot and we know its 
 exact distribution. Its square,
 $$
     Z^2_a =  \frac{(\hat{\gamma} - \gamma)^2}{\hat{\sigma}^2 a^T(\mathbf{X}^T\mathbf{X})^{-1}a}
@@ -254,13 +248,13 @@ $$
   is likewise a pivot, now with an $F_{1, n-p}$-distribution. 
 
 Quantiles of the $t_{n-p}$-distribution (or the $F_{1, n-p}$-distribution) depend 
-on the residual degrees of freedom $\mathrm{df} = n-p$ but are straigthforward
+on the residual degrees of freedom $\mathrm{df} = n-p$ but are straightforward
 to compute. As $\mathrm{df}  \to \infty$, the $t_{n-p}$-distribution will converge 
 to a standard normal distribution $\mathcal{N}(0, 1)$, and the 
 $F_{1, n-p}$-distribution will converge to a $\chi^2_1$-distribution.
 :::
 
-Beyond the normal model specified by the assumptions A3 and A5 we can rarely 
+Beyond the normal model specified by the assumptions **A3** and **A5** we can rarely 
 find the exact distribution of $Z$-statistics. However, we typically use 
 the approximation $Z \overset{\mathrm{approx}}{\sim} \mathcal{N}(0, 1)$,
 and we then choose $z = z_{\alpha}$ as the $1 - \alpha/2$ quantile in the 
@@ -268,7 +262,7 @@ $\mathcal{N}(0, 1)$-distribution for the construction of the corresponding
 intervals. This leads to the standard choice of $z = 1.96$ to give 
 approximately[^nominal] 95\% coverage.
 
-[^nominal]: We often specifies a *nominal* coverage of $1 - \alpha$, which is the coverage probability we aim for, e.g., by computing quantiles in an *approximate* distribution. The actual coverage probability may then be larger or smaller depending on how good the approximation is.
+[^nominal]: We often specify a *nominal* coverage of $1 - \alpha$, which is the coverage probability we aim for, e.g., by computing quantiles in an *approximate* distribution. The actual coverage probability may then be larger or smaller depending on how good the approximation is.
 
 Formal justification of the approximation $Z \overset{\mathrm{approx}}{\sim} \mathcal{N}(0, 1)$
 is beyond the scope of this chapter. The standard asymptotic arguments are in 
@@ -296,7 +290,7 @@ The standard confidence intervals quantify rather explicitly the sampling uncert
 of the parameter estimate, and they are 
 constructed with a certain nominal coverage probability in mind. 
 In that way they appear relatively intuitive. 
-They do, however, not really answer the question about which parameters 
+They do not, however, really answer the question about which parameters 
 are the most *plausible* for the given data. 
 
 This section introduces *likelihood intervals* for a parametrized model 
@@ -305,7 +299,7 @@ most plausible parameter values. While a confidence interval by definition
 only has a coverage interpretation, likelihood intervals have 
 intrinsic value that can be justified without reference to sampling 
 properties. They are typically calibrated to have desired coverage 
-properties as well but coverage is not their only virtue. 
+properties as well, but coverage is not their only virtue. 
 The section concludes by showing that standard confidence intervals 
 based on maximum-likelihood estimation are closely related 
 to likelihood intervals. 
@@ -313,15 +307,15 @@ to likelihood intervals.
 For a given dataset, the likelihood ratio quantifies 
 the relative evidence in the data of one probability distribution
 in our statistical model over another. In terms of the generic log-likelihood 
-function $\ell$ and generic parameter $\beta$, the difference 
+function $\ell$ and generic parameter $\beta$, the difference (the log-likelihood ratio)
 $$
     \ell(\beta_1) - \ell(\beta_2)
 $$
 thus quantifies the evidence in the data for $\beta_1$ over $\beta_2$. 
 If the difference is positive, there is 
 more evidence for $\beta_1$, and if it is negative, there is more evidence for $\beta_2$. 
-The maximum likelihood estimator (MLE) is the parameter -- and corresponding 
-probability distribution in our model -- for which 
+The maximum likelihood estimator (MLE) is the parameter---and corresponding 
+probability distribution in our model---for which 
 there is the largest evidence in the data.
  
 We introduce the supremum of the log-likelihood over the parameter space as 
@@ -330,7 +324,7 @@ $$
 $$
 If the MLE exists and is denoted $\hat{\beta}^{\mathrm{MLE}}$, we have 
 $\ell_{\mathrm{max}} = \ell(\hat{\beta}^{\mathrm{MLE}})$, but $\ell_{\mathrm{max}}$ 
-is well defined even if the MLE is not. To capture abstractly which parameters achieve
+is well defined even if the MLE does not exist. To capture abstractly which parameters achieve
 a likelihood value close to $\ell_{\mathrm{max}}$ we introduce the likelihood regions as sublevel 
 sets of the negative log-likelihood.
 
@@ -353,7 +347,7 @@ The likelihood regions have the following properties[^inter]:
 * If $\beta_1 \in \mathcal{L}(c)$ and $\beta_2 \not \in \mathcal{L}(c)$ then $\ell(\beta_1) > \ell(\beta_2)$.
 * The likelihood regions increase as a function of $c$: If $c_1 < c_2$  then $\mathcal{L}(c_1) \subseteq \mathcal{L}(c_2)$.
 
-[^inter]: And the interpretation that $\mathcal{L}(c)$ gradually as $c$ increases includes models for which there is less and less evidence in the data.
+[^inter]: With the interpretation that, as $c$ increases, $\mathcal{L}(c)$ gradually includes models for which there is less and less evidence in the data.
 
 The general (multivariate) likelihood regions are not much easier to comprehend 
 than the likelihood itself, but we can modify the definition to give practically useful 
@@ -369,7 +363,7 @@ $$
     \mathcal{I}(c) = \{\gamma \mid 2 (\ell_{\mathrm{max}} - \ell(\gamma)) < c \}.
 $$
 
-[^intervals-again]: As in other cases, the set $\mathcal{I}(c)$ needs not be an interval, but the terminology becomes less heavy if we accept this slight abuse of the word "interval".
+[^intervals-again]: As in other cases, the set $\mathcal{I}(c)$ need not be an interval, but the terminology becomes less heavy if we accept this slight abuse of the word "interval".
 ::: 
 
 We note that the likelihood intervals are simply the one-sided interval estimates 
@@ -386,7 +380,7 @@ And for any choice of $c > 0$, parameters in $\mathcal{I}(c)$ are more plausible
 outside of $\mathcal{I}(c)$.
 
 The obvious question is how the cutoff $c$ should be chosen if we want to report a 
-single likelihood interval? If we want the 
+single likelihood interval. If we want the 
 interval to be a confidence interval, we need to calibrate $c$ to yield the desired 
 nominal coverage, and we discuss this in greater detail in @sec-calibration. 
 A standard choice
@@ -395,40 +389,44 @@ $\mathcal{I}(3.841)$ to be a nominal 95%
 confidence interval by supposing that $2 (\ell_{\mathrm{max}} - \ell(\gamma))$ 
 approximately follows a $\chi^2_1$-distribution[^chi-quantile].
 
-[^chi-quantile]: The 95\% quantile in the $\chi^2$-distribution with one degrees of freedom is $3.841$.
+[^chi-quantile]: The 95\% quantile in the $\chi^2$-distribution with one degree of freedom is $3.841$.
 
-**Absolute interpretations of log-likelihood ratios**
+::: {.callout-note icon=false}
+## Absolute interpretations of log-likelihood ratios
 
 There is an alternative to coverage for justifying a choice of 
-the cufoff $c$ in the construction of likelihood intervals. It is based on an absolute 
+the cutoff $c$ in the construction of likelihood intervals. It is based on an absolute 
 interpretation of log-likelihood ratios. The argument works by 
 constructing a simple analogy to the abstract log-likelihood 
 ratio scale.
 
-The analogy supposes that we draw balls from one of two (infinite) urns, but we don't known which one it is. 
+The analogy supposes that we draw balls from one of two (infinite) urns, but we do not know which one it is. 
 One urn has only white balls and the other has half black and half white balls.
 If we at any time draw a black ball we know for sure that we are drawing from the second urn. 
-But if we have drawn $b$ white balls without drawing a black we may ask: how strong is the evidence for 
+But if we have drawn $b$ white balls without drawing a black one, we may ask: how strong is the evidence for 
 the "all white" urn over the alternative? The log-likelihood ratio of the "all white" urn over the alternative is $b \cdot \log(2) \approx 0.69 \cdot b$, and we can regard this number as a quantification 
 of the evidence. 
 
 Because the example is simple, we can use it to develop an understanding of
 the log-likelihood ratio scale. Most would agree that an observation of 
-$b = 10$ white balls is strong evidence in favor of the "all white" urn, 
-while $b = 3$ is not. That is, a log-likelihood 
-ratio of $10 \cdot \log(2) = 6.931$ is "strong evidence", while a log-likelihood 
-ratio of $3 \cdot \log(2) = 2.079$ is not. A log-likelihood ratio of 
-$3.841$ corresponds to $5.5$ white balls, which seems like moderate evidence 
-for the "all white" urn over the alternative.  
+$b = 5$ white balls, corresponding to a log-likelihood ratio of $5 \cdot \log(2) =  3.466$,
+is clear evidence in favor of the "all white" urn. While $b = 2$, for which 
+$2 \cdot \log(2) = 1.386$, is only fairly weak evidence. The common threshold 
+for the likelihood intervals is $c = 3.841$, which corresponds to 
+a log-likelihood ratio of $3.841 / 2 = 1.92$---or about $b = 2.8$ white balls.
+This is moderate evidence for the "all white" urn over the alternative. 
+If we were to calibrate the intervals to correspond to the evidence in 
+$b = 5$ white balls instead, we should use a cutoff of $c = 6.931$.
 
 The purpose of the simple urn example is to develop a reference by analogy 
-for interpretion of log-likelihood ratios -- if we are willing to interpret such ratios absolutely. 
+for interpretation of log-likelihood ratios---if we are willing to interpret such ratios absolutely. 
 In that case we can translate a general 
 log-likelihood ratio to an interpretable quantity: the number of white balls drawn. 
 For a thorough treatment of the likelihood principle, promoting this perspective, see the book 
 *Statistical Evidence* by Richard @Royall:1997. The urn example is covered in 
 his Section 1.6. We will not push this interpretation too far, but it is an 
 interesting theoretical perspective.
+:::
 
 ::: {#exm-glm-likelihood}
 
@@ -436,7 +434,7 @@ interesting theoretical perspective.
 
 Suppose $a \in \mathbb{R}^p$ and that the parameter of interest is $\gamma = a^T \beta$. 
 Suppose first that the MLE, $\hat{\beta}$, exists and that $\hat{\gamma} = a^T \hat{\beta}$.
-The profile log-likelihood over $\beta$ (ignoring for now the dispersion parameter) is given by 
+The profile log-likelihood over $\beta$ (ignoring the estimation of the dispersion parameter) is given by 
 $$
     \ell(\gamma) = \sup_{\beta: a^T \beta = \gamma} \ell(\beta) = \ell(\hat{\beta}(\gamma))
 $$
@@ -448,11 +446,11 @@ MLE in a glm with a fixed offset parameter.
 
 The likelihood combinant statistic is recognized as the deviance test statistic 
 $$
-    2 (\ell_{\mathrm{max}} - \ell(\gamma)) = D_0(\gamma) - D,
+    2 (\ell_{\mathrm{max}} - \ell(\gamma)) = \frac{D_0(\gamma) - D}{\varphi},
 $$
 where $D_0(\gamma)$ is the deviance corresponding to the affine hypothesis 
 $H_0: a^T \beta = \gamma$. The computation of the likelihood interval for a 
-fixed $c$ proceed as follows: 
+fixed $c$ proceeds as follows: 
 
 * Compute $D_0(\gamma)$ for a small number of $\gamma$-values around $\hat{\gamma}$.
 * Solve[^solutions] the equation 
@@ -478,7 +476,7 @@ as introduced in @sec-glm-test-conf and corresponding to
 $$
     \hat{\mathrm{se}} = \sqrt{\hat{\varphi} a^T (\mathbf{X}^T \hat{\mathbf{W}} \mathbf{X})^{-1}a}.
 $$ 
-They can be computed using `confint.lm()`. 
+They can be computed using `confint.default()`. 
 The standard intervals are faster to compute and often similar to the likelihood 
 intervals, but the likelihood intervals often have better coverage properties, 
 in particular for small samples, where they, for good reason, can be rather 
@@ -496,7 +494,7 @@ we may choose $c$ according to the quantiles of a $\chi^2_1$-distribution to
 achieve the desired nominal coverage. For example, with $c = 3.841$ the nominal 
 coverage of the likelihood interval is 95%. 
 
-[^wilks]: The theoretical justification is known as *Wilks' theorem* stating that under suitable regularity assumptions then $$D_0(\gamma) - D \overset{\mathcal{D}}{\to} \varphi \chi^2_1$$ for $n \to \infty$ if the model is correctly specified and $\gamma = a^T \beta$.
+[^wilks]: The theoretical justification is known as *Wilks' theorem* stating that under suitable regularity assumptions $D_0(\gamma) - D \overset{\mathcal{D}}{\to} \varphi \chi^2_1$ for $n \to \infty$ if the model is correctly specified and $\gamma = a^T \beta$.
 
 If the parameter of interest is $\mu = \mu(\gamma)$, where $\mu$ is the mean value 
 function, then the likelihood interval for $\mu$ (supposing that $\mu$ is increasing) equals
@@ -549,7 +547,7 @@ $$
     \hat{\alpha}(\gamma) = \hat{\alpha} + 
     (\hat{\gamma} - \gamma) \mathcal{J}_{11}^{-1} \mathcal{J}_{1p}.
 $$
-Plugging this into $h(\beta)$ gives the profile log-likelihood 
+Plugging this into $h(\beta)$ gives the profiled function 
 $$
     h(\gamma) = (\hat{\gamma} - \gamma)^2 (\mathcal{J}_{pp} -  \mathcal{J}_{1p}^T \mathcal{J}_{11}^{-1} \mathcal{J}_{1p}) .
 $$
@@ -560,7 +558,7 @@ $$
 and the result follows.
 :::
 
-We can use @lem-quadprof to connect the log-likelihood intervals to the 
+We can use @lem-quadprof to connect the likelihood intervals to the 
 standard intervals based on the MLE and the observed Fisher information. 
 
 For a twice continuously differentiable parametric log-likelihood $\ell$ and 
@@ -575,7 +573,7 @@ $$
     2(\ell_{\max} - \ell(\beta)) \approx 
     (\hat{\beta}^{\mathrm{MLE}} - \beta)^T \mathcal{J}^{\mathrm{obs}} (\hat{\beta}^{\mathrm{MLE}} - \beta).
 $$
-[**OBS:** For generalized linear models the dispersion parameter can be ignored for the computation of the MLE of the regression parameters, but it has to be included for the computation of likelihood intervals, cf. also @exm-glm-likelihood. Similarly, the log-likelihod approximations presented here suppose that the dispersion parameter estimate is included, cf. @thm-scorefisher]{.aside}
+[**Note:** For generalized linear models the dispersion parameter can be ignored for the computation of the MLE of the regression parameters, but it has to be included for the computation of likelihood intervals, cf. also @exm-glm-likelihood. Similarly, the log-likelihood approximations presented here suppose that the dispersion parameter estimate is included, cf. @thm-scorefisher.]{.aside}
 
 Suppose that the $j$-th coordinate $\beta_j$ is our parameter of interest
 and that $\mathcal{J}^{\mathrm{obs}}$ is positive definite, then @lem-quadprof 
@@ -585,7 +583,7 @@ $$
      \approx \frac{(\hat{\beta}_j^{\mathrm{MLE}} - \beta_j)^2}{((\mathcal{J}^{\mathrm{obs}})^{-1})_{jj}},
 $$ {#eq-quadapprox-profile}
 where the infimum over $\beta_{-j}$ means over all coordinates in $\beta$ except $\beta_j$.
-We see that the right hand side above equals $Z^2$ for the $Z$-statistic
+We see that the right-hand side above equals $Z^2$ for the $Z$-statistic
 $$
     Z = \frac{\hat{\beta}_j^{\mathrm{MLE}} - \beta_j}{\sqrt{((\mathcal{J}^{\mathrm{obs}})^{-1})_{jj}}}
 $$
@@ -599,14 +597,14 @@ We emphasize the following key points about likelihood intervals.
 * Likelihood intervals have an intrinsic interpretation: the parameter values located centrally 
    in the interval (those that remain in the interval for small $c$) are more plausible than those 
    close to the boundaries.
-* Likelihood intervals are invariant under reparametrizations: we get the same intervals irrespectively
+* Likelihood intervals are invariant under reparametrizations: we get the same intervals irrespective
    of how the model is parametrized.
 * The approximation ([-@eq-quadapprox-profile]) allows us to interpret standard confidence 
    intervals based on the MLE as approximate likelihood intervals. For this reason they inherit 
    the interpretations of likelihood intervals, but the quality of the approximation 
    depends on the parametrization.
-* The `confint()` method for glm objects compute likelihood intervals by profiling. 
-   Standard confidence intervals can be computed by calling `confint.lm()` directly 
+* The `confint()` method for glm objects computes likelihood intervals by profiling. 
+   Standard confidence intervals can be computed by calling `confint.default()` directly 
    for the glm object.
 
 ### Robust standard errors {#sec-robust}
@@ -618,23 +616,23 @@ robustness of the glm estimators toward misspecification of the response distrib
 If just the conditional mean and variance are correctly specified, the estimators as 
 well as the statistical inference based on these estimators are still valid. Similarly, 
 the partial likelihood estimator for the proportional hazards model does
-not require a correct specification of the full response distribution either -- the estimators and the
+not require a correct specification of the full response distribution either---the estimators and the
 statistical inference remain valid as long as the proportional hazards assumption holds
-and the hazard weights are correctly specified. 
+and the relative risks are correctly specified. 
 
 In applications we attempt to justify the assumptions we *do* make via model diagnostics, 
 and we correct misspecifications if possible. In @sec-advertising, for example, the first 
 Poisson model of vegetable sales showed a clear but fixable
 misspecification of the mean-variance relation. It is, however, difficult to 
 eliminate all model misspecifications, either because they are not detectable 
-by the model diagnostics or because they are not easily fixable, 
+by the model diagnostics or because they are not easily fixable. 
 Thus we cannot give any guarantees that the model is correctly specified.
 To partially remedy this we derive in this section analytic methods for 
 standard error estimation that are somewhat robust toward model misspecifications.
 
 We will in this section focus on the regression setup 
 with observations $(X_1, Y_1), \ldots, (X_n, Y_n)$ assumed i.i.d.
-That is, we make assumption A6 on the joint distribution of the 
+That is, we make assumption **A6** on the joint distribution of the 
 observations. The regression parameter is $\beta \in \mathbb{R}^p$,
 and we consider estimators given as solutions to an *estimating equation*
 $$
@@ -642,13 +640,13 @@ $$
 $$ {#eq-est-eq}
 for some estimating function 
 $u : \mathbb{R}^p \times \mathbb{R} \times \mathbb{R}^p \to \mathbb{R}^p$.
-In practice, $\mathcal{U}$ might be a (transposed) score function, but the methods we 
+In practice, $\mathcal{U}$ might be a score function, but the methods we 
 derive apply to the partial score equation and any other estimating equation. 
 
 For a general estimating function we *define* the target value of the parameter $\beta$ 
 to be the solution to the equation 
 $$
-    \mathbf{E}(u(X, Y, \beta)) = \int u(x, y, \beta) P(dx, dy) = 0,
+    \mathbf{E}(u(X, Y, \beta)) = \int u(x, y, \beta) P(\mathrm{d}x, \mathrm{d}y) = 0,
 $$ {#eq-esteq}
 where $P$ denotes the joint distribution of $(X, Y)$. That is, 
 for *any* joint distribution we define the parameter $\beta$ 
@@ -666,7 +664,7 @@ $$ {#eq-glm-u}
 cf. @lem-scorefisher and @thm-scorefisher. If the mean is misspecified, the $\beta$ 
 parameter is determined as the solution to the equation 
 $$
-  E \left( \frac{\mu'(X^T\beta)}{\mathcal{V}(\mu(X^T\beta))} (\mathbf{E}(Y \mid X) - \mu(X^T\beta)) X  \right) = 0.
+  \mathbf{E} \left( \frac{\mu'(X^T\beta)}{\mathcal{V}(\mu(X^T\beta))} (\mathbf{E}(Y \mid X) - \mu(X^T\beta)) X  \right) = 0.
 $$
 If the mean is correctly specified as $\mathbf{E}(Y \mid X) = \mu(X^T\beta)$, then 
 this value of $\beta$ also solves the equation above. 
@@ -675,19 +673,19 @@ this value of $\beta$ also solves the equation above.
 Let $\hat{\beta}$ denote a solution to the estimating equation $\mathcal{U}(\beta) = 0$, 
 then by a Taylor expansion of $\mathcal{U}$ around $\hat{\beta}$ we find 
 $$
-    \mathcal{U}(\beta) \approx \mathcal{U}(\hat{\beta}) + \hat{J} (\beta - \hat{\beta})
-    = \hat{J} (\beta - \hat{\beta})
+    \mathcal{U}(\beta) \approx \mathcal{U}(\hat{\beta}) - \hat{J} (\beta - \hat{\beta})
+    = \hat{J} (\hat{\beta} - \beta)
 $$
 where
 $$
-    \hat{J} \coloneqq D_{\beta} \mathcal{U}(\hat{\beta}) = \sum_{i=1}^n D_{\beta} u(X_i, Y_i, \hat{\beta}).
+    \hat{J} \coloneqq - D_{\beta} \mathcal{U}(\hat{\beta}) = - \sum_{i=1}^n D_{\beta} u(X_i, Y_i, \hat{\beta}).
 $$
 [The arguments made here are not rigorous but can be made so by sufficiently many regularity assumptions. The important point is to understand the motivation for the *sandwich estimator* defined below as a robust variance estimator.]{.aside}
 
-Since $\mathbf{E}(u(Y_i, X_i, \beta)) = 0$ the central limit theorem implies that
+Since $\mathbf{E}(u(X_i, Y_i, \beta)) = 0$ the central limit theorem implies that
 $$
     \frac{1}{n} \hat{J} (\hat{\beta} - \beta) \approx 
-    \frac{1}{n} \sum_{i=1}^n u(X_i, Y_i, \beta) \overset{\mathrm{as}}{\sim} 
+    \frac{1}{n} \sum_{i=1}^n u(X_i, Y_i, \beta) \overset{\mathrm{approx}}{\sim} 
     \mathcal{N}(0, C_1 / n) 
 $$
 where 
@@ -701,7 +699,7 @@ $$
 then $\hat{C} / n$ is an estimator of $C_1$, and with  $Z \sim \mathcal{N}(0, \mathbf{I})$ 
 we arrive at the distributional approximation 
 $$
-    \hat{\beta} - \beta \overset{\mathcal{D}}{\approx} n \hat{J}^{-1} (\hat{C} / n^2)^{1/2} Z
+    \hat{\beta} - \beta \overset{\mathrm{approx}}{\sim}  n \hat{J}^{-1} (\hat{C} / n^2)^{1/2} Z
     = \hat{J}^{-1} \hat{C}^{1/2} Z \sim \mathcal{N}(0, \hat{J}^{-1} \hat{C} \hat{J}^{-T}).
 $$
 The estimator 
@@ -712,7 +710,7 @@ of the asymptotic covariance matrix is known as the *sandwich estimator*.
 
 If the estimating equation is a score equation, Bartlett's second identity 
 states that *when the model is correctly specified* 
-$C_1 = \mathbf{E}(D_\beta u(X, Y, \beta))$, in which case $\hat{C} \hat{J}^{-T} \approx \mathbf{I}$. 
+$C_1 = -\mathbf{E}(D_\beta u(X, Y, \beta))$, in which case $\hat{C} \hat{J}^{-T} \approx \mathbf{I}$. 
 So for a correctly specified model 
 we can simply use the inverse of the observed Fisher information $\hat{J}^{-1}$ as 
 an estimator of the asymptotic covariance matrix. The sandwich estimator
@@ -762,21 +760,21 @@ $$
 $$ {#eq-tilde-w-working}
 where the weights $\hat{w}_{ii}$ are multiplied by the working residuals and everything is then squared. 
 
-Note that if the mean is correctly specified (GA1 holds) then $\mathbf{E}((Y_i - \mu_i)^2 \mid X_i ) = \mathbf{V}(Y_i  \mid X_i)$,
+Note that if the mean is correctly specified (**GA1** holds) then $\mathbf{E}((Y_i - \mu_i)^2 \mid X_i ) = \mathbf{V}(Y_i  \mid X_i)$,
 and[^eq-approx] 
 $$
     \mathbf{E}(\tilde{w}_{ii} \mid X_i) \approx \hat{w}_{ii} \frac{\mathbf{V}(Y_i \mid X_i)}{\mathcal{V}(\hat{\mu}_i)}.
 $$
-If the variance function is also correctly specified (GA2 holds), then
+If the variance function is also correctly specified (**GA2** holds), then
 $\mathbf{V}(Y_i \mid X_i) = \varphi \mathcal{V}(\mu_i)$ and
 $\mathbf{E}(\tilde{w}_{ii} \mid X_i) \approx \varphi \hat{w}_{ii}$,
 and the sandwich formula ([-@eq-sandwich]) will be relatively close 
 to $\hat{\varphi} (\mathbf{X}^T \hat{\mathbf{W}} \mathbf{X})^{-1}$. 
-But if either or both of GA1 or GA2 are wrong, the 
+But if either or both of **GA1** or **GA2** are wrong, the 
 weights $\tilde{w}_{ii}$ can be interpreted as adjustments for the misspecification
 of the model. 
 
-[^eq-approx]: We don't get exact equality because the weights are computed using the estimated parameters.
+[^eq-approx]: We do not get exact equality because the weights are computed using the estimated parameters.
 :::
 
 Standard error estimates using the sandwich estimator can be computed using the 
@@ -785,13 +783,13 @@ of standard confidence intervals. This will be illustrated in @sec-ad-robust.
 
 It almost sounds too 
 good to be true that we can compute valid confidence intervals without making 
-*any* model assumptions -- and in a certain sense it is, as argued forcefully
+*any* model assumptions---and in a certain sense it is, as argued forcefully
 by @freedmanSoCalledHuberSandwich2006. If the mean value is wrongly specified, 
 it is often not possible to interpret the target parameter, which makes it 
-very unclear what the value of the confidence interval is -- even if it 
+very unclear what the value of the confidence interval is---even if it 
 technically has the correct coverage. Thus the robust intervals 
-for generalized linear models are primarily useful when GA2 might be violated
-but GA1 holds.
+for generalized linear models are primarily useful when **GA2** might be violated
+but **GA1** holds.
 
 ## Bootstrap {#sec-bootstrap}
 
@@ -810,10 +808,10 @@ interval estimators.
 Bootstrapping is usually based on simulations rather than 
 analytic methods. Specifically, on *resampling* of new datasets.
 
-The two basic steps of the bootstap are:
+The two basic steps of the bootstrap are:
 
 1. Sample $B$ independent new datasets $\mathbf{Y}_1^*,\ldots,\mathbf{Y}_B^*$.
-2. Compute the statistic of interest from each resampled data set.
+2. Compute the statistic of interest from each resampled dataset.
 
 The statistic is typically either a parameter estimator, a test statistic or a 
 combinant statistic. Its resampling distribution is also known 
@@ -835,8 +833,8 @@ In practice, everything we are interested in about the bootstrap
 distribution is estimated from the empirical distribution based on 
 the $B$ resampled datasets. The finite number $B$ of resampled datasets
 introduces a sampling error, and $B$ should be
-chosen as large as possible to avoid this error to influence
-on the reported results. An appropriate choice is dictated by the
+chosen as large as possible to prevent this error from influencing
+the reported results. An appropriate choice is dictated by the
 trade-off between computational costs and the accuracy required by the application. 
 We will give more advice on the choice of $B$ below depending on the 
 specific application of the bootstrap.
@@ -848,7 +846,7 @@ compute an estimate of the standard error of an estimator.
 
 ## Bootstrap standard error estimation
 Let $\gamma$ denote the parameter of interest and let $\hat{\gamma} = \hat{\gamma}(\mathbf{Y})$
-denote the estimate based on the the data $\mathbf{Y}$. 
+denote the estimate based on the data $\mathbf{Y}$. 
 From the resampled data $\mathbf{Y}_1^*,\ldots,\mathbf{Y}_B^*$ we compute reestimates
 $$
     \hat{\gamma}_b^* = \hat{\gamma}(\mathbf{Y}_b^*)
@@ -870,39 +868,39 @@ For estimation of the standard error, $B = 200$ is usually enough for acceptable
 The two major resampling algorithms are known as *nonparametric* and *parametric* 
 bootstrapping. They have an abstract form and some specific variants for
 regression models. A third resampling algorithm, known as *residual resampling*, 
-is specific to regression models, and the *wild bootstrap*, that we will 
-not cover, should also be mentioned as a regression specific bootstrap 
+is specific to regression models, and the *wild bootstrap*, which we will 
+not cover, should also be mentioned as a regression-specific bootstrap 
 algorithm. 
 
 #### Nonparametric bootstrapping {.unnumbered}
 
 Nonparametric bootstrapping does not require a parametric model, but it
-does require some distributional assumptions that allow us to sample new data sets from an empirical 
+does require some distributional assumptions that allow us to sample new datasets from an empirical 
 distribution. In the abstract formulation the assumption is that 
 $\mathbf{Y} = (Y_1, \ldots, Y_n)$ with $Y_1, \ldots, Y_n$ i.i.d. 
-Each resampled data set is obtained by sampling $n$ observations from $Y_1, \ldots, Y_n$ *with replacement*. 
-This is in practice carried out by sampling $n$ independent indices uniformly from $\{1, \ldots, n\}$. A resampled data set 
+Each resampled dataset is obtained by sampling $n$ observations from $Y_1, \ldots, Y_n$ *with replacement*. 
+This is in practice carried out by sampling $n$ independent indices uniformly from $\{1, \ldots, n\}$. A resampled dataset 
 $$
     \mathbf{Y}^* = (Y_{1}^*, \ldots, Y_{n}^*)
 $$ 
 thus consists of $n$ i.i.d. observations from the empirical distribution 
 $$
-    \sum_{i=1}^n \delta_{Y_i}.
+    \frac{1}{n}\sum_{i=1}^n \delta_{Y_i}.
 $$
 
 In a regression context the response variables $Y_1, \ldots, Y_n$ are **not** identically distributed 
 conditionally on the predictors. Thus we cannot just resample the responses with replacement, say. 
-But under assumption A6 the *pairs* $(Y_i, X_i)$ are i.i.d.. This may be a resonable assumption 
+But under assumption **A6** the *pairs* $(X_i, Y_i)$ are i.i.d. This may be a reasonable assumption 
 when the predictors and the response are observed jointly, while it makes little sense 
 for an experiment where the predictors are fixed by a design.
 
 Pair sampling for nonparametric bootstrapping in a regression setup 
-proceeds under assumption A6 by resampling $n$ pairs independently
+proceeds under assumption **A6** by resampling $n$ pairs independently
 from the dataset $(X_1, Y_1), \ldots, (X_n, Y_n)$ *with replacement*. That is, the 
 resampled dataset consists of $n$ i.i.d. observations $(X_1^*, Y_1^*), \ldots, (X_n^*, Y_n^*)$
 from the empirical distribution 
 $$
-    \sum_{i=1}^n \delta_{(X_i, Y_i)}.
+    \frac{1}{n} \sum_{i=1}^n \delta_{(X_i, Y_i)}.
 $$
 The actual implementation is still done in practice by sampling $n$ independent 
 indices uniformly from $\{1, \ldots, n\}$.
@@ -911,24 +909,24 @@ indices uniformly from $\{1, \ldots, n\}$.
 
 Parametric bootstrapping amounts to resampling data from the parametrically specified 
 model of the data. In the abstract formulation the distribution of $\mathbf{Y}$ is assumed to be in a
-parametrized family $P_{\beta}$ of probability measures, and $\hat{\beta}$ is the estimate of 
+parametrized family $P_{\beta}^{\otimes n}$ of probability measures, and $\hat{\beta}$ is the estimate of 
 $\beta$ based on $\mathbf{Y}$. Then we resample $\mathbf{Y}^*$ as $n$ i.i.d. observations
 from $P_{\hat{\beta}}$. 
 
 In the regression setup we can do parametric bootstrapping either conditionally 
 or unconditionally on the predictors. Both require the strong distributional model 
-assumption GA3. 
+assumption **GA3**. 
 
 Conditional parametric bootstrapping amounts to resampling the 
 responses $\mathbf{Y}^* = (Y_1^*, \ldots, Y_n^*)$ under assumption A5. 
 That is, we resample the coordinates $Y_i^* \mid X_i$ independently from the 
 fitted exponential dispersion model $\mathcal{E}(\theta(\hat{\eta}_i), \nu_{\hat{\varphi}})$.
 Contrary to nonparametric pair sampling, this form of bootstrapping does 
-not assume A6 and makes good sense for a designed experiment.
+not assume **A6** and makes good sense for a designed experiment.
 
 Unconditional parametric bootstrapping requires additionally a parametric 
 model of the predictor distribution.
-Resampling proceeds under assumption A6 and consists of two steps:
+Resampling proceeds under assumption **A6** and consists of two steps:
 
 1. Sample $\mathbf{X}^* = (X_1^*, \ldots, X_n^*)$ i.i.d. from the fitted predictor distribution.
     Set $\hat{\eta}_i^* = (X_i^*)^T \hat{\beta}$.
@@ -936,7 +934,7 @@ Resampling proceeds under assumption A6 and consists of two steps:
     $Y_i^* \mid \mathbf{X}^* \sim \mathcal{E}(\theta(\hat{\eta}_i^*), \nu_{\hat{\varphi}})$. 
 
 We would rarely want to do unconditional parametric bootstrapping as this requires a full 
-model of the predictors. But we could implement a hybrid algorithm where step 1. above 
+model of the predictors. But we could implement a hybrid algorithm where step 1 above 
 is replaced by resampling the predictors from the empirical distribution. That is, 
 the resampling of the predictors is nonparametric, but the resampling given the 
 predictors is parametric. 
@@ -947,7 +945,7 @@ Residual resampling is a version of nonparametric bootstrapping for regression m
 where residuals and not responses are resampled. The algorithm only requires assumption 
 A5, just as conditional parametric bootstrapping, and it thus makes sense for 
 designed experiments, but it does not require a parametric model specification of the 
-conditional reponse distribution.
+conditional response distribution.
 
 Residual resampling is simplest to formulate for the additive noise model where 
 $$
@@ -958,7 +956,7 @@ In this case the raw residuals are
 $$
     \hat{\varepsilon}_i = Y_i - \mu(X_i^T\hat{\beta}) = Y_i - \hat{\mu}_i.
 $$
-We resample a new data set by resampling raw residuals *with replacement*. That is, a
+We resample a new dataset by resampling raw residuals *with replacement*. That is, a
 resampled response vector $\mathbf{Y}^* = (Y_{1}^*, \ldots, Y_{n}^*)$ is constructed as follows:
 
 1. Sample the residuals $\varepsilon_1^*,\ldots, \varepsilon_n^*$ independently 
@@ -969,15 +967,15 @@ For residual resampling the predictor variables are held fixed just as for condi
 parametric bootstrapping. The resampling of residuals is in practice carried out 
 as for the other nonparametric bootstrapping procedures by sampling indices uniformly.
 It is possible to combine the residual resampling above with a nonparametric bootstrap resampling 
-of the predictors -- if we are willing to make the stronger assumption A6. 
+of the predictors---if we are willing to make the stronger assumption **A6**. 
 
 It is not straightforward to extend residual resampling to all generalized linear models. 
-We would need an one-to-one map $t_\mu : \overline{\mathcal{J}} \to \mathbb{R}$ with the 
-property that the distribution of $\varepsilon = t_\mu(Y)$ and $X$ are independent 
+We would need a one-to-one map $t_\mu : \overline{J} \to \mathbb{R}$ with the 
+property that $\varepsilon = t_\mu(Y)$ and $X$ are independent 
 when $\mathbf{E}(Y \mid X) = \mu$ and $\mathbf{V}(Y \mid X) = \varphi \mathcal{V}(\mu)$. 
 For the additive noise model this map is $t_\mu(y) = y - \mu$. If we can find such a 
 map $t_\mu$, the residuals are defined as $\hat{\varepsilon}_i = t_{\hat{\mu}_i}(Y_i)$
-and we replace step 2. above by
+and we replace step 2 above by
 
 2. Set $Y_i^* = t_{\hat{\mu}_i}^{-1}(\varepsilon^*_i)$ for $i = 1, \ldots, n.$
 
@@ -991,7 +989,7 @@ $$
     t_{\mu}(y) = \frac{y - \mu}{\sqrt{\mathcal{V}(\mu)}}.
 $$
 The resulting resampled residuals are the Pearson residuals, but 
-for the corresponding bootstrap distribution to resemble to 
+for the corresponding bootstrap distribution to resemble the 
 sampling distribution of the responses correctly, we need the specific 
 model assumption ([-@eq-additive-noise-var]).
 
@@ -1010,14 +1008,14 @@ The goal is to approximate the distribution of a combinant statistic
 for an unknown $P$ with $\gamma = \gamma(P)$ a functional of $P$. 
 The main principle behind bootstrapping is the distributional approximation 
 $$
-    R(\mathbf{Y}, \gamma) \overset{\mathcal{D}}{\approx} R(\mathbf{Y}^*, \hat{\gamma})
+    R(\mathbf{Y}, \gamma) \overset{\mathrm{approx}}{\sim} R(\mathbf{Y}^*, \hat{\gamma})
 $$ {#eq-bootapprox}
 with $\mathbf{Y}^* \sim \hat{P}$. Here $\hat{P}$ is an estimate of $P$ 
 based on $\mathbf{Y}$ and $\hat{\gamma}$ is an estimate of $\gamma$. 
 That is, we approximate the *unknown sampling distribution* of $R(\mathbf{Y}, \gamma)$
 by the *known bootstrap distribution* of $R(\mathbf{Y}^*, \hat{\gamma})$. 
 
-Note that it is possible for $\hat{\gamma} \neq \gamma(\hat{P})$. Indeed, 
+Note that it is possible that $\hat{\gamma} \neq \gamma(\hat{P})$. Indeed, 
 $\hat{\gamma}$ is in a regression context typically a plug-in estimate 
 $\gamma(\hat{\beta})$ based on the parametric estimate
 of $\beta$, while $\hat{P}$ is (derived from) an empirical distribution. 
@@ -1077,7 +1075,7 @@ $$
     \hat{\gamma}_1^*- \hat{\gamma},\ldots,\hat{\gamma}_B^*- \hat{\gamma}.
 $$
 Here $\hat{\gamma}_b^* = \hat{\gamma}(\mathbf{Y}_b^*)$ is the estimate based on 
-the $b$-th resampled data set $\mathbf{Y}_b^*$. 
+the $b$-th resampled dataset $\mathbf{Y}_b^*$. 
 This is a simple procedure, but approximate pivotality of $R$ is questionable.
 :::
 
@@ -1112,14 +1110,14 @@ but its actual coverage is sometimes poor.
 
 
 ::: {#exm-like-boot}
-The combinant statistic can be the (profile) negative log-likelihood
+The combinant statistic can be the (profile) log-likelihood ratio statistic
 $$
     R(\mathbf{Y}, \gamma) = 2(\ell_{\mathrm{max}} - \ell(\gamma)).
 $$
 From the bootstrap sample 
 $$
-    2(\ell_{\mathrm{max}, 1}^* - \ell(\hat{\gamma})), \ldots, 
-    2(\ell_{\mathrm{max}, B}^* - \ell(\hat{\gamma}))
+    2(\ell_{\mathrm{max}, 1}^* - \ell_1^*(\hat{\gamma})), \ldots, 
+    2(\ell_{\mathrm{max}, B}^* - \ell_B^*(\hat{\gamma}))
 $$
 we compute the estimate $\hat{c}_{\alpha}$ of the $(1-\alpha)$-quantile, 
 and the corresponding likelihood interval for $\gamma$ with nominal coverage $1-\alpha$ becomes
@@ -1136,8 +1134,8 @@ $$
 $$
 the bootstrap sample becomes 
 $$
-   \frac{(\hat{\gamma}^*_1 - \hat{\gamma})^2}{(\hat{\mathrm{se}_1^*})^2}, \ldots, 
-   \frac{(\hat{\gamma}^*_B - \hat{\gamma})^2}{(\hat{\mathrm{se}_B^*})^2},
+   \frac{(\hat{\gamma}^*_1 - \hat{\gamma})^2}{(\hat{\mathrm{se}}_1^*)^2}, \ldots, 
+   \frac{(\hat{\gamma}^*_B - \hat{\gamma})^2}{(\hat{\mathrm{se}}_B^*)^2},
 $$
 which we use to estimate $\hat{c}_{\alpha}$ as the empirical $(1-\alpha)$-quantile.
 The corresponding confidence interval for $\gamma$ then becomes  
@@ -1181,7 +1179,7 @@ The main focus in this section is to compute a confidence interval
 for the effect of advertising as expressed by the regression parameter for 
 the categorical variable `ad`. 
 
-We first load the and clean the data as in @sec-advertising.
+We first load and clean the data as in @sec-advertising.
  
 ```{r}
 #| label: load-veg-data
@@ -1191,12 +1189,12 @@ vegetables <- filter(vegetables, !is.na(discount), week != 2)
 ```
 
 
-### Model based intervals {#sec-ad-like}
+### Model-based intervals {#sec-ad-like}
 
 We fit a Poisson model with the same formula as used with the gamma model 
 in @sec-ad-gamma-model (with a natural cubic spline expansion of `discount`).
 We then compute a standard confidence interval for the regression parameter associated
-with the variable `ad` via `confint.lm()`. The default nominal coverage of 
+with the variable `ad` via `confint.default()`. The default nominal coverage of 
 all confidence intervals is 95%. 
 
 ```{r}
@@ -1207,7 +1205,7 @@ form <- sale ~ offset(log(normalSale)) + store  + ad +
 vegetables_glm <- glm(form, family = poisson, data = vegetables)
 int_to_tib <- function(x, name) 
  tibble(interval = name, lower = x[1], upper = x[2])
-ad_int <- confint.lm(vegetables_glm, "ad1") |> 
+ad_int <- confint.default(vegetables_glm, "ad1") |> 
     int_to_tib("Pois standard")
 ad_int 
 ```
@@ -1241,7 +1239,7 @@ no reason to expect that this construction with *nominal level* 95% has 95% actu
 Due to the overdispersion and/or the misspecification of the variance function by 
 the Poisson model, we fit alternative models with 
 the same mean value specification (same formula and same link function) but 
-using the quasi Poisson family as well as the gamma model. For each model fit we 
+using the quasi-Poisson family as well as the gamma model. For each model fit we 
 then compute both standard and likelihood intervals. The results are shown in 
 @tbl-q-pois-gamma-conf.
 
@@ -1251,13 +1249,13 @@ then compute both standard and likelihood intervals. The results are shown in
 #| message: false
 vegetables_glm_quasi <- glm(form, family = quasipoisson, data = vegetables)
 vegetables_glm_gamma <- glm(form, family = Gamma("log"), data = vegetables)
-confint.lm(vegetables_glm_quasi, "ad1") |> 
+confint.default(vegetables_glm_quasi, "ad1") |> 
     int_to_tib("Q-Pois standard") |>
     add_row(ad_int) -> ad_int
 confint(vegetables_glm_quasi, "ad1") |> 
     int_to_tib("Q-Pois likelihood") |>
     add_row(ad_int) -> ad_int
-confint.lm(vegetables_glm_gamma, "ad1") |> 
+confint.default(vegetables_glm_gamma, "ad1") |> 
     int_to_tib("Gamma standard") |>
     add_row(ad_int) -> ad_int
 confint(vegetables_glm_gamma, "ad1") |> 
@@ -1274,12 +1272,12 @@ confint(vegetables_glm_gamma, "ad1") |>
 ad_int |> knitr::kable(digits = 5)
 ```
 
-The intervals based on the quasi Poisson family are unsurprisingly somewhat wider 
+The intervals based on the quasi-Poisson family are unsurprisingly somewhat wider 
 because the estimated dispersion parameter is somewhat larger than $1$. The likelihood 
-interval is again almost identical to the standard interval for the quasi Poisson family, 
+interval is again almost identical to the standard interval for the quasi-Poisson family, 
 because it is also just a rescaling by the estimated dispersion parameter.
 
-The intervals for the gamma model are even wider and are furthermore skewed toward zero. 
+The intervals for the gamma model are even wider and are furthermore shifted toward zero. 
 There is a slightly larger difference between the standard interval and the likelihood 
 interval for the gamma model, but it is still a relatively small difference. 
 
@@ -1350,7 +1348,7 @@ and the computation using `sandwich()` agree[^sandwich-diff].
 
 In applications of the sandwich estimator we usually want to compute (standard) 
 confidence intervals based on the standard errors it provides. We can do these 
-computations ourself but it can also be done coveniently by the general `coefci()` 
+computations ourselves, but it can also be done conveniently by the general `coefci()` 
 function from the lmtest package. 
 
 ```{r}
@@ -1366,11 +1364,11 @@ lmtest::coefci(vegetables_glm_gamma, parm = "ad1", vcov. = sandwich) |>
 
 The two robust intervals are included in @tbl-q-pois-gamma-sandwich-conf.
 We note that the robust interval based on the Poisson model is notably wider 
-than the model based intervals, and it is even wider than the intervals 
-corrected for overdispersion via the quasi Poisson model. The robust 
-interval for the gamma model is, in fact, narrower than the model based 
-intervals but the differences between the robust interval and the model 
-based intervals are much smaller for the gamma model than for the Poisson model.
+than the model-based intervals, and it is even wider than the intervals 
+corrected for overdispersion via the quasi-Poisson model. The robust 
+interval for the gamma model is, in fact, narrower than the model-based 
+intervals, but the differences between the robust interval and the 
+model-based intervals are much smaller for the gamma model than for the Poisson model.
 
 ```{r}
 #| label: tbl-q-pois-gamma-sandwich-conf
@@ -1388,15 +1386,16 @@ ad_int |> knitr::kable(digits = 5)
 In this section we first implement 
 nonparametric bootstrapping using pair sampling. The implementation 
 is based on `sample()` for sampling indices from $1$ to $n$ (the number of observations)
-with replacement. For each bootstrapped dataset we fit the same model using glm
+with replacement. For each bootstrapped dataset we fit the same model using `glm()`
 and here we only keep the parameter of interest for each fitted model. When 
 doing bootstrapping in general it might be better to keep the entire model object 
-returned by `glm()` and then subsequently extract what is needed -- to avoid having 
+returned by `glm()` and then subsequently extract what is needed---to avoid having 
 to redo the bootstrap computations for other parameters of interest.
 
 ```{r}
 #| label: boot-ad
 #| code-fold: show
+set.seed(1234)
 B <- 999
 n <- nrow(vegetables)
 beta <- numeric(B)
@@ -1468,8 +1467,8 @@ gridExtra::grid.arrange(p1, p2)
 ```
 
 We observe that the standard error based on parametric bootstrapping 
-is almost identical to the model based analytic estimate of the standard error. 
-This suggests that if the data were from a Poisson model, the model based estimate
+is almost identical to the model-based analytic estimate of the standard error. 
+This suggests that if the data were from a Poisson model, the model-based estimate
 would, in fact, be quite accurate. 
 The standard error based on nonparametric bootstrapping is, however, around six
 times larger. This is in accordance with our previous observations that the 
@@ -1502,7 +1501,7 @@ with nominal coverage 95%.
 #| code-fold: show
 beta_star <- beta - boot_stat$beta_hat[1]
 beta_qt <- quantile(beta_star, probs = c(0.975, 0.025), type = 1)
-boot_stat$beta_hat[1] - beta_qt
+boot_stat$beta_hat[1] - unname(beta_qt)
 ```
 
 ```{r}
@@ -1529,7 +1528,7 @@ for(b in 1:B) {
 ```{r}
 #| label: fig-bootdens-gamma
 #| column: margin
-#| fig-cap: "Nonparametric bootstrap distribution of $\\hat{\\beta}_{\\mathrm{ad1}}$ using the Gamma model."
+#| fig-cap: "Nonparametric bootstrap distribution of $\\hat{\\beta}_{\\mathrm{ad1}}$ using the gamma model."
 #| echo: false
 #| opts.label: smallfigure
 ggplot(mapping = aes(beta)) +
@@ -1545,7 +1544,7 @@ zero and also a bit narrower than the nonparametric bootstrap distribution
 based on the Poisson model.
 
 All four nonparametric bootstrap intervals are in @tbl-boot-conf. The gamma model results in 
-slightly narrower intervals than the Poisson model, and in intervals that are also 
+somewhat narrower intervals than the Poisson model, and in intervals that are also 
 closer to zero. There are small differences between the standard intervals
 and the simple intervals. This is most pronounced for the Poisson model, where the 
 simple interval is moved slightly to the right relative to the standard interval. 
@@ -1586,27 +1585,27 @@ ad_int |> filter(interval %in% c("Gamma boot se", "Gamma boot simple", "Pois boo
 
 
 @fig-all-conf compares all twelve intervals computed using the two different models 
-for estimation and using interval estimators that are either model based, robust or bootstrap based.
+for estimation and using interval estimators that are either model-based, robust or bootstrap-based.
 The intervals are quite different, and this example shows first of all that statistical 
 inference based on a misspecified model (the Poisson model) can be quite misleading. 
 We make the following additional observations.
 
 * The nonparametric bootstrap intervals are generally the widest intervals. Using the gamma model 
     standard errors or the robust sandwich estimator for the Poisson model is a 
-    huge improvement over the Poison model based standard errors, but the 
+    huge improvement over the standard errors based on the Poisson model, but the 
     nonparametric bootstrap suggests even wider intervals.
 * The parametric bootstrap does not adjust for model misspecification and it usually 
-   gives intervals close to standard intervals using model based standard errors. 
-   It can be useful if we don't have an analytic estimator of the standard error though.
+   gives intervals close to standard intervals using model-based standard errors. 
+   It can be useful if we do not have an analytic estimator of the standard error though.
 * The gamma model and the Poisson model specify the same mean value model but result 
    in different estimators (because they specify different variance models and thus different weights). 
    Thus the estimates are different. If the gamma variance fits the data the best, the resulting 
    estimator will also be more efficient. The same interval estimator gives narrower 
    intervals for the gamma model estimator than for the Poisson model estimator,  
-   which suggest that the gamma model estimator is the most efficient.
-* Irrespectively of which interval estimator we consider, the conclusion is still that 
-   there is a significant positive association between advertising and sale. But the 
-   evidence appears less strong and the magnitude much more undercertain than if 
+   which suggests that the gamma model estimator is the most efficient.
+* Irrespective of which interval estimator we consider, the conclusion is still that 
+   there is a significant positive association between advertising and sales. But the 
+   evidence appears less strong and the magnitude much more uncertain than if 
    we went with the initial conclusion based on the Poisson model only.
 
 ```{r}
@@ -1615,7 +1614,7 @@ We make the following additional observations.
 #| column: margin
 #| echo: false
 #| opts.label: smallfigure
-#| fig-height: 4
+#| fig-height: 6
 mutate(ad_int, interval = factor(interval, levels = interval)) |>
     ggplot(aes(interval, ymin = lower, ymax = upper)) + 
         geom_errorbar() +
@@ -1630,7 +1629,7 @@ strong model assumptions, to analytically construct intervals with better covera
 properties for small samples, but for moderate to large sample sizes the 
 nonparametric bootstrap is hard to beat. 
 
-The main drawback of the bootstrap is a non-significant extra computational 
+The main drawback of the bootstrap is a non-negligible extra computational 
 burden, since we need to refit the model $B$ times. Though this computational 
 cost scales linearly, it still means that if $B = 999$ as above, and if it takes just one 
 minute to compute the estimator for one dataset, it will take more than half a day 
@@ -1652,37 +1651,55 @@ to estimate even more extreme quantiles with any accuracy we need $B$ to be even
 
 ## Exercises {.unnumbered}
 
-::: {#exr-npmlemean}
-Assume that the sample space is $\mathbb{R}^k$ and the parameter of
-interest is the mean 
-$$
-    \gamma(P) = \int y \, \mathrm{d}P(y).
-$$
-Assume that we have observations $Y_1, \ldots, Y_n$ and let $K$ denote 
-the convex hull spanned by these observations (the smallest convex subset
-containing the observations). Let $\hat{P}$ be the NPMLE, for which 
-$$
-    \gamma(\hat{P}) = \frac{1}{n} Y_i.
-$$
+::: {#exr-robust}
+The dataset `car` from the R package RwR contains the number of car insurance claims (`Claims`) 
+and the number of policy holders (`Holders`) cross-tabulated according to the district (`District`), 
+the size of the motor (`Motor`) and the age of the policy holder (`Age`). The table has 64 cells, 
+and each row in the dataset corresponds to one cell. We model the claim rate per policy holder 
+by the Poisson regression model with log link function, main effects of the three categorical 
+variables, and $\log(\texttt{Holders})$ entering as an offset. The parameter of interest is the 
+regression parameter $\beta_{\texttt{D}}$ for district D (major cities) relative to district A, and 
+$e^{\beta_{\texttt{D}}}$ is the corresponding claim rate ratio.
 
-1. Argue that if the support of $P'$ is contained in $K$ then $\gamma(P') \in K$, 
-   and show that in this case there exists a 
-    $$
-        P = \sum_{i=1}^n P_i \varepsilon_{Y_i}.
-    $$
-    such that $L(P) \geq L(P')$ and $\gamma(P) = \gamma(P')$.
+1. Fit the Poisson regression model and investigate if it fits the data, e.g., by comparing the 
+    deviance to the residual degrees of freedom and by plotting the Pearson residuals. Compute the 
+    standard 95% confidence interval and the likelihood interval for $\beta_{\texttt{D}}$, and transform 
+    both intervals into intervals for the rate ratio $e^{\beta_{\texttt{D}}}$.
 
-2. Show that if the support of $P'$ is not restricted then 
-    for all $\gamma \in \mathbb{R}^k$
-    $$
-        \sup_{P': \gamma(P') = \gamma} L(P') = L(\hat{P}).
-    $$
+2. Compute the sandwich estimator ([-@eq-sandwich]) of the asymptotic covariance matrix explicitly 
+    from the model matrix, the working weights and the working residuals as in @sec-ad-robust. 
+    Do the computation using both representations, ([-@eq-tilde-w-pearson]) and ([-@eq-tilde-w-working]), 
+    of the weights $\tilde{w}_{ii}$, and compare the results to the result of `sandwich()`. 
+    Compute the robust 95% confidence interval for $\beta_{\texttt{D}}$. 
+
+3. Compare the model-based and the robust standard errors for all the regression parameters. 
+    Even though the Poisson model appears to fit the data well, the two sets of standard errors 
+    differ considerably. To investigate which of the two interval constructions for $\beta_{\texttt{D}}$ 
+    has an actual coverage closest to the nominal 95%, simulate 1000 new datasets from the fitted 
+    Poisson model (conditionally on the predictors and the number of policy holders), refit the model 
+    to each simulated dataset, and compute both intervals. Estimate the actual coverage of each 
+    of the two interval constructions and explain the result. 
+
+    *Hint: The sandwich estimator is itself an estimator with sampling variability. How many 
+    observations are used to estimate the $10 \times 10$ matrix $C_1$?* 
+
+4. Refit the model without `Age`. Show that this model is overdispersed, and compute the standard, 
+    the quasi-Poisson and the robust 95% confidence intervals for $\beta_{\texttt{D}}$ in this model. 
+    Compare the intervals to each other and to those obtained for the full model. 
+
+5. The robust interval in question 4 accounts for the misspecification of the variance, but `Age` 
+    has been left out of the mean value model. Discuss, in the light of the discussion 
+    following @exm-glm-sandwich, which parameter the estimator of $\beta_{\texttt{D}}$ targets 
+    in the model without `Age`, and whether the robust interval is a useful interval estimate 
+    of the effect of district D. The sandwich estimator was motivated in @sec-robust under 
+    assumption **A6**. Discuss if this assumption is reasonable for the cells of a cross-tabulation 
+    such as the `car` data. Which of the intervals computed in this exercise would you report? 
 :::
 
 ::: {#exr-gompertz}
 The Gompertz distribution on $[0, \infty)$ has survival function 
-$$S
-    (t) = \exp(- \eta (e^{\gamma t} - 1)) \quad t \geq 0,
+$$
+    S(t) = \exp(- \eta (e^{\gamma t} - 1)), \quad t \geq 0,
 $$
 for parameters $\eta, \gamma > 0$. We assume in the following that 
 $$
@@ -1729,7 +1746,7 @@ exponential with rate parameter $\lambda$, and that the censoring variables are 
 
 5. Argue why $\hat{\lambda} = (n - n_u) / t$ is a sensible estimator of $\lambda$. 
     
-6. Simulate a new data set, $(\tilde{T}_1, \tilde{\delta}_1), \ldots, (\tilde{T}_n, \tilde{\delta}_n)$, 
+6. Simulate a new dataset, $(\tilde{T}_1, \tilde{\delta}_1), \ldots, (\tilde{T}_n, \tilde{\delta}_n)$, 
     using the estimated parameters $\hat{\eta}$ and $\hat{\gamma}$ for the Gompertz survival distribution 
     and $\hat{\lambda}$ for the exponential censoring distribution. Compute and plot the
     Kaplan-Meier estimator of the survival function for the simulated data and compare it to 
@@ -1751,16 +1768,16 @@ bootstrap algorithm, which, for instance, can be used to calibrate the likelihoo
 
 
 ::: {#exr-model-selection}
-This exercise is investigating the effect of model selection 
+This exercise investigates the effect of model selection 
 on the standard confidence interval constructions. 
 
-The exercise uses the `cholost` data set from the R package RwR,
+The exercise uses the `cholost` dataset from the R package RwR,
 and you will consider models of the effect of *compliance* on cholesterol decrease. Data 
 is from a trial where 164 men took 
 cholestyramine for a number of years. Their decrease in
 blood-level cholesterol from the beginning to the end of the trial is
-the response variable (`y` in the data set). Not all of
-them took the intended dose. In the data set the variable
+the response variable (`y` in the dataset). Not all of
+them took the intended dose. In the dataset the variable
 `c` measures compliance. It is a monotone transformation of the
 proportion of the dose actually taken. 
 
@@ -1778,7 +1795,7 @@ and it is assumed throughout that $\mathbf{V}(Y \mid C) = \sigma^2$.
     of the cholesterol decrease as a function of compliance. 
     Investigate the model fit[^no-hexbin]. 
 
-[^no-hexbin]: This is a small data set, so don't use hexagonal binning for plotting the data points!
+[^no-hexbin]: This is a small dataset, so do not use hexagonal binning for plotting the data points!
 
 In the following $f$ is expanded using natural
 cubic splines. Using the R terminology, an expansion with $\mathrm{df}$ degrees of freedom
@@ -1789,25 +1806,25 @@ basis functions).
 2. Fit $f$ as a natural cubic spline with 3 degrees of freedom.
     Give a graphical presentation of the resulting model. Compare the model to the linear regression model above.  
 
-3. In the remaining part of the exercise the focus is on the estimation of $f(c)$ for 
-    $$
-        c \in I := \{-2, -1, 0, 1, 2\}.
-    $$ 
-    That is, the focus is on the computation of the
-    estimators $\hat{f}(c)$ and their distribution for $c$ taking these
-    five particular values.  
+In the remaining part of the exercise the focus is on the estimation of $f(c)$ for 
+$$
+    c \in I := \{-2, -1, 0, 1, 2\}.
+$$ 
+That is, the focus is on the computation of the
+estimators $\hat{f}(c)$ and their distribution for $c$ taking these
+five particular values.  
 
-4. Use nonparametric bootstrapping to estimate standard errors of $\hat{f}(c)$ 
+3. Use nonparametric bootstrapping to estimate standard errors of $\hat{f}(c)$ 
     for $c \in I$ when fitting the natural cubic spline model
     with 3 degrees of freedom. Compare with the theoretical
     values of the standard errors.
 
-5. Consider the 6 models where $f$ is a natural cubic spline with 1--6 degrees of freedom. 
+4. Consider the 6 models where $f$ is a natural cubic spline with 1--6 degrees of freedom. 
     Compare the models and use the adjusted $R^2$-statistic to select one of the 6 models. 
 
 The bootstrap above does not take into account any model
 selection such as the selection of degrees of freedom of the cubic
-spline expansion of $f$. The last question in this problem explores
+spline expansion of $f$. The last question in this exercise explores
 the effect of model selection on the confidence intervals.
 
 6. Use nonparametric bootstrapping to estimate standard errors of $\hat{f}(c)$ 
@@ -1819,6 +1836,37 @@ the effect of model selection on the confidence intervals.
 ::: {#exr-likelihood-regions}
 Let $\mathcal{L}(c)$ denote the likelihood regions from @def-likelihood-region. 
 
-1. Show that the MLE exists if and only if $\bigcap_{c > 0} \mathcal{L}(c) \not =  \emptyset$
+1. Show that the MLE exists if and only if $\bigcap_{c > 0} \mathcal{L}(c) \neq \emptyset.$
 2. Show that the MLE is unique if and only if $\bigcap_{c > 0} \mathcal{L}(c)$ is a singleton set.
+:::
+
+
+::: {#exr-npmlemean}
+Assume that the sample space is $\mathbb{R}^k$ and the parameter of
+interest is the mean 
+$$
+    \gamma(P) = \int y \, \mathrm{d}P(y).
+$$
+Assume that we have observations $Y_1, \ldots, Y_n$ and let $K$ denote 
+the convex hull spanned by these observations (the smallest convex subset
+containing the observations). Let $\hat{P} = \frac{1}{n} \sum_{i=1}^n \delta_{Y_i}$ be the 
+empirical measure, for which 
+$$
+    \gamma(\hat{P}) = \frac{1}{n} \sum_{i=1}^n Y_i.
+$$
+Let $L(P) = \prod_{i=1}^n P(Y_i)$ denote the so-called empirical likelihood, which is 
+literally the product of the probabilities of the observations.
+
+1. Argue that if the support of $P'$ is contained in $K$ then $\gamma(P') \in K$, 
+   and show that in this case there exists a 
+    $$
+        P = \sum_{i=1}^n p_i \delta_{Y_i}
+    $$
+    such that $L(P) \geq L(P')$ and $\gamma(P) = \gamma(P')$.
+
+2. Show that if the support of $P'$ is not restricted then 
+    for all $\gamma \in \mathbb{R}^k$
+    $$
+        \sup_{P': \gamma(P') = \gamma} L(P') = L(\hat{P}).
+    $$
 :::

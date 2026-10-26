@@ -9,42 +9,41 @@ source("_common.R")
 
 ::: {.callout-warning}
 This chapter is still a draft and minor changes are made without notice.
-In particular, a few practical examples will be added in Sections 11.4 and 11.5.
 :::
 
 This chapter deals with regression models for time-to-event data with possible right censoring, which 
 is common for survival data but also in other applications of statistics[^app] such as reliability 
 theory and credit risk. 
 
-[^app]: Time to failure of an electronic component, say, or time default of a debitor.
+[^app]: Time to failure of an electronic component, say, or time to default of a debtor.
 
 Some of the notation in this chapter will deviate a bit from 
-the notation used for other regression models, which is deliberate and to follow 
+the notation used for other regression models, which is deliberate and intended to follow 
 some of the standard conventions in the survival literature. 
-The response variable will, for example, be denoted $T$ instead of $Y$, which is 
+The outcome variable will, for example, be denoted $T$ instead of $Y,$ which is 
 also a natural notation for a time-to-event observation. 
-The regression models are, however, still of the form, where a linear 
-predictor $\eta = X^T \beta$ is formed from the vector of predictors $X \in \mathbb{R}^p$ 
-and a parameter $\beta \in \mathbb{R}^p$, and the effect of the predictors on 
-the survival distribution is then only through $\eta$. 
+The regression models are formed in terms of a linear 
+predictor $\eta = X^T \beta$ based on the vector of predictors $X \in \mathbb{R}^p$ 
+and a parameter $\beta \in \mathbb{R}^p,$ and the effect of the predictors on 
+the survival distribution is then always through $\eta.$ 
 
 
 
 ## Outline and prerequisites 
 
-@sec-intro-surv is covers the basic definitions specific to survival analysis 
+@sec-intro-surv covers the basic definitions specific to survival analysis 
 and motivates why survival (regression) analysis is special. It also covers the
 basic nonparametric estimators of survival distributions. @sec-par-surv 
-covers parametric survival models and likehood based methods for estimation 
+covers parametric survival models and likelihood based methods for estimation 
 and statistical inference. The accelerated failure time models and the proportional
-hazard model are introduced, which show two different ways that the linear 
+hazards models are introduced, which show two different ways that the linear 
 predictor can affect the survival distribution. @sec-semipar-surv primarily 
-treats Cox's proportional hazard model, which is the most widely used 
-survival regression model. As the name suggests, it is a proportional hazard model, 
-but the methodology is *semiparametric*, meaning in this case that a baseline hazard
+treats Cox's proportional hazards model, which is the most widely used 
+survival regression model. As the name suggests, it is a proportional hazards model, 
+but the methodology is *semiparametric*. In this case it means that a baseline hazard
 function is left unconstrained. @sec-res-surv introduces survival residuals, 
 which differ a bit from residuals considered for linear and generalized linear models. 
-These differences reflect that survival models don't target conditional expectations, 
+These differences reflect that survival models do not target conditional expectations, 
 but otherwise the purposes of the residuals for model diagnostics are the same. 
 
 The chapter primarily relies on the following R packages. 
@@ -81,12 +80,12 @@ The baseline is thus time zero on the time axis of the survival time.
 
 The patients are followed for some period of time, and if they 
 die during this followup period, their survival time is registered. 
-At a planned calendar time the study ends and the status of the patients are registered, that is, 
+At a planned calendar time the study ends and the status of each patient is registered, that is, 
 we register if they died, in which case we know their survival time, or if they 
 are still alive. 
 All patients alive at the end of the study have *right censored* survival 
 times. This form of censoring is sometimes called *administrative censoring*. 
-Some patients might also have dropped out of the study earlier, because they moved or didn't want to 
+Some patients might also have dropped out of the study earlier, because they moved or did not want to 
 participate anymore, say. At the time they drop out, we say that they are *lost-to-followup*, 
 and this also results in right censoring of their survival time. 
 
@@ -97,7 +96,7 @@ survival distributions. But it is not clear that
 we want to model *expected* survival times, and the conditional expectation 
 is often not[^reasons] the correct target of a survival regression model. 
 
-[^reasons]: One reason is technical. Expectations rely on the tails of distributions, and with right censoring we don't get that information. 
+[^reasons]: One reason is technical. Expectations rely on the tails of distributions, and with right censoring we do not get that information. 
 
 Regression models for survival data 
 thus differ from the linear and generalized linear regression 
@@ -111,9 +110,9 @@ models in at least the following two ways:
 
 The overall objective of a survival regression model is the same as for any regression model: 
 how are the different predictors associated with the survival time. We might then have 
-different more specific questions we want to answer. For example, to determine if the survival distributions 
+different more specific questions we want to answer. For example, to determine if the survival distribution 
 depends on a choice of treatment (testing). Or we might want to quantify how strongly 
-a predictor is associated with survival response.
+a predictor is associated with the survival outcome.
 
 We might, of course, also be interested in prediction, which we often call *survival prognosis*. 
 It is rarely of interest to make a point prediction of a survival time for an individual, 
@@ -147,13 +146,14 @@ prostate <- prostate |> as_tibble()
 
 ```{r}
 #| label: fig-prostate-entry
-#| fig-cap: "The entry date of the 100 first prostate cancer patients into the study, their follow-up time and their status at end of follow-up."
+#| fig-cap: "The entry date of the first 100 prostate cancer patients into the study, their follow-up time and their status at end of follow-up."
 #| column: margin
+#| warning: false
 #| fig-height: 7
 #| fig-width: 3
 #| echo: false
-head(prostate, 100) |> 
-    arrange(sdate) |>
+arrange(prostate, sdate) |>
+    head(100) |> 
     mutate(index = seq_along(sdate)) |> 
     ggplot(aes(x = sdate, xend = sdate + months(dtime), y = index)) +
     geom_segment() + 
@@ -162,7 +162,7 @@ head(prostate, 100) |>
     ylab("Patient") +
     xlab("Date") +
     theme(legend.position = "top")
-select(prostate, c(rx, status, dtime, age, sdate)) 
+select(prostate, c(rx, status, dtime, age, sdate)) # This is deliberate
 ```
 
 @fig-prostate-entry illustrates the data for the first 100 patients 
@@ -190,7 +190,7 @@ patients.
 ### Survival distributions and censoring
 
 A survival time $T^*$ is simply a non-negative random variable. We will denote 
-its distribution function by $F$, and if the distribution has density $f$ w.r.t. Lebesgue measure, 
+its distribution function by $F,$ and if the distribution has density $f$ w.r.t. Lebesgue measure, 
 we have 
 $$
     F(t) = \mathbf{P}(T^* \leq t) = \int_{0}^{t} f(s) \mathrm{d}s.
@@ -211,7 +211,7 @@ $$ {#eq-surv-from-cum}
 If $S$ is continuously differentiable, $-S'(t) = f(t)$ is the density of the survival distribution, 
 and the *hazard function* is defined as 
 $$
-    \lambda(t) \coloneqq - (\log S(t))' = \frac{f(t)}{S(t)}.
+    \lambda(t) \coloneqq \Lambda'(t) = - (\log S(t))' = \frac{f(t)}{S(t)}.
 $$ {#eq-hazard}
 [There are one-to-one relations between the distribution function, the survival function and the cumulative hazard function.]{.aside}
 
@@ -222,10 +222,10 @@ $$
         & =  \lim_{\varepsilon \to 0+} \frac{1}{\varepsilon} \mathbf{P}(T^* \in (t,t+\varepsilon] \, | \, T^* > t),
     \end{align*}
 $$
-and $\lambda(t)$ thus has the interpretation as the instantaneous rate of death at time $t$ given survival beyond time $t$. 
+and $\lambda(t)$ thus has the interpretation as the instantaneous rate of death at time $t$ given survival beyond time $t.$ 
 We also note that
 $$
-    \Lambda(t) = \int_0^t \lambda(s) \mathrm{d} s = - \log S(t)
+    \Lambda(t) = \int_0^t \lambda(s) \mathrm{d} s
 $$
 which explains why $\Lambda$ is called the *cumulative* hazard function.
 
@@ -233,8 +233,8 @@ We will not observe $T^*$ but only
 $$
     T = \min\{T^*, C\} \quad \text{ and } \quad \delta = 1(T^* \leq C)
 $$
-for a *censoring variable* $C$. We call $T$ the *right censored* survival time 
-and $\delta$ the *status indicator*. The status indicator is $1$ if the $T$ is uncensored and 
+for a *censoring variable* $C.$ We call $T$ the *right censored* survival time 
+and $\delta$ the *status indicator*. The status indicator is $1$ if $T$ is uncensored and 
 $0$ otherwise. To distinguish the distribution of $C$ clearly from the distribution of the survival 
 time, we will generally denote its survival function by $H$ and its density by $h$ (if
 it exists). That is, 
@@ -254,22 +254,22 @@ and the status indicators
 $$
     \delta_i = 1(T_i^* \leq C_i)
 $$
-for $i = 1, \ldots, n$. 
+for $i = 1, \ldots, n.$ 
 
-The vector of predictor variables is as elsewhere denoted $X_i \in \mathbb{R}^p$, and we are generally 
+The vector of predictor variables is as elsewhere denoted $X_i \in \mathbb{R}^p,$ and we are generally 
 interested in models of the conditional distributions[^cond-dist] 
 $$
     T_i^* \mid X_i = x.
 $$ 
 
-An issue of particular concern for survival analysis is *when* a predictor variable is observed. In some studies, 
+An issue of particular importance for survival modeling is to understand *when* a predictor variable is observed. In some studies, 
 some potential predictor variables are monitored throughout the study. Such variables as BMI and 
 blood pressure might be recorded on a monthly basis, say. It is possible to develop a 
 general time-to-event theory where predictors also change with time, but it is both technically 
 beyond this chapter, and it is also conceptually challenging to understand and interpret 
 such models correctly.
 
-[^cond-dist]: Note that the target is the conditional distribution of the unobserved and uncensored $T^*_i$, not the oberved and censored $T_i$. 
+[^cond-dist]: Note that the target is the conditional distribution of the unobserved and uncensored $T^*_i,$ not the observed and censored $T_i.$ 
 
 We will throughout assume that all predictors are observed[^observable] at or 
 before baseline, and we refer to such predictors as *baseline predictors*.
@@ -280,11 +280,11 @@ modifications of A5 or A6 to the survival setup.
 [^observable]: Or, as a minimum, observable at time zero.
 
 **SA5:** The conditional distribution of $(T^*_i, C_i)$ given $\mathbf{X}$ depends only 
-on $X_i$ and $(T^*_1, C_1), \ldots, (T^*_n, C_n)$ are conditionally independent given $\mathbf{X}$.
+on $X_i$ and $(T^*_1, C_1), \ldots, (T^*_n, C_n)$ are conditionally independent given $\mathbf{X}.$
 
 **SA6:** The triples $(T^*_1, C_1, X_1), \ldots, (T^*_n, C_n, X_n)$ are i.i.d. 
 
-Since $(T_i, \delta_i)$ is a function of $(T^*_i, C_i)$, then either assumption 
+Since $(T_i, \delta_i)$ is a function of $(T^*_i, C_i),$ then either assumption 
 implies the same distributional statement about the $(T_i, \delta_i)$-s as about 
 the $(T^*_i, C_i)$-s.
 
@@ -292,7 +292,7 @@ An additional delicate survival modeling question is what to assume about the
 joint distribution of $T^*_i$ and $C_i$ (possibly, conditionally on $X_i$). 
 Throughout, we will make the following assumption.
 
-**Independent censoring:** $T^*_i$ and $C_i$ are conditionally independent given $X_i$. 
+**Independent censoring:** $T^*_i$ and $C_i$ are conditionally independent given $X_i.$ 
 
 Even though the assumption above is a *conditional* independence statement, 
 it is known simply as "independent censoring". In the literature, 
@@ -310,7 +310,7 @@ survival function
 $$
     \hat{S}^*_n(t) = \frac{1}{n} \sum_{i=1}^n 1(T_i^* > t)
 $$
-as a nonparametric estimator of $S$. Clearly, we cannot compute 
+as a nonparametric estimator of $S.$ Clearly, we cannot compute 
 $\hat{S}^*_n$ if we only have censored observations. 
 The purpose of this section is to 
 introduce two nonparametric estimators of a survival distribution 
@@ -334,11 +334,11 @@ that is, where we have strict inequalities among the ordered survival times
 $$
     T_{(1)} < T_{(2)} < \ldots < T_{(n-1)}  < T_{(n)}.
 $$
-Here $T_{(k)}$ denotes the survival time with rank $k$, and we will 
-denote the corresponding status indicator by $\delta_{(i)}$. 
-[Without censoring, the Kaplan-Meier estimator equals $\hat{S}^*$, cf. @exr-empsurv]{.aside}
+Here $T_{(k)}$ denotes the survival time with rank $k,$ and we will 
+denote the corresponding status indicator by $\delta_{(k)}.$ 
+[Without censoring, the Kaplan-Meier estimator equals $\hat{S}^*,$ cf. @exr-empsurv]{.aside}
 
-When there are no ties, and $T_{(k)} \leq t < T_{(k+1)}$, we can factorize the survival function as 
+When there are no ties, and $T_{(k)} \leq t < T_{(k+1)},$ we can factorize the survival function as 
 $$
     \begin{align*}
         S(t) & =  \mathbf{P}(T^* > t) \\
@@ -347,15 +347,15 @@ $$
     \end{align*}
 $$ 
 where $\mathbf{P}(T^* \geq T_{(i+1)} \mid T^* \geq T_{(i)})$ is the conditional probability of surviving 
-from $T_{(i)}$ to $T_{(i+1)}$ given survival beyond time $T_{(i)}$. 
+from $T_{(i)}$ to $T_{(i+1)}$ given survival beyond time $T_{(i)}.$ 
 
-Since $Y(T_{(i)})$ are the number of individuals at risk[^at-risk] at time $T_{(i)}$ 
-and $Y(T_{(i)}) - \delta_{(i)}$ are the number of individuals that die in the interval 
-$[T_{(i)}, T_{(i+1)})$, we can regard 
+Since $Y(T_{(i)})$ is the number of individuals at risk[^at-risk] at time $T_{(i)}$ 
+and $Y(T_{(i)}) - \delta_{(i)}$ is the number of individuals that survive the interval 
+$[T_{(i)}, T_{(i+1)}),$ we can regard 
 $$
     \frac{Y(T_{(i)}) - \delta_{(i)}}{Y(T_{(i)})} = 1-\frac{\delta_{(i)}}{Y(T_{(i)})}
 $$
-as an estimator of the conditional probability $\mathbf{P}(T^* \geq T_{(i+1)} \mid T^* \geq T_{(i)})$.
+as an estimator of the conditional probability $\mathbf{P}(T^* \geq T_{(i+1)} \mid T^* \geq T_{(i)}).$
 This gives the *Kaplan-Meier* estimator for $t \in [T_{(k)}, T_{(k+1)})$
 $$
     \hat{S}(t) = \left(1-\frac{\delta_{(k)}}{Y(T_{(k)})}\right) 
@@ -376,7 +376,7 @@ To define the Kaplan-Meier estimator that allows for multiple deaths
 at the same time (ties), we introduce  the *counting process* of deaths (non-censored events)
 $$N(t) = \sum_{i=1}^n 1(T_i \leq t, \delta_i=1),$$
 and the jumps for the counting process given as 
-$$\Delta N(t) = N(t) - N(t-) = N(t) - \lim_{\varepsilon \to 0+} N(t-\varepsilon),$$
+$$\Delta N(t) = N(t) - N(t-) = N(t) - \lim_{\varepsilon \to 0+} N(t-\varepsilon).$$
 
 \index{Kaplan-Meier estimator} 
 
@@ -388,7 +388,7 @@ $$ {#eq-KM-general}
 :::
 
 In the infinite product above, all factors where $\Delta N(s) = 0$ 
-are equal to $1$. There is thus only a finite number of factors different from $1$. 
+are equal to $1.$ There is thus only a finite number of factors different from $1.$ 
 When $\Delta N(s) \in \{0, 1\}$ we see that @eq-KM-general coincides with 
 @eq-KM-no-ties. The definition allows for $\Delta N(s) > 1$
 to correctly account for multiple deaths at the same time and thus ties among 
@@ -396,7 +396,7 @@ the observed survival times.
 [The function `survfit()` from the R package survival can be used to compute the Kaplan-Meier estimator.]{.aside}
 
 
-Since the cumulative hazard function is $\Lambda = - \log(S)$, we can estimate it 
+Since the cumulative hazard function is $\Lambda = - \log(S),$ we can estimate it 
 nonparametrically as 
 $$
     - \log(\hat{S}(t)) = - \sum_{s \leq t} \log  \left(1-\frac{\Delta N(s)}{Y(s)}\right).
@@ -417,7 +417,7 @@ $$
     \Lambda(t) \approx \sum_{i: T_{(i)} \leq t}  \mathbf{P}(T^* \in [T_{(i)}, T_{(i + 1)}) \mid T^* \geq T_{(i)}), 
 $$
 and if there are no ties, the conditional probabilities in the sum above can be estimated[^est-prob] as 
-$\delta_{(i)} / Y(T_{(i)})$. This leads to the *Nelson-Aalen* estimator 
+$\delta_{(i)} / Y(T_{(i)}).$ This leads to the *Nelson-Aalen* estimator 
 $$
     \hat{\Lambda}(t) = \sum_{i: T_{(i)} \leq t} \frac{\delta_{(i)}}{Y(T_{(i)})}.
 $$ {#eq-NA-no-ties}
@@ -433,7 +433,7 @@ $$
 $$ {#eq-NA-general}
 :::
 
-Since the survival function is given by $S(t) = \exp(-\Lambda(t))$, we can
+Since the survival function is given by $S(t) = \exp(-\Lambda(t)),$ we can
 estimate the survival function by plugging the 
 Nelson-Aalen estimator of the cumulative hazard, which gives
 $$
@@ -441,7 +441,7 @@ $$
     \frac{\Delta N(s)}{Y(s)}\right).
 $$ {#eq-surv-by-NA}
 
-We note that $\exp(-\hat{\Lambda})$ is not the Kaplan-Meier estimator and nor is 
+We note that $\exp(-\hat{\Lambda})$ is not the Kaplan-Meier estimator, nor is 
 $- \log(\hat{S})$ the Nelson-Aalen estimator. 
 [The function `survfit()` with argument `stype = 2` estimates the survival function in terms of the Nelson-Aalen estimator via @eq-surv-by-NA.]{.aside}
 
@@ -451,9 +451,9 @@ $$
     \exp\left(- \frac{\Delta N(s)}{Y(s)}\right) \approx  \left(1 -
     \frac{\Delta N(s)}{Y(s)}\right)
 $$
-for large $Y(s)$ by using the Taylor expansion $\exp(x) = 1 + x + o(x^2)$. 
+for large $Y(s)$ by using the Taylor expansion $\exp(x) = 1 + x + O(x^2).$ 
 Thus differences between the factors are small unless $s$ is so large that 
-the number of individuals at risk, $Y(s)$, is small. 
+the number of individuals at risk, $Y(s),$ is small. 
 
 One can argue that the way ties are handled above presumes that survival times 
 can be exactly equal, which is at odds with any continuous survival distribution. 
@@ -464,7 +464,7 @@ $$
     \frac{1}{Y(s)} + \frac{1}{Y(s) - 1} + \ldots + \frac{1}{Y(s) - \Delta N(s) + 1}.
 $$ 
 [The function `survfit()` with argument `ctype = 2` will use the Fleming-Harrington correction for ties.]{.aside}
-This is known as the *Fleming-Harrington* correction for ties. It often doesn't
+This is known as the *Fleming-Harrington* correction for ties. It often does not
 make much of a practical difference though. 
 
 ::: {#exm-prostate-II}
@@ -484,7 +484,7 @@ select(prostate, c(rx, status, dtime, age)) |> skim()
 @tbl-skim-prostate shows 148 patients (out of 502) were alive at the end of the 
 study. Thus 148 of the survival times are right censored. @tbl-prostate-death 
 shows a more detailed tabulation of the values of the `status` variable, which 
-specifies one out of nine different causes of death -- in addition to specifying 
+specifies one out of nine different causes of death---in addition to specifying 
 if the patient is still alive. We may also note that the survival time (`dtime`)
 is registered in months since baseline, which is a very coarse scale. Consequently 
 there are many ties in the data. 
@@ -507,9 +507,9 @@ the `status` variable will only be used to determine the censoring status.
 We fit survival functions for all patients using the `survfit()` function 
 from the survival package. See `?survfit.formula` for details about how to 
 specify a model using the formula interface. Note that the left hand side of the 
-formula, that specifies the response, uses the special `Surv()` function syntax 
+formula, that specifies the outcome, uses the special `Surv()` function syntax 
 to include information about the censoring status. We fit the survival functions 
-below using both the Kaplan-Meier and the Nelson-Aalen, and we also fit the 
+below using both the Kaplan-Meier and the Nelson-Aalen estimators, and we also fit the 
 survival function using the Nelson-Aalen estimator with the Fleming-Harrington 
 correction for ties. 
 
@@ -535,7 +535,7 @@ prostate_NA_FH <- survfit(
 )
 ```
 
-@fig-survival-est shows the fitted survival curves -- including a plot that zooms in on 
+@fig-survival-est shows the fitted survival curves---including a plot that zooms in on 
 a part of the curves. The differences are small and barely visible, and they are most pronounced 
 in the tail of the distribution. 
 
@@ -593,12 +593,12 @@ summary(prostate_KM_rx, data.frame = TRUE) |>
 In this section we focus on parametric models of the survival distribution, 
 and we will first derive a generic expression for the likelihood function. 
 We then turn to regression models and introduce the accelerated failure time 
-models and the proportional hazards models as two different was for the 
-predictors to affect the response distribution.
+models and the proportional hazards models as two different ways for the 
+predictors to affect the outcome distribution.
 
 ### The likelihood
 
-Recall that in terms of $T^*$ and $C$ we have $T = \min\{T^*, C\}$ and $\delta = 1(T^* \leq C)$. 
+Recall that in terms of $T^*$ and $C$ we have $T = \min\{T^*, C\}$ and $\delta = 1(T^* \leq C).$ 
 Our first result gives the density of the joint distribution of $(T, \delta)$ in terms of 
 the marginal distributions of $T^*$ and $C$ when they are independent.
 
@@ -634,78 +634,92 @@ $$
 :::
 
 Based on the density result above we can introduce the full likelihood for right censored 
-observations. With $(T_1, \delta_1), \ldots, (T_n, \delta_n)$ independent the full likelihood is 
+observations. With $(T_1, \delta_1), \ldots, (T_n, \delta_n)$ independent, 
+$F_i$ the distribution function for $T_i^*$ and $H_i$ the survival function for the 
+censoring variable $C_i$, the full likelihood is 
 \index{likelihood!survival model}
 $$
-    L = \prod_{i=1}^n  f_i(T_i)^{\delta_i} S_i(T_i)^{1-{\delta_i}} h_i(T_i)^{1-{\delta_i}} H_i(T_i)^{\delta_i}.
+    L(F, H) = \prod_{i=1}^n  f_i(T_i)^{\delta_i} S_i(T_i)^{1-{\delta_i}} h_i(T_i)^{1-{\delta_i}} H_i(T_i)^{\delta_i},
 $$
+where $F$ and $H$ are shorthand for $F_1, \ldots, F_n$ and $H_1, \ldots, H_n$.
 
-For a parametrized model of the distributions of $T^*_1, \ldots, T^*_n$ we have that 
-$f_i = f_{i, \beta}$ for some parameter $\beta$. The censoring distributions, given 
-by the densities $g_i$, usually hold no information about the parameter $\beta$. 
-This implies that 
+If the survival distribution can vary independently of the censoring distribution,
+the full likelihood can be seen as a function of $F$ only, 
 $$
-    L(\beta) = \prod_{i=1}^n f_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i)^{1-{\delta_i}} K_i
+    F \mapsto \prod_{i=1}^n  f_i(T_i)^{\delta_i} S_i(T_i)^{1-{\delta_i}} K_i 
+    = \left(\prod_{i=1}^n  f_i(T_i)^{\delta_i} S_i(T_i)^{1-{\delta_i}}\right) \left(\prod_{i=1}^n K_i\right),
 $$
-with $K_i$ depending on the observations but not the parameter $\beta$.
-
-Note how the derivation of the likelihood makes it explicit what the dominating measure is,
-and thus that the joint distribution in fact has a density. The derivation also makes
-it clear how the distribution of the censoring mechanism enters, and 
-why it can be ignored when it does not depend on the unknown parameter
-$\beta$. The argument for ignorance is not independent censoring[^ind-cen]
-but that the $g_i$-s do not depend upon $\beta$. Technically, the censoring 
-distribution and the parameter $\beta$ are *variation independent*.
-
-[^ind-cen]: Though independent censoring does play a role here for our particular derivation and form of the full likelihood.
-
-By dropping the factors $K_i$, that do not depend upon the parameter $\beta$, 
-in the expression above for the likelihood, we arrive at the following 
-definition of the survival likelihood. 
+with $K_i$ some constants depending on the observations but not on the survival distribution $F.$
+For estimation and inference purposes, we can drop the factor $\prod_{i=1}^n K_i$ since it is 
+only the first factor that depends on $F$. 
 
 ::: {#def-likelihood}
-With the above setup, the survival likelihood is
+The survival likelihood is
 $$ 
-L(\beta)  =  \prod_{i=1}^n f_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i)^{1-{\delta_i}}.
+L(F) \coloneqq \prod_{i=1}^n f_{i}(T_i)^{\delta_i} S_{i}(T_i)^{1-{\delta_i}}.
 $$ {#eq-survlike}
 :::
 
+For a parametrized model of the distributions of $T^*_1, \ldots, T^*_n$ we have that 
+$f_i = f_{i, \beta}$ for some parameter $\beta.$ This gives the survival likelihood 
+as a function of $\beta$,
+$$
+    L(\beta) = \prod_{i=1}^n f_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i)^{1-{\delta_i}}.
+$$
+
+The survival likelihood is the likelihood we will use throughout this chapter. 
+Its derivation made it explicit how this is a likelihood w.r.t. a dominating measure
+up to a factor that depends on the censoring mechanism only. We can ignore 
+this factor when it does not depend on the unknown parameter $\beta.$ 
+The argument for that is not independent censoring[^ind-cen] as such
+but that the $H_i$-s do not depend upon $\beta.$ Technically, the censoring 
+distribution and the parameter $\beta$ are assumed *variation independent*.
+
+[^ind-cen]: Though independent censoring plays a role here for our particular derivation and form of the full likelihood.
+
 It is possible to take a slightly different point of view and
 condition on the censoring variables instead. Then the dominating measure
-for the $i$-th censored observation, $T_i$, becomes $m + \delta_{C_i}$ 
-($\delta_{C_i}$ is the Dirac measure in $C_i$). One arrives at
-the same likelihood as above though. 
+for the $i$-th censored observation, $T_i,$ becomes Lebesgue measure plus a 
+unit point mass in $C_i.$ One arrives at the same likelihood as above though. 
 
 We can also express the likelihood in terms of the hazard and cumulative 
 hazard functions.
 
 ::: {#prp-likelihood}
-If $f_{i, \beta}$ has hazard function $\lambda_{i,\beta}$ and cumulative hazard function 
-$\Lambda_{i, \beta}$, the survival likelihood equals 
+If $F_i$ is the distribution function of $T_i^*$ with hazard function $\lambda_{i}$ and 
+cumulative hazard function $\Lambda_{i},$ the survival likelihood equals 
 $$ 
-    L(\beta) = \prod_{i=1}^n \lambda_{i, \beta}(T_i)^{\delta_i} e^{- \Lambda_{i, \beta}(T_i)} 
-$$ {#eq-survlike2}
+    L(F) = L(\Lambda) \coloneqq \prod_{i=1}^n \lambda_{i}(T_i)^{\delta_i} e^{- \Lambda_{i}(T_i)} 
+$$ {#eq-survlike1dot5}
 ::: 
 
 ::: {.proof}
 Recall that 
 $$
-    \lambda_{i, \beta}(t) = \frac{f_{i,\beta}(t)}{S_{i,\beta}(t)}  
+    \lambda_{i}(t) = \frac{f_{i}(t)}{S_{i}(t)}  
 $$
 and that 
 $$
-    S_{i,\beta}(t) = e^{- \Lambda_{i, \beta}(t)}.
+    S_{i}(t) = e^{- \Lambda_{i}(t)}.
 $$
 Hence 
 $$
     \begin{align*}
-    L(\beta) & = \prod_{i=1}^n f_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i)^{1-{\delta_i}} \\
-    & =  \prod_{i=1}^n \lambda_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i)^{1-{\delta_i}} \\
-    & = \prod_{i=1}^n \lambda_{i, \beta}(T_i)^{\delta_i} S_{i, \beta}(T_i) \\
-    & =  \prod_{i=1}^n \lambda_{i, \beta}(T_i)^{\delta_i} e^{- \Lambda_{i, \beta}(T_i)}.
+    L(F) & = \prod_{i=1}^n f_{i}(T_i)^{\delta_i} S_{i}(T_i)^{1-{\delta_i}} \\
+    & =  \prod_{i=1}^n \lambda_{i}(T_i)^{\delta_i} S_{i}(T_i)^{\delta_i} S_{i}(T_i)^{1-{\delta_i}} \\
+    & = \prod_{i=1}^n \lambda_{i}(T_i)^{\delta_i} S_{i}(T_i) \\
+    & =  \prod_{i=1}^n \lambda_{i}(T_i)^{\delta_i} e^{- \Lambda_{i}(T_i)} = L(\Lambda).
     \end{align*}
 $$
 :::
+
+If $f_{i, \beta}$ is a parametrized density for the survival distribution with 
+hazard function $\lambda_{i, \beta}$ and cumulative hazard function $\Lambda_{i, \beta},$
+the likelihood as a function of $\beta$ can then be expressed as
+$$ 
+    L(\beta) = \prod_{i=1}^n \lambda_{i, \beta}(T_i)^{\delta_i} e^{- \Lambda_{i, \beta}(T_i)}.
+$$ {#eq-survlike2}
+
 
 :::{#exm-weibull-hazard}
 The *Weibull distribution* has hazard function 
@@ -716,7 +730,7 @@ for $\alpha, \gamma > 0$ two parameters. The special
 case $\gamma = 1$ gives us the exponential distribution 
 with constant hazard function. The Weibull distribution 
 has increasing hazard functions over time when $\gamma > 1$
-and decreasing hazard function when $\gamma < 1$.
+and decreasing hazard function when $\gamma < 1.$
 
 The cumulative hazard function is 
 $$
@@ -742,19 +756,19 @@ $$
 
 ## MLE for the exponential distribution
 
-Continuing @exm-weibull-hazard and fixing $\gamma = 1$, corresponding to an
-exponential distribution with hazard rate $\alpha$, we find that the 
+Continuing @exm-weibull-hazard and fixing $\gamma = 1,$ corresponding to an
+exponential distribution with hazard rate $\alpha,$ we find that the 
 log-likelihood equals 
 $$
     \ell(\alpha) = \sum_{i=1}^n \delta_i \log(\alpha) - \alpha T_i
 $$
-up to additive terms that do not depend on $\alpha$. This log-likelihood has 
-a unique stationary point 
+up to additive terms that do not depend on $\alpha.$ Provided that at least one 
+observation is uncensored, this log-likelihood has a unique stationary point 
 $$
     \hat{\alpha} = \frac{\sum_{i=1}^n \delta_i}{\sum_{i=1}^n T_i} = \frac{n_u}{\sum_{i=1}^n T_i}
 $$
-where $n_u = \sum_{i=1}^n \delta_i$ are the number of deaths (the number of uncensored events). 
-The second derivative of of $\ell$ is negative, so $\ell$ is concave and $\hat{\alpha}$ is 
+where $n_u = \sum_{i=1}^n \delta_i$ is the number of deaths (the number of uncensored events). 
+The second derivative of $\ell$ is $-n_u / \alpha^2 < 0,$ so $\ell$ is strictly concave and $\hat{\alpha}$ is 
 the MLE. 
 
 If we had treated the observations as if there were no censoring, we would get the MLE 
@@ -773,9 +787,9 @@ which likewise overestimates the rate.
 ### Regression models
 
 We introduce two ways that predictor variables 
-can affect the survival response distribution. The accelerated failure time 
-models exemplified by the log-logistic model, and the proportional 
-hazards models exemplified by the Weibull model. In the latter case, 
+can affect the survival outcome distribution: the accelerated failure time 
+models, exemplified by the log-logistic model, and the proportional 
+hazards models, exemplified by the Weibull model. In the latter case, 
 it turns out that the likelihood can be computed and optimized 
 using methods for Poisson generalized linear models. 
 
@@ -798,7 +812,7 @@ with corresponding density
 $$
     f(t) = F'(t) = \frac{\lambda t^{\lambda-1}}{(1+t^{\lambda})^2}
 $$
-for $t > 0$.  
+for $t > 0.$  
 :::
 
 
@@ -813,15 +827,16 @@ with $\eta = X^T \beta$ the linear predictor and $\sigma > 0$ a scale parameter.
 :::
 
 The interpretation of the AFT model is that a 
-unit change of the $j$-th predictor increases -- or *accelerates* -- the
-failure time by a factor $e^{\beta_j}$. 
+unit change of the $j$-th predictor, with the other predictors fixed, multiplies the
+failure time by a factor $e^{\beta_j}.$ The predictor thus changes the time scale, and 
+it *accelerates* ($\beta_j < 0$) or decelerates ($\beta_j > 0$) the time to failure. 
 
 
 ::: {#exm-log-logistic-II}
 
 ## Log-logistic AFT model
 
-If $G$ is the logistic distribution with scale parameter is $\sigma = \lambda^{-1}$,
+If $G(z) = e^z/(1 + e^z)$ is the standard logistic distribution function and the scale parameter is $\sigma = \lambda^{-1},$
 the survival function for the corresponding AFT model is 
 $$
         \begin{aligned}
@@ -832,7 +847,7 @@ $$ {#eq-log-logistic-surv}
 where $\eta = X^T \beta$ is the linear predictor. This is 
 a log-logistic distribution as introduced in @exm-log-logistic. The 
 effect of $\eta$ is[^scaling] a *scale transformation* of the log-logistic 
-distribution with scale parameter $e^{\eta}$. The density is 
+distribution with scale parameter $e^{\eta}.$ The density is 
 $$
     \begin{aligned}
         f_{\eta}(t) & = \frac{\lambda e^{-\lambda \eta} t^{\lambda-1}}{(1+e^{-\lambda \eta} t^{\lambda})^2} \\
@@ -840,15 +855,15 @@ $$
     \end{aligned}
 $$ {#eq-log-logistic-dens}
 
-[^scaling]: If $T$ has log-logistic distribution with density $f_0$, then $e^{\eta} T$ is log-logistic distributed with density $f_{\eta}$, cf. @exr-loglog. 
+[^scaling]: If $T$ has log-logistic distribution with density $f_0,$ then $e^{\eta} T$ is log-logistic distributed with density $f_{\eta},$ cf. @exr-loglog. 
 ::: 
 
 \index{accelerated failure time} 
 
 For maximum likelihood estimation 
 we need to compute and optimize the likelihood in @eq-survlike. Efficient 
-computation requires access to the density as well as the survival function, 
-which are both explicitly available for the log-logistic distribution, 
+computation requires access to the density as well as the survival function. 
+Both are explicitly available for the log-logistic distribution, 
 which makes this distribution attractive for AFT models. 
 
 ::: {#exm-log-logistic-prostate}
@@ -877,22 +892,22 @@ are contrasts. The survival function is also implemented below for later usage.
 # beta-parameters corresponding to the intercept and contrasts. 
 # Its default value corresponds to no predictor.
 nll <- function(par, time, status, x = rep(1, length(time))) {
-    lambda <- par[1]^{-1}
+    lambda <- 1 / par[1]
     eta <- par[2] + c(0, par[-c(1, 2)])[x] # beta_x
     uncens <- status == 1
     lt <- log(time)
     logf <- (log(lambda) - lambda * eta[uncens] + (lambda - 1) * lt[uncens] - 
         2 * log(1 + exp(lambda * (lt[uncens] - eta[uncens])))) |> sum()
-    logS <- log(1 + exp(lambda * (lt[!uncens] - eta[!uncens]))) |> sum()
-    - logf + logS
+    neg_logS <- log(1 + exp(lambda * (lt[!uncens] - eta[!uncens]))) |> sum()
+    - logf + neg_logS
 }
 ```
 
 We use `optim()` with method `L-BFGS-B` to compute the maximum-likelihood estimate
 of a single survival distribution. Since some of the patients have survived less 
-than one months, some survival times are registered as $0$, which is first of 
-all numerically problematic (due to $\log(0)$). For this reason we offset all times by 
-$0.5$ corresponding to shifting all death times by half a months.
+than one month, some survival times are registered as $0,$ which is 
+numerically problematic (due to $\log(0)$). For this reason we add 
+$0.5$ to all times, corresponding to shifting all survival and censoring times by half a month.
 
 ```{r}
 #| label: log-logistic-optim
@@ -929,7 +944,7 @@ summary(prostate_KM, data.frame = TRUE) |>
 
 We see from the `optim()` result that the parameter estimates are $\hat{\sigma} =$ `r round(prostate_aft$par[1], 2)`
 and $\hat{\beta}_0 =$  `r round(prostate_aft$par[2], 2)`, and 
-we can also see that $-\ell(\hat{\sigma}, \hat{\beta}_0) =$ `r round(prostate_aft$value, 2)`
+we can also see that $-\ell(\hat{\sigma}, \hat{\beta}_0) =$ `r round(prostate_aft$value, 2)`.
 The corresponding fitted survival function is compared to the Kaplan-Meier 
 estimator in @fig-log-logistic-prostate.
 
@@ -955,7 +970,7 @@ prostate_aft_rx[1:2]
 
 ```{r}
 #| label: fig-prostate-aft-rx
-#| fig-cap: "The AFT survival functions for the fitted log-logistic distributions (full) and the Kaplan-Meier estimators (dashed) for each of the four treatment groups."
+#| fig-cap: "The AFT survival functions for the fitted log-logistic distributions (solid) and the Kaplan-Meier estimators (dashed) for each of the four treatment groups."
 #| fig-cap-location: margin
 # The log-logistic survival function in the scale-location parametrization. 
 time0 <- 0:80
@@ -1005,7 +1020,7 @@ $3$ degrees of freedom. It is above $0.1$ and we cannot reject that
 there is no treatment effect. 
 
 As for `lm` and `glm` objects there are methods for `survreg` objects implemented 
-in the broom package fo the `glance()` and `tidy()` functions and in the survival 
+in the broom package for the `glance()` and `tidy()` functions and in the survival 
 package for `anova()`. We will illustrate some of their usages in subsequent examples.
 
 #### Proportional hazards models {.unnumbered}
@@ -1031,8 +1046,8 @@ $$
     \Lambda(t) = \Lambda_0(t) e^{\eta},
 $$
 and the proportionality holds for the cumulative hazard as well. 
-The factor $e^{\beta_j}$ is the *hazard ratio* \index{hazard ratio} between two models
-corresponding to a unit change of the $j$-th predictor.
+The factor $e^{\beta_j}$ is the *hazard ratio* \index{hazard ratio} between two individuals
+whose $j$-th predictors differ by one unit while all other predictors are equal.
 
 The proportional hazards model is sometimes called the *Cox model*. 
 @Cox:1972 discovered that for the proportional hazards model, 
@@ -1057,7 +1072,7 @@ $$
 $$
 This is (surprisingly) up to a constant the log-likelihood for a
 Poisson model of the $\delta_i$-s with logarithmic link function and mean value 
-$T_i^{\gamma}e^{\eta_i}$ for fixed $\gamma$. Note that the $\alpha$ parameter 
+$T_i^{\gamma}e^{\eta_i}$ for fixed $\gamma.$ Note that the $\alpha$ parameter 
 appearing in @exm-weibull-hazard is captured by an intercept in the linear predictor.
 
 For a fixed value of the linear predictor we also find that 
@@ -1078,8 +1093,8 @@ $$
 ]{.aside}
 ::: 
 
-The example above shows how implementations of generalized linear models -- 
-and Poisson regression models, in particular -- 
+The example above shows how implementations of generalized linear models---
+and Poisson regression models, in particular---
 can be used to fit the Weibull proportional hazards model (for fixed $\gamma$)
 with the survival times entering as an offset term. This was of historical 
 importance as it made computations practical early on using some standard 
@@ -1101,11 +1116,11 @@ then the corresponding AFT model has survival function
 $$
     S_\eta(t) = \exp\left(-(e^{-\eta}t)^{\frac{1}{\sigma}}\right) = \exp\left(-e^{-\gamma \eta}t^\gamma\right)
 $$
-where $\gamma = \frac{1}{\sigma}$. That is, the cumulative hazard function is 
-, which is the proportional hazards 
+where $\gamma = \frac{1}{\sigma}.$ That is, the cumulative hazard function is 
+$\Lambda_\eta(t) = e^{- \gamma \eta}t^\gamma,$ which is the proportional hazards 
 model with a Weibull baseline, but reparametrized in terms of the scale 
-parameter $\sigma = \frac{1}{\gamma}$, and the linear predictor is 
-multiplied by $-\gamma$. 
+parameter $\sigma = \frac{1}{\gamma},$ and the linear predictor is 
+multiplied by $-\gamma.$ 
 
 We can use the `survreg()` function to fit the model. 
 
@@ -1162,7 +1177,7 @@ summary(prostate_KM_rx, data.frame = TRUE) |>
 
 ```{r}
 #| label: fig-prostate-weibull-rx
-#| fig-cap: "The survival functions for the fitted Weibull distributions (full) and the Kaplan-Meier estimators (dashed) for each of the four treatment groups."
+#| fig-cap: "The survival functions for the fitted Weibull distributions (solid) and the Kaplan-Meier estimators (dashed) for each of the four treatment groups."
 #| fig-cap-location: margin
 fit <- tibble(rx = factor(1:4, labels = levels(prostate$rx)))
 p_seq <- seq(0.01, 0.90, 0.01)
@@ -1189,13 +1204,12 @@ summary(prostate_KM_rx, data.frame = TRUE) |>
 @fig-prostate-weibull-rx compares the fitted Weibull distributions to the 
 Kaplan-Meier estimators for the four treatment groups, and @tbl-prostate-weibull-test 
 reports the test statistic and $p$-value for testing if there are no 
-differences between the four treatment groups. The $p$-value is a bit smaller 
-in this case than when using the log-logistic distribution, and this time 
-just below 5%. 
+differences between the four treatment groups. The $p$-value is $0.02$ and 
+a bit smaller than when using the log-logistic distribution.
 
 ```{r}
 #| label: tbl-prostate-weibull-test
-#| tbl-cap: "Deviance (likelihood-ratio) test of the hypothesis that there are no difference between the three treatment groups."
+#| tbl-cap: "Deviance (likelihood-ratio) test of the hypothesis that there are no differences between the four treatment groups."
 #| tbl-cap-location: bottom
 #| column: margin
 prostate_survreg |> 
@@ -1225,156 +1239,268 @@ glm((status != "alive") ~ offset(log(dtime + 0.5) / sigma) + rx,
 
 To conclude our analyses of the prostate survival times, we have shown how one 
 treatment group (1.0 mg estrogen) has a slightly different survival distribution 
-than the other three with a better survival prognosis. The statistical tests 
-of any treatment effect, based on two parametric models, are at best borderline significant
-though, and we cannot draw any clear conclusion. 
+than the other three with a better survival prognosis. For the statistical tests 
+of any treatment effect, based on two parametric models, only one is significant.
+The signal is therefore weak and we cannot draw a clear conclusion on whether there 
+is a treatment effect. 
 
-There do not seem to be any detectable difference between the other three treatment groups. 
+There does not seem to be any detectable difference between the other three treatment groups. 
 It is particularly noteworthy that the treatment group with the highest dose (5.0 mg estrogen)
-have a survival distribution simular to the placebo group. If there were an effect, we 
+has a survival distribution similar to the placebo group. If there were an effect, we 
 would often expect it to be monotone in dosage, and it would be peculiar if the effect is 
 only there for the medium dose. 
 
 ## Semiparametric survival models {#sec-semipar-surv}
 
 For the parametric proportional hazards models in @def-prop-hazard, the baseline 
-hazard function $\lambda_0$ is either known or parametrized itself. There is a risk 
-that we have misspecified this baseline model, and we would like to avoid 
-a model of the baseline hazard if possible. This leads to the semiparametric proportional 
+hazard function $\lambda_0$ is either known or parametrized itself. Since any 
+specific parametrized baseline model might be misspecified, we would like to avoid 
+modeling the baseline hazard if possible. This leads to the semiparametric proportional 
 hazards model, where an individual's hazard is proportional to a 
-common baseline hazard $\lambda_0$ with an individual weight factor, but where we 
-do not model[^semi] the baseline $\lambda_0$. 
+common baseline hazard $\lambda_0$ with the individual relative risk as proportionality factor, 
+but where we do not model[^semi] the baseline $\lambda_0.$ 
 
-[^semi]: This is similar to *not* making distributional assumptions such as A3 or GA3 for the linear and generalized models.
+[^semi]: This is similar to *not* making distributional assumptions such as A3 or GA3 for the linear and generalized linear models.
 
 The general proportional hazards model assumes that the 
-dependence of the predictors is via a multiplicative factor on the baseline, 
+dependence on the predictors is via a multiplicative factor on the baseline, 
 and the $i$-th individual thus has hazard function
 $$
-    \lambda_i(t) = w_i \lambda_0(t)
+    \lambda_i(t) = \psi_i \lambda_0(t)
 $$
-for $w_i > 0$ a weight[^weight]. The cumulative hazard function is consequently $\Lambda_i(t) = w_i
-\Lambda_0(t)$.
+for $\psi_i > 0$ the *relative risk*[^relrisk] \index{relative risk} of the $i$-th individual. The cumulative hazard function is consequently $\Lambda_i(t) = \psi_i \Lambda_0(t).$
 
-[^weight]: The $i$-th weight could be $e^{\eta_i}$ with $$\eta_i = X_i^T \beta$$ the linear predictor, but it does not need to be for the general arguments.
+In the following sections we discuss parametrization and estimation of the relative risks
+via maximization of Cox's partial likelihood. This is an estimation criterion based on the 
+full likelihood but where the baseline hazard has been profiled out. 
 
-::: {#def-cum-weight} 
-In terms of the observations $T_1, \ldots, T_n$ and weights $w_1, \ldots, w_n \geq 0$ we 
-define the cumulative weight process 
-$$
-    W(t) = \sum_{j: t \leq T_j} w_j
-$$ 
-and the cumulative weights $W_i = W(T_i)$.
-:::
 
-::: {#prp-fac2}
-When $\Lambda_i(t) = w_i \Lambda_0(t)$ the likelihood equals
-$$
-    L = \prod_{i: \delta_i = 1} \frac{w_i}{W_i} \left(\prod_{i} 
-    (W_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} W(t) \lambda_0(t) \mathrm{d} t}.
-$$
-[To ease notation we leave out limits on the generic index $i$ in products and sums. It will always run through observations from $1$ to $n$.]{.aside}
-::: 
-
-::: {.proof}
-First note that with $W(t) = \sum_{j: t \leq T_j} w_j$,
-$$
-    \sum_{i} \Lambda_i(T_i) = \int_0^{\infty} W(t) \lambda_0(t) \mathrm{d} t.
-$$
-The likelihood can therefore be factorized as  
-$$
-    \begin{align*}
-      L & = \prod_{i} \lambda_i(T_i)^{\delta_i} e^{-\Lambda_i(T_i)} \\
-        & = \left(\prod_{i: \delta_i = 1} (w_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} W(t) \lambda_0(t)
-        \mathrm{d} t} \\ 
-        & = \prod_{i: \delta_i = 1} \frac{w_i}{W_i} \left(\prod_{i} 
-        (W_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} W(t) \lambda_0(t)
-        \mathrm{d} t}.
-    \end{align*}
-$$
-:::
-
-The purpose of @prp-fac2 is to decompose the likelihood into two factors, 
-where the second factor
-$$
-    \tilde{L}(\lambda_0) = 
-    \left(\prod_{i} (W_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} W(t) \lambda_0(t) \mathrm{d} t}.
-$$
-is the only one depending on $\lambda_0$. This factor can be made arbitrarily large if 
-we try to maximize over $\lambda_0$, and there is thus no unconstrained 
-"maximum-likelihood" estimator of $\lambda_0$ in a classical sense.
-
-It is possible to formalize, via a certain renormalization, that for fixed weights 
-the "maximizer" is a generalized function of the form 
-$$
-    \hat{\lambda}_0 = \sum_{i} \frac{\delta_i}{W_i} \delta_{T_i}
-$$
-where $\delta_{T_i}$ is the Dirac measure in $T_i$. Since
-$$
-\int_0^{\infty} W(t) \hat{\lambda}_0 \mathrm{d} t = \sum_{i} W_i \frac{\delta_i}{W_i} = \sum_{i} \delta_i = n_u,
-$$
-the number of uncensored obervations, this leads to 
-$$
-    \tilde{L}(\hat{\lambda}_0) = e^{-n_u},
-$$
-which is independent of the weights. We pursue a similar perspective in @sec-pois-emp-like.
-
+[^relrisk]: The $i$-th relative risk could be $e^{\eta_i}$ with $\eta_i = X_i^T \beta$ the linear predictor, but it does not need to be for the general arguments.
 
 ### Cox's partial likelihood
 
-@prp-fac2 and the subsequent discussion suggest that for estimation 
-of the parameters that enter into the weights[^var-ind2], and not into 
-$\lambda_0$, we can ignore the factor $\tilde{L}$ in the likelihood.
-This motivates our definition of Cox's *partial* likelihood. 
+[To ease notation we leave out limits on generic indices $i$ and $j$ in products and sums. They will always run through observations from $1$ to $n.$]{.aside}
 
-[^var-ind2]: And are variation independent with $\lambda_0$.
+::: {#def-cum-weight} 
+In terms of the observations $T_1, \ldots, T_n$ and relative risks $\psi_1, \ldots, \psi_n > 0$ we 
+define the cumulative relative risk process 
+$$
+    \Psi(t) = \sum_{j: t \leq T_j} \psi_j
+$$ 
+and the cumulative relative risks $\Psi_i = \Psi(T_i).$
+:::
+
 
 \index{Cox's partial likelihood} \index{partial likelihood}
 
 ::: {#def-cox-likelihood}
-Cox's partial likelihood for the proportional hazards model is 
+Cox's partial likelihood for the proportional hazards model[^ties-partial-likelihood] is 
 $$
-    L_{\mathrm{par}} = \prod_{i: \delta_i = 1} \frac{w_i}{W_i}
+    L_{\mathrm{par}} (\Psi) = \prod_{i: \delta_i = 1} \frac{\psi_i}{\Psi_i}
 $$
-where the cumulative weights $W_i$ are given by @def-cum-weight.
+where the cumulative relative risks $\Psi_i$ are given by @def-cum-weight.
 ::: 
 
-In practice, the predictors are mostly linked to the weights via an exponential 
-function and are thus of the form
+[^ties-partial-likelihood]: If there are no ties among the outcome observations in the data, the relative risks $\psi_i$ are determined uniquely by the jumps of $\Psi$. If there are ties, we cannot disentangle the individual relative risks completely from $\Psi$ alone. We write $L_{\mathrm{par}}$ as a function of $\Psi$ anyway for notational convenience, remembering that when there are ties, $\Psi$ must be annotated with information about how the jumps decompose into relative risk contributions for each individual. 
+
+The partial likelihood is a function of the relative risks only, but its definition
+may appear somewhat unmotivated. The following proposition shows how it is related to 
+the survival likelihood.
+
+
+::: {#prp-fac2}
+When $\Lambda_i(t) = \psi_i \Lambda_0(t)$ the survival likelihood equals
 $$
-    w_i = e^{X^T_i \beta} = e^{\eta_i}.
+    L(\Psi, \Lambda_0) \coloneqq  L_{\mathrm{par}} (\Psi) \left(\prod_{i} 
+    (\Psi_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} \Psi(t) \lambda_0(t) \mathrm{d} t}.
+$$
+::: 
+
+::: {.proof}
+First note that with $\Psi(t) = \sum_{j: t \leq T_j} \psi_j,$
+$$
+    \sum_{i} \Lambda_i(T_i) = \int_0^{\infty} \Psi(t) \lambda_0(t) \mathrm{d} t.
+$$
+The survival likelihood can therefore be factorized as  
+$$
+    \begin{align*}
+      L(\Lambda) & = \prod_{i} \lambda_i(T_i)^{\delta_i} e^{-\Lambda_i(T_i)} \\
+        & = \left(\prod_{i: \delta_i = 1} (\psi_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} \Psi(t) \lambda_0(t)
+        \mathrm{d} t} \\ 
+        & = \prod_{i: \delta_i = 1} \frac{\psi_i}{\Psi_i} \left(\prod_{i} 
+        (\Psi_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} \Psi(t) \lambda_0(t)
+        \mathrm{d} t} =  L(\Psi, \Lambda_0).
+    \end{align*}
+$$
+:::
+
+
+@prp-fac2 decomposes the likelihood into two factors
+$$
+    L(\Psi, \Lambda_0) =  L_{\mathrm{par}} (\Psi)  \tilde{L}(\Psi, \Lambda_0), 
+$$
+where the second factor is 
+$$
+    \tilde{L}(\Psi, \Lambda_0) = 
+    \left(\prod_{i} (\Psi_i \lambda_0(T_i))^{\delta_i}\right) e^{-\int_0^{\infty} \Psi(t) \Lambda_0(\mathrm{d} t)}.
+$$
+It is only this second factor that depends on the baseline hazard. A standard idea is then 
+to compute the *profile likelihood* by maximizing $\tilde{L}(\Psi, \Lambda_0)$ 
+over $\Lambda_0$ for a fixed cumulative relative risk process $\Psi.$ 
+This is, unfortunately, not directly possible, since $\tilde{L}(\Psi, \Lambda_0)$
+can be driven to $+ \infty$ if we maximize over 
+$\Lambda_0$---even if $\Lambda_0$ is constrained to be given by a continuous hazard function $\lambda_0$. 
+It is, however, possible to *renormalize* the factor such that the 
+profiling operation can be carried out in a meaningful way.  
+
+Given $\varepsilon > 0$, the *renormalized likelihood factor* is defined as 
+$$ 
+    \tilde L_\varepsilon(\Psi, \Lambda_0) = \prod_i \Big(\Psi_i\,\big[\Lambda_0(T_i) - \Lambda_0(T_i-\varepsilon)\big]\Big)^{\delta_i} e^{-\int_0^\infty \Psi(t)\,\Lambda_0(\mathrm{d} t)}.
+$$
+For a continuously differentiable $\Lambda_0$, 
+$$
+    \Lambda_0(T_i)-\Lambda_0(T_i-\varepsilon) = \varepsilon \lambda_0(T_i) + o(\varepsilon),
+$$
+whence if $\lambda_0(T_i) > 0$ for all uncensored observations,
+$$
+    \tilde L_\varepsilon(\Psi, \Lambda_0) = \varepsilon^{n_u}\,\tilde L(\Psi, \Lambda_0)\,(1+o(1)),
+$$
+where $n_u \coloneqq \sum_{i} \delta_i$ is the number of uncensored observations. 
+
+
+::: {#prp-profiling}
+If there are no ties in the data and $\varepsilon > 0$ is smaller than the smallest gap between 
+distinct observation times, then 
+$$
+    \sup_{\Lambda_0} \tilde L_\varepsilon(\Psi, \Lambda_0) = e^{-n_u}
+$$ {#eq-profiling}
+and the supremum is attained in 
+$$
+    \hat{\Lambda}_0(t) = \sum_{i: T_i \leq t} \frac{\delta_i}{\Psi_i}. 
+$$
+[The supremum in @eq-profiling is taken over *all* cumulative hazard functions $\Lambda_0$,
+regarded as distribution functions for measures, including 
+*jump cumulative hazard functions* of the form 
+$$
+    \Lambda_0(t) = \sum_{i : T_i \leq t} \lambda_i
+$$
+for $\lambda_1, \ldots, \lambda_n \geq 0$. These are measures 
+with point masses $\lambda_i$ in $T_i,$ 
+that is, $\Delta \Lambda_0(T_i) = \lambda_i.$]{.aside}
+:::
+
+::: {.proof}
+The cumulative relative risk process $\Psi$ is a left-continuous step function 
+that is constant between observation times. So $\Psi(s) = \Psi_i$ for 
+$s \in (T_i-\varepsilon,T_i]$. 
+
+With $\omega_i = \Lambda_0(T_i) - \Lambda_0(T_i - \varepsilon)$,
+$$
+    \int_0^\infty \Psi(t) \,\Lambda_0(\mathrm{d}t) \ge \sum_i \Psi_i \omega_i,
+$$
+with equality exactly when $\Lambda_0$ puts no mass outside the windows 
+$(T_i-\varepsilon,T_i]$ on the set where $\Psi > 0$. 
+
+This shows that 
+$$
+    \log\tilde L_\varepsilon(\Psi, \Lambda_0) \le \sum_i \big(\delta_i\log(\Psi_i \omega_i) - \Psi_i \omega_i\big).
+$$
+The right-hand side is maximized term by term when 
+$$
+    \hat{\omega}_i = \left\{ \begin{array}{ll} 
+    \Psi_i^{-1} & \quad \text{if } \delta_i = 1 \\
+    0 & \quad \text{if } \delta_i = 0.
+     \end{array}\right.
+$$
+This maximum is attained for $\hat{\Lambda}_0$ with 
+$$
+     \log\tilde L_\varepsilon(\Psi, \hat{\Lambda}_0) = - \sum_{i} \delta_i = - n_u. 
+$$
+:::
+
+We conclude from @prp-fac2 and @prp-profiling that for $\varepsilon$ small,
+$$
+\begin{align*}
+L(\Psi, \Lambda_0) & =  L_{\mathrm{par}} (\Psi)  \tilde{L}(\Psi, \Lambda_0) \\
+& \approx L_{\mathrm{par}} (\Psi) \tilde{L}_{\varepsilon}(\Psi, \Lambda_0) \ \varepsilon^{-n_u},
+\end{align*}
+$$
+with the approximation holding for any fixed $\Lambda_0(t) = \int_0^t \lambda_0(s) \mathrm{d} s$ 
+as $\varepsilon \to 0$. Fixing (a small) $\varepsilon > 0$ and maximizing the renormalized 
+likelihood factor over $\Lambda_0$ gives 
+$$
+L_{\mathrm{par}} (\Psi) e^{-n_u} \varepsilon^{-n_u},
+$$
+which is Cox's partial likelihood up to the factor $e^{-n_u} \varepsilon^{-n_u}$ that 
+depends on neither the baseline nor the relative risks. 
+
+Note that the supremum in @eq-profiling is, for any sufficiently small 
+$\varepsilon > 0$, also attained by any $\Lambda_0^{\varepsilon}$ 
+with hazard function $\lambda_0^{\varepsilon}$ fulfilling $\lambda_0^{\varepsilon}(s) = 0$
+for $s \not \in \cup_i (T_i-\varepsilon,T_i]$ and 
+$$
+    \int_{T_i - \varepsilon}^{T_i} \lambda_0^{\varepsilon}(s) \mathrm{d} s = \hat{\omega}_i.
+$$
+Each of these converges pointwise to $\hat{\Lambda}_0$ for $\varepsilon \to 0$, and 
+$\hat{\Lambda}_0$ is sensibly regarded as *the* nonparametric maximum-likelihood 
+estimate of $\Lambda_0$. 
+
+### Estimation and inference 
+
+The arguments following @prp-fac2 and @prp-profiling show that for estimation 
+of parameters that enter into the relative risks[^var-ind2], and not into 
+$\lambda_0,$ we can ignore the factor $\tilde{L}(\Psi, \Lambda_0)$ in 
+the likelihood and simply optimize the partial likelihood.
+
+[^var-ind2]: And are variation independent of $\lambda_0.$
+
+In practice, the relative risks are typically linked to a vector of predictors 
+$X$ via an exponential function, that is, they are of the form
+$$
+    \psi_i = e^{X^T_i \beta} = e^{\eta_i}.
 $$ {#eq-exp-weights}
 In this case we find that the partial log-likelihood equals   
 $$
-    \ell_{\mathrm{par}}(\beta) = 
-    \sum_{i: \delta_i = 1} X_i^T \beta - \log \Bigg(\underbrace{\sum_{j: T_i \leq T_j} w_j}_{W_i} \Bigg),
+    \ell_{\mathrm{par}}(\beta) = \log L_{\mathrm{par}}(\beta) = 
+    \sum_{i: \delta_i = 1} X_i^T \beta - \log \Bigg(\underbrace{\sum_{j: T_i \leq T_j} \psi_j}_{\Psi_i} \Bigg),
 $$ {#eq-partial-ll}
 with corresponding score function 
 $$
-    \mathcal{U}_{\mathrm{par}}(\beta) = D \ell_{\mathrm{par}}(\beta) = \sum_{i: \delta_i = 1} X_i^T - 
-    \frac{\sum_{j: T_i \leq T_j} X_j^T w_j}{W_i}
+    \begin{aligned}
+    \mathcal{U}_{\mathrm{par}}(\beta) & = \nabla \ell_{\mathrm{par}}(\beta) = 
+        \sum_{i: \delta_i = 1} \left( X_i - \sum_{j: T_i \leq T_j} \frac{\psi_j}{\Psi_i} X_j \right) \\
+        & = \sum_{i: \delta_i = 1} \left( X_i - \bar{X}_i \right),
+    \end{aligned}
 $$ {#eq-partial-score}
-and information function
+where 
+$$
+    \bar{X}_i =  \sum_{j: T_i \leq T_j} \frac{\psi_j}{\Psi_i}  X_j.
+$$
+The information function becomes 
 
 $$
     \begin{aligned}
-       \hskip -30mm \mathcal{J}_{\mathrm{par}}(\beta) & = - D^2  \ell_{\mathrm{par}}(\beta) \\
-        & = \sum_{i: \delta_i = 1} \frac{\sum_{j: T_i \leq T_j} X_j X_j^T w_j}{W_i} - 
-        \frac{(\sum_{j: T_i \leq T_j} X_j w_j) (\sum_{j: T_i \leq T_j} X_j w_j)^T}{W_i^2}.
+      \mathcal{J}_{\mathrm{par}}(\beta) & = - D \mathcal{U}_{\mathrm{par}}(\beta) \\
+        & = \sum_{i: \delta_i = 1} \left( \sum_{j: T_i \leq T_j} \frac{\psi_j}{\Psi_i} X_j X_j^T  - 
+        \bar{X}_i \bar{X}_i^T \right) \\
+        & = \sum_{i: \delta_i = 1} \sum_{j: T_i \leq T_j} \frac{\psi_j}{\Psi_i} (X_j - \bar{X}_i)(X_j - 
+         \bar{X}_i)^T, 
     \end{aligned}
 $$ {#eq-partial-information}
+where we have used that the sum of the weights $\psi_j / \Psi_i$ for $j$ with $T_i \leq T_j$ is one.
 
-The estimate, $\hat{\beta}$, is computed by maximizing $\ell_{\mathrm{par}}$, and 
-the observed information, $\mathcal{J}(\hat{\beta}),$ is used for quadratic approximations 
-of $\ell_{\mathrm{par}}$, for standard error estimates and Wald tests. In practice, the computations 
+
+The estimate, $\hat{\beta},$ is computed by maximizing $\ell_{\mathrm{par}},$ and 
+the observed information, $\mathcal{J}_{\mathrm{par}}(\hat{\beta}),$ is used for quadratic approximations 
+of $\ell_{\mathrm{par}},$ for standard error estimates and Wald tests. In practice, the computations 
 proceed just as if $\ell_{\mathrm{par}}$ were a log-likelihood function. 
 
 The particular score test
 $$
-    \mathcal{U}(0)^T \mathcal{J}(0)^{-1} \mathcal{U}(0)
+    \mathcal{U}_{\mathrm{par}}(0)^T \mathcal{J}_{\mathrm{par}}(0)^{-1} \mathcal{U}_{\mathrm{par}}(0)
 $$
 for testing $\beta = 0$ reduces to a classical test known as the *log-rank test* \index{log-rank test} 
-in the special case with only a single categorical predictor.  
+in the special case with only a single categorical predictor and no ties.  
 
 ::: {#exm-prostate-coxph}
 Cox's proportional hazards model can be fitted to data via the function `coxph()` 
@@ -1418,133 +1544,27 @@ summary(prostate_cox)
 
 The parameter estimates are comparable to those obtained by `survreg()` with the 
 Weibull distribution, by appropriately rescaling, since that model is parametrized 
-as an AFT model. In particular, they Cox model regression parameters have the opposite 
+as an AFT model. In particular, the Cox model regression parameters have the opposite 
 sign. This is noteworthy, since a negative value of a Cox model regression parameter 
 means that the corresponding predictor has a positive association with the survival time. 
-That is, if $\beta_i < 0$ then a unit increase of $X_i$ decreases the hazard by a factor 
-$e^{-\beta_i} < 1$, which results in a survival distribution with longer survival times. 
+That is, if $\beta_j < 0$ then a unit increase of the $j$-th predictor multiplies the hazard by the factor
+$e^{\beta_j} < 1,$ which results in a survival distribution with longer survival times.
 
 Note that the (partial) likelihood-ratio test reported in @tbl-prostate-cox-test results in a very 
 similar conclusion as using the Weibull baseline.
 :::
 
-### Poisson empirical likelihood {#sec-pois-emp-like}
-
-To provide an additional perspective on Cox's partial likelihood, 
-we will show how it can also be derived from a rigorous profiling 
-argument of the Poisson empirical likelihood we define below. 
-Our main purpose of giving this argument is that we then also get 
-an explicit formula for a nonparametric estimator of the
-cumulative baseline hazard function. 
-
-For $\lambda_1, \ldots, \lambda_n \geq 0$ we define the corresponding *jump cumulative hazard function* as 
-$$
-    \Lambda(t) = \sum_{i : T_i \leq t} \lambda_i.
-$$
-We can regard this cumulative hazard function as having the hazard function
-$$
-    \lambda(t) = \sum_{i} \lambda_i \delta_{T_i},
-$$
-which is, of course, not a function but a measure, and $\Lambda(t)$ is the 
-measure of the interval $[0, t]$. The measure has point mass $\lambda_i$ 
-in the jump point $T_i$. 
-
-::: {#def-pois-surv-likelihood}
-The Poisson empirical likelihood of a jump cumulative hazard function is 
-$$
-    L^*(\Lambda) = \prod_{i}  \lambda_i^{\delta_i} e^{- \Lambda_i}
-$$
-where $\Lambda_i = \Lambda(T_i)$.
-:::
-
-In this section we think about $L^*$ as simply a formal extension of the likelihood ([-@eq-survlike2])
-from continuously differentiable cumulative hazard functions to jump functions, 
-but see also @sec-dis-surv on discrete time survival distributions, and see
-@Johansen:1983 for a justification of $L^*$ as a real likehood.
-
-The next lemma gives an expression for the Poisson empirical log-likelihood 
-for jump cumulative hazard functions of the form
-$$
-    \Lambda_i(t) = w_i \sum_{j: T_j \leq t} e^{h_j}.
-$$
-
-::: {#lem-poisson-prop} 
-Suppose that $\Lambda_0$ has jumps $\lambda_i = e^{h_i}$ for $h_i \in \mathbb{R}$. 
-For the proportional hazards model with baseline $\Lambda_0$ the Poisson empirical log-likelihood is
-$$
-    \ell^* = \sum_{i} \delta_i h_i + \delta_i \log (w_i) - e^{h_i} W_i.
-$$ {#eq-ell-star}
-:::
-
-::: {.proof}
-The Poisson log-likelihood for the proportional hazards model is 
-$$
-    \begin{align*}
-        \ell^* & = \sum_{i} \delta_i \log(\lambda_0(T_i)) + \delta_i \log (w_i) - \Lambda_0(T_i)w_i \\
-        & = \sum_{i} \delta_i h_i + \delta_i \log(w_i) - w_i \sum_{j : T_j \leq T_i} e^{h_j},
-    \end{align*}
-$$ 
-where $\ell^*$ is expressed in terms of the weights and the exponents $h_j$. Interchanging the sums in the log-likelihood we get 
-$$
-    \ell^* = \sum_{i} \delta_i h_i + \delta_i \log (w_i) - e^{h_i} W_i.
-$$ 
-:::
-
-::: {#lem-profile} 
-The maximizer of $\ell^*$ in ([-@eq-ell-star]) over $h_1, \ldots, h_n$ is given by 
-$$
-    e^{h_i} = \frac{\delta_i}{W_i}
-$$
-for $i = 1, \ldots, n$. 
-[With all weights being $1$ in @lem-profile, the estimator is recognized as the Nelson-Aalen estimator.]{.aside}
-:::
-
-::: {.proof}
-The parameters $h_i$ are variation independent, and we
-  can thus maximize the function by maximizing each term. Differentiating we find that 
-$$
-    \partial_{h_i} \ell^* = \delta_i - e^{h_i} W_i.
-$$
-If $\delta_i = 0$ the function is monotonely decreasing and maximized 
-in $- \infty$ corresponding to $e^{h_i} = 0$. If $\delta_i = 1$ we equate 
-the derivative equal to $0$ and find the claimed solution to be the
-unique stationary point. An additional
-differentiation shows that the second derivative is 
-$$
-    - e^{h_i} W_i  < 0, 
-$$
-and this implies that the solution is a global maximum. 
-::: 
-
-As an immediate consequence of plugging the maximizer into $\ell^*$ 
-we get the following corollary.
-
-::: {#cor-emp-profile}
-The profile log-likelihood for the weights of the Poisson empirical log-likelihood is 
-$$
-    \ell^*_{\mathrm{profile}} = \underbrace{\sum_{i: \delta_i = 1} \log \left(
-    \frac{w_i}{W_i}\right)}_{\text{\hskip -5mm Cox's partial log-likelihood}} - \ n_u
-$$ 
-where $n_u = \sum_{i} \delta_i$ is the total number of uncensored observations 
-(the number of deaths).
-:::
-
-Corollary @cor-emp-profile shows how Cox's partial likelihood 
-appears as a profile likelihood function from the Poisson empirical likelihood 
-for the proportional hazards model. 
-
-When $w_i = e^{X_j^T \beta}$, @lem-profile results in the estimator 
+Once we have estimated $\beta$ via the partial likelihood, we can estimate the 
+baseline via @prp-profiling. When $\psi_i = e^{X_i^T \beta},$ @prp-profiling results in the estimator
 $$
     \hat{\Lambda}_0(t) = \sum_{i: T_i \leq t} \frac{\delta_i}{\sum_{j:T_i \leq T_j} e^{X_j^T \hat{\beta}}}
 $$
-of the cumulative hazard function in terms of the survival times and the 
-estimate $\hat{\beta}$. This estimator is known as the *Breslow estimator*,
+of the baseline cumulative hazard function in terms of the survival times and the 
+estimate $\hat{\beta}.$ This estimator is known as the *Breslow estimator*,
 which can be seen as an extension of the Nelson-Aalen estimator of the baseline 
 cumulative hazard function. 
 
 \index{Breslow estimator} 
-
-
 
 ::: {#exm-prostate-breslow}
 
@@ -1552,9 +1572,9 @@ We continue @exm-prostate-coxph and compute the Breslow estimator of the baselin
 cumulative hazard using `survfit()`, see `?survfit.coxph` for details. 
 In fact, `survfit()` returns an estimate of the baseline survival function as
 $$
-    \hat{S}_0(t) = e^{-\hat{\Lambda}_0}
+    \hat{S}_0(t) = e^{-\hat{\Lambda}_0(t)}
 $$
-where $\hat{\Lambda}_0$ is the Breslow estimator.
+where $\hat{\Lambda}_0$ is a Breslow-type estimator.
 
 
 ```{r}
@@ -1564,7 +1584,7 @@ where $\hat{\Lambda}_0$ is the Breslow estimator.
 #| code-fold: show
 survfit(prostate_cox) |>
     summary(data.frame = TRUE) |>
-    ggplot(aes(time + 0.5, surv)) + 
+    ggplot(aes(time, surv)) + 
         geom_ribbon(aes(ymin = lower, ymax = upper), fill = "gray90") +
         geom_step() +
         ylim(0, 1) +
@@ -1586,16 +1606,16 @@ intercept parameter. Since the baseline hazard is nonparametric, we cannot ident
 intercept parameter in this model, and the intercept is effectively absorbed into the nonparametric 
 baseline. As pointed out in the  `survfit()` documentation, this also means that there is no 
 such thing as *the* baseline hazard. 
-What the baseline hazard is depends on a choice of baseline value of $X$, and thus also 
+What the baseline hazard is depends on a choice of baseline value of $X,$ and thus also 
 on how the predictors are encoded. In this example, the 
-baseline computed by `survfit()` corresponds to the placebo treatment group, but in more complicated setups the baseline 
-corresponds to a pseudo individual -- see `?survfit.coxph`. 
+baseline computed by `survfit()` corresponds to the placebo treatment group, but in more 
+complicated setups the baseline corresponds to a pseudo individual---see `?survfit.coxph`. 
 
-While it can be instructive to extract the estimated regression parameters and use
-([-@eq-mult-baseline]) explicitly, the code below used for actually computing the 
-estimated survival functions shown in @fig-prostate-coxph-rx use `survfit()` with 
-a new dataset, which will give a survival function for each row of the new data. 
-This is both a safer and more convenient way of computing such estimates. 
+It can be instructive to extract the estimated regression parameters and use
+([-@eq-mult-baseline]) explicitly, but it is safer and more convenient to compute the 
+estimated survival functions shown in @fig-prostate-coxph-rx using `survfit()` with 
+a new dataset. The code below shows how, and it gives a survival function for each 
+row of the new data. 
 
 ```{r}
 #| echo: false
@@ -1624,12 +1644,10 @@ summary(prostate_cox_baseline, data.frame = TRUE) |>
         ylab("survival probability") +
         theme(legend.position = "top")
 ```
-:::
-
 
 ```{r}
 #| label: fig-prostate-coxph-rx
-#| fig-cap: "The fitted survival functions for proportional hazards models using the Cox proportional hazards model with the Breslow estimator of the baseline (full, step) and the parametric Weibull survival functions (dashed) for each of the four treatment groups."
+#| fig-cap: "The fitted survival functions for proportional hazards models using the Cox proportional hazards model with the Breslow estimator of the baseline (solid, step) and the parametric Weibull survival functions (dashed) for each of the four treatment groups."
 #| fig-cap-location: margin
 #| message: false
 pred_frame <- tibble(
@@ -1648,31 +1666,45 @@ survfit(prostate_cox, newdata = pred_frame) |>
         ylab("survival probability") +
         theme(legend.position = "top")
 ```
+:::
 
+### How ties are handled
 
-### Ties
+Some of the results and procedures in the previous sections required no 
+ties in the data. In this section we briefly discuss how to handle ties, 
+which occur frequently in practice.
 
-We did not deal with ties explicitly in any of the derivations in previous sections. 
 If there are ties among the survival times, the summation over $j: T_i \leq T_j$ in the 
-definition of the cumulative weights is still well defined. If it happens that $T_i = T_k$ 
-the corresponding cumulative weights $W_i = W_k$ also become identical.
+definition of the cumulative relative risks is still well defined. If it happens that $T_i = T_k,$ 
+the corresponding cumulative relative risks $\Psi_i = \Psi_k$ also become identical.
 And if both observations are uncensored, they enter into the partial likelihood 
 as the product
 $$
-    \frac{w_i}{W_i} \frac{w_k}{W_k} = \frac{w_i w_k}{W_i^2}.
+    \frac{\psi_i}{\Psi_i} \frac{\psi_k}{\Psi_k} = \frac{\psi_i \psi_k}{\Psi_i^2}.
 $$
 This implicit way of handling ties is known as Breslow's method. It 
-treats ties as if they were really due to events that happend at the exact same time.
+treats ties as if they were really due to events that happened at the exact same time.
+
+The renormalization argument extends to handle ties in this way. To see this, 
+suppose there are $d_k$ tied deaths at the $k$-th distinct time, 
+where $\Psi$ takes the value $\Psi_{(k)}$. The corresponding window then contributes 
+$(\Psi_{(k)}\omega_k)^{d_k} e^{-\Psi_{(k)}\omega_k}$, which is maximized at 
+$\omega_k = d_k/\Psi_{(k)}$. This gives 
+$$
+    \sup_{\Lambda_0} \tilde L_\varepsilon = \prod_k d_k^{d_k}\, e^{-n_u},
+$$ 
+which is still independent of $\Psi$. The profile is therefore $L_{\mathrm{par}}$ with 
+Breslow's tie handling, and the formula for $\hat\Lambda_0$ is unchanged. 
 
 If the tie $T_i = T_k$ was due to rounding or grouping, the contribution 
 to the partial likelihood from those two observations should have been one of the two factors:
 $$
-    \frac{w_i w_k}{W_i (W_i - w_i)} \quad \text{or} \quad \frac{w_i w_k}{W_k (W_k - w_k)}.
+    \frac{\psi_i \psi_k}{\Psi_i (\Psi_i - \psi_i)} \quad \text{or} \quad \frac{\psi_i \psi_k}{\Psi_k (\Psi_k - \psi_k)}.
 $$ {#eq-fac}
 
 We could try to break the tie, e.g., by letting the R function `order()` break ties in whatever 
 arbitrary way it chooses depending on the sorting algorithm and the original order of the data.
-This naive solution will break all ties but in a unsystematic way, choosing one of the two factors above 
+This naive solution will break all ties but in an unsystematic way, choosing one of the two factors above 
 arbitrarily. Breaking ties in this way appears difficult to justify, and we should probably 
 only break ties if we actually know and use the correct ordering prior to the rounding. 
 
@@ -1681,7 +1713,7 @@ only break ties if we actually know and use the correct ordering prior to the ro
 Efron's method[^default] represents instead the "correct but unknown" factor
 by an approximation. Efron's approximation for two ties is 
 $$
-    \frac{w_i w_k}{W_i (W_i - (w_i + w_k)/2)} = \frac{w_i w_k}{W_k (W_k - (w_i + w_k)/2)}
+    \frac{\psi_i \psi_k}{\Psi_i (\Psi_i - (\psi_i + \psi_k)/2)} = \frac{\psi_i \psi_k}{\Psi_k (\Psi_k - (\psi_i + \psi_k)/2)}
 $$
 with similar formulas for more than two ties. The approximation is 
 close to the geometric mean of the factors ([-@eq-fac]).
@@ -1705,7 +1737,7 @@ of the observed survival times to a set of random variables whose distribution s
 exponential if the model is correct. They are based on the following result.
 
 ::: {#lem-cum-haz-trans}
-If $T$ has continuous cumulative hazards function $\Lambda$ 
+If $T$ has continuous cumulative hazard function $\Lambda$ 
 then  $\Lambda(T)$ is exponentially distributed with rate 1. 
 ::: 
 
@@ -1716,9 +1748,9 @@ $$
 $$
 From this it follows that 
 $$
-    \mathbf{P}(\Lambda(T) \leq t) = \mathbf{P}(S(t) > \exp(-t)) = 1 - \exp(-t)
+    \mathbf{P}(\Lambda(T) \leq t) = \mathbf{P}(S(T) \geq \exp(-t)) = 1 - \exp(-t)
 $$
-for $t \geq 0$, or $\Lambda(T) \sim \text{Exp}(1)$.
+for $t \geq 0,$ or $\Lambda(T) \sim \text{Exp}(1).$
 :::
 
 ::: {#def-CS}
@@ -1727,11 +1759,11 @@ Cox-Snell residuals are defined as \index{residual!Cox-Snell}
 $$
     \hat{\Lambda}_i(T_i)
 $$ {#eq-CS}
-for $i = 1, \ldots, n$. 
+for $i = 1, \ldots, n.$ 
 ::: 
 
 From the lemma above we conclude that if $(T_1, \delta_1), \ldots, (T_n, \delta_n)$ are independently right censored
- survival times  with corresponding hazard functions $\Lambda_1, \ldots, \Lambda_n$, then 
+ survival times  with corresponding cumulative hazard functions $\Lambda_1, \ldots, \Lambda_n,$ then 
 $$
     (\Lambda_1(T_1), \delta_1), \ldots, (\Lambda_n(T_n), \delta_n)
 $$
@@ -1740,13 +1772,13 @@ are independently right censored i.i.d. exponentially distributed variables.
 If there were no censoring, we would expect the Cox-Snell residuals to follow approximately an
 exponential distribution. With censoring the Cox-Snell residuals are expected to 
 be approximately independently censored exponentially distributed. We use this 
-in practice by estimating the cumulative hazards function for the Cox-Snell residuals 
+in practice by estimating the cumulative hazard function for the Cox-Snell residuals 
 using, e.g., the Nelson-Aalen estimator or the negative log of the Kaplan-Meier 
 estimator. The resulting estimate is then 
 compared to the cumulative hazard for the exponential distribution, which
-is $\Lambda(t) = t$. In practice we plot the estimated cumulative 
+is $\Lambda(t) = t.$ In practice we plot the estimated cumulative 
 hazards against the Cox-Snell residuals, which should fall on 
-a straight line with slope $1$. 
+a straight line with slope $1.$ 
 
 ### Martingale residuals 
 
@@ -1758,15 +1790,16 @@ and are thus the status indicators minus the Cox-Snell residuals.
 Their usefulness is partly justified by the following result.
 
 ::: {#lem-MG}
-If $T = \min\{T^*, C\}$ with $T^*$ and $C$ having continuously
+If $T = \min\{T^*, C\}$ with $T^*$ and $C$ independent and both having continuously
 differentiable survival functions it holds that
 $$
-    \mathbf{E}(\Lambda(T)) = \mathbf{P}(T^* \leq C).
+    \mathbf{E}(\Lambda(T)) = \mathbf{P}(T^* \leq C),
 $$ 
+where $\Lambda$ is the cumulative hazard function for $T^*.$ 
 :::
 
 ::: {.proof}
-Let $S$ and $H$ denote the survival functions of $T^*$ and $C$, 
+Let $S$ and $H$ denote the survival functions of $T^*$ and $C,$ 
 respectively. By integration by parts
 $$
     \begin{align*}
@@ -1776,64 +1809,104 @@ $$
     \end{align*}
 $$
 [The survival function for the minimum of the two independent random 
-variables $T^*$ and $C$ is the product $SH$, whence the density of their distribution 
-is the negative derivative $-(SH)'$.]{.aside}
+variables $T^*$ and $C$ is the product $SH,$ whence the density of their distribution 
+is the negative derivative $-(SH)'.$]{.aside}
 :::
 
-It follows from @lem-MG that with $\delta = 1(T^* \leq C)$ then 
+@lem-MG holds conditionally on $X$ under independent censoring, and it 
+follows, possibly using the tower property of conditional 
+expectations, that with $\delta = 1(T^* \leq C),$ 
 $$
     \mathbf{E} (\delta - \Lambda(T)) = 0.
 $$ {#eq-MG-mean}
-Thus if $\hat{\Lambda}_i$ were the true cumulative hazards function, 
+
+
+Thus if $\hat{\Lambda}_i$ were the true cumulative hazard function, 
 the  martingale residuals would have mean zero. 
 
 Now $\hat{\Lambda}_i$ is only an estimate, but if the model fits the data, the martingale residuals should have 
-approximately mean $0$. In the more advanced theory of survival 
+approximately mean $0.$ In the more advanced theory of survival 
 analysis they also enjoy a  martingale property, which explains their name. 
 Here we will not pursue this, but just observe that we can investigate the model
-fit by investigating if the martingale residuals  approximately have  mean $0$. 
+fit by investigating if the martingale residuals  approximately have  mean $0.$ 
 The residuals can be used much as regression residuals to judge overall fit as
 well as the fit of how the individual predictor variables enter into the model. 
-It should be noted, though, that they by definition have a left skewed distribution[^mg-dis]
-concentrated on $(-\infty, 1)$. 
+It should be noted, though, that they by definition have a left-skewed distribution[^mg-dis]
+concentrated on $(-\infty, 1).$ 
 
 [^mg-dis]: The martingale residuals are *never* approximately normally distributed!
 
+In addition to the martingale residuals, we also define the *squared-martingale residuals*
+as
+\index{residual!squared-martingale}
+$$
+    (\delta_i - \hat{\Lambda}_i(T_i))^2 - \hat{\Lambda}_i(T_i).
+$$
+@exr-mg-res shows that $\mathbf{E}((\delta - \Lambda(T))^2) = \mathbf{E}(\Lambda(T))$ 
+under independent censoring, if $\Lambda$ is the cumulative hazard function for $T^*$, 
+and the squared-martingale residuals should thus also roughly have mean zero. 
 
 ::: {#exm-prostate-residuals}
 As for other regression models, we can use `augment()` from the broom package 
 to extract fitted values (the linear predictor) and residuals. @fig-prostate-mg-res-rx
-shows the martingale residuals plotted against the treatment (which is the only 
-predictor in the model at this point). Since the dataset is rather small, it makes 
+shows the martingale residuals and squared-martingale residuals plotted against 
+the treatment (which is the only predictor in the model at this point). 
+Since the dataset is rather small, it makes 
 sense here to use `geom_beeswarm()` from the ggbeeswarm package to visualize 
 the full distribution of the residuals as well as the individual points.
-Note the upper cap at $1$ of all martingal residual distributions.
+Note the upper cap at $1$ of all martingale residual distributions. 
 
 ```{r}
 #| label: fig-prostate-mg-res-rx
-#| fig-cap: "Martingale residuals for the Cox model for each of the four treatment groups. The blue points and errorbars are means and 95% confidence intervals."
+#| fig-cap: "Martingale (left) and squared-martingale (right) residuals for the Cox model for each of the four treatment groups. The blue points and error bars in the right panel are means and 95% confidence intervals."
 #| fig-cap-location: margin
-augment(prostate_cox, data = prostate) |> 
-    ggplot(aes(rx, .resid)) + 
-    ggbeeswarm::geom_beeswarm(alpha = 0.4) + 
-    geom_point(
-        stat = "summary", 
-        fun = mean, 
-        color = "blue", 
-        size = 2.5
-    ) +
-    geom_errorbar(
-        stat = "summary", 
-        fun.data = mean_se, 
-        fun.args = list(mult = 1.96),
-        color = "blue", 
-        width = 0.15, 
-        linewidth = 0.7
-    )
+#| opts.label: widefigure2
+prostate_cox_aug <- augment(prostate_cox, data = prostate) |>
+    mutate(
+        Lambda = (status != "alive") - .resid,   # Cox-Snell residuals
+        v = .resid^2 - Lambda                    # Squared-martingale residuals
+    ) 
+
+p1 <- ggplot(prostate_cox_aug, aes(rx, .resid)) + 
+        ggbeeswarm::geom_beeswarm(alpha = 0.4) +
+        ylab("Martingale residuals") +
+        theme(
+         axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)
+        )
+  
+p2 <- ggplot(prostate_cox_aug, aes(rx, v)) +
+        ggbeeswarm::geom_beeswarm(alpha = 0.4) +
+        geom_point(
+            stat = "summary", 
+            fun = mean, 
+            color = "blue", 
+            size = 2.5
+        ) + 
+        geom_errorbar(
+            stat = "summary", 
+            fun.data = mean_se, 
+            fun.args = list(mult = 1.96),
+            color = "blue", 
+            width = 0.15, 
+            linewidth = 0.7
+        ) + 
+        ylab("Squared-martingale residuals") +
+        theme(
+         axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)
+        )
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
 
-@fig-prostate-mg-res-rx includes means and confidence intervals for each 
-group of residuals, which should include zero for all groups as in the figure. 
+Since the model only includes the single categorical predictor `rx`,
+the martingale residual plot is not informative about misspecifications,
+because the empirical mean of the martingale residuals is forced to be exactly zero within each 
+group by the estimation procedure. The plot is only shown here to demonstrate 
+what the distribution of martingale residuals looks like. The plot of the 
+squared-martingale residuals in @fig-prostate-mg-res-rx is, however, informative 
+as a check of the proportional hazards assumption. The figure includes means and 
+confidence intervals for each group of squared-martingale residuals, and these 
+intervals should include zero for all groups, as they do in the figure. 
 
 We can also plot the residuals against another potential predictor, such as `age`, 
 as in @fig-prostate-mg-res-age. We see a clear association between age and the residuals 
@@ -1865,12 +1938,12 @@ prostate_cox_add <- coxph(
 )
 ```
 
-@fig-prostate-cox-add-res shows two residual plots. One based on comparing the 
-Cox-Snell residuals to the exponential distribution and standard type of a residual 
+@fig-prostate-cox-add-res shows two residual plots. The first compares the 
+Cox-Snell residuals to the exponential distribution, and the second is a standard type of residual 
 plot, this time of the martingale residuals against the fitted values. The 
 fitted values are the linear predictors. For the computation of the Cox-Snell 
 residuals, we used that `type.predict = "expected"` in the call of `augment()`
-gives $\hat{\Lambda}(T_i)$ as the predicted values (`.fitted` column in the output).
+gives $\hat{\Lambda}_i(T_i)$ as the predicted values (`.fitted` column in the output).
 
 ```{r}
 #| label: fig-prostate-cox-add-res
@@ -1910,21 +1983,24 @@ correctly modeled.
 
 Alternative residuals include the deviance residuals and the 
 Schoenfeld residuals. We will not treat the latter, but the former are based on 
-the following observation. The Poisson nonparametric log-likelihood as well as the parametric
-log-likelihood with a continuous baseline can be written as 
+the following observation. The parametric log-likelihood with a continuous baseline 
+as well as the logarithm of $L_{\mathrm{par}}(\Psi) \tilde{L}_{\varepsilon}(\Psi, \Lambda_0)$,
+evaluated in jump cumulative hazard functions, can be written as 
 $$
-    \ell^* = \sum_{i=1}^n \underbrace{\delta_i \log (w_i \Lambda_{0,i}) - w_i
-    \Lambda_{0,i}}_{\text{Poisson log-likelihood term}} + \sum_{i=1}^n \delta_i \log \left(\frac{\lambda_{0,i}}{\Lambda_{0,i}}\right)
+     \sum_{i=1}^n \underbrace{\delta_i \log (\psi_i \Lambda_{0,i}) - \psi_i
+    \Lambda_{0,i}}_{\text{Poisson log-likelihood term}} + \sum_{i=1}^n \delta_i \log \left(\frac{\lambda_{0,i}}{\Lambda_{0,i}}\right),
 $$ 
+where $\Lambda_{0,i} = \Lambda_0(T_i)$, $\lambda_{0,i} = \lambda_0(T_i)$ 
+in the parametric case and $\lambda_{0,i} = \Delta \Lambda_0(T_i)$ in the jump case. 
 The first term is identical to the Poisson log-likelihood, and the
-second term does not depend on parameters that enter into the weights. 
+second term does not depend on parameters that enter into the relative risks. 
 Based on this we define the deviance residuals in terms of the
 Poisson deviances \index{residual!survival deviance}
 $$
     d(\delta_i, \hat{\Lambda}_{i}) = 2\left( \delta_i \log
     (\delta_i/\hat{\Lambda}_{i}) - \delta_i + \hat{\Lambda}_{i}\right),
 $$
-where $\hat{\Lambda}_{i} =  \hat{w}_i \hat{\Lambda}_{0,i}$.
+where $\hat{\Lambda}_{i} =  \hat{\psi}_i \hat{\Lambda}_{0,i}.$
 
 The result is the *deviance residuals*
 $$
@@ -1946,9 +2022,9 @@ the deviance residuals is less skewed.
 
 ### Prostate cancer continued
 
-We conclude this section by a final analysis of the prostate cancer data
+We conclude this section with a final analysis of the prostate cancer data
 based on the insights we have obtained from the previous sections. 
-We include both `age` and treatment `rx` in the model. Now with `age` 
+We include both `age` and treatment `rx` in the model, now with `age` 
 nonlinearly expanded using natural cubic splines and `rx` interacting (linearly)
 with `age`. 
 
@@ -1956,7 +2032,7 @@ with `age`.
 #| label: prostate-cox-int
 #| code-fold: show
 prostate_cox_int <- coxph( 
-    Surv(dtime + 0.5, status != "alive") ~ ns(age, df = 4) + age * rx, 
+    Surv(dtime + 0.5, status != "alive") ~ ns(age, df = 4) + age*rx, 
     data = prostate, 
 )
 ```
@@ -1992,7 +2068,7 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
 
 To better understand the interaction model we will compute and visualize 
-the estimated risk factors 
+the estimated relative risks 
 $$
     e^{\hat{\eta}}
 $$
@@ -2022,7 +2098,7 @@ pred_frame <- mutate(
 
 ```{r}
 #| label: tbl-prostate-pred-frame
-#| tbl-cap: "Estimated risk factors for the interaction model."
+#| tbl-cap: "Estimated relative risks for the interaction model."
 #| tbl-cap-location: bottom
 #| column: margin
 #| echo: false
@@ -2030,21 +2106,21 @@ pred_frame |> knitr::kable(digits = 3)
 ```
 
 
-The computations above give a data frame with estimated risk factors for 16 combinations 
-of age and treatment. Since these factors are always relative risk factors, we have 
+The computations above give a data frame with estimated relative risks for 16 combinations 
+of age and treatment. Since relative risks are only determined up to a common factor, we have 
 normalized them so that the placebo treatment for age 55 is the reference. @tbl-prostate-pred-frame
-shows the table of the resulting risk factors. Recall that the smaller the risk 
-factor is, the smaller is the risk of dying and the longer is the survival time. 
+shows the table of the resulting relative risks. Recall that the smaller the relative 
+risk is, the smaller is the risk of dying and the longer is the survival time. 
 
 
-@fig-prostate-pred-frame shows a plot of the estimated risk factors, 
+@fig-prostate-pred-frame shows a plot of the estimated relative risks, 
 from which the nonlinear and non-additive nature of the model is 
-clear. For the high treatment dosage there is a notable change from reducing the risk relative 
-to placebo for patients younger than about 70 years while it increases the risk for the older patients.
+clear. For the high treatment dosage there is a notable change: it reduces the risk relative 
+to placebo for patients younger than about 70 years, while it increases the risk for older patients.
 
 ```{r}
 #| label: fig-prostate-pred-frame
-#| fig-cap: "Estimated risk factors as a function of age and treatment relative to placebo treatment for patient of age 55."
+#| fig-cap: "Estimated relative risks as a function of age and treatment, normalized to the placebo treatment for a patient aged 55."
 #| fig-cap-location: margin
 #| echo: false
 pred_frame2 <- expand.grid(
@@ -2067,7 +2143,7 @@ mutate(
 ```
 
 @fig-prostate-int-surv shows the fitted survival functions corresponding 
-to the risk factors in @tbl-prostate-pred-frame. It gives a different perspective 
+to the relative risks in @tbl-prostate-pred-frame. It gives a different perspective 
 on how the estimated survival curves change with age, and how the interaction 
 effect makes the treatment with the high dosage appear beneficial for younger 
 patients while harmful for older patients. 
@@ -2085,7 +2161,7 @@ survfit(prostate_cox_int, newdata = pred_frame) |>
     ggplot(aes(time, surv, color = rx)) + 
     geom_step(
         data = summary(prostate_KM, data.frame = TRUE), 
-        aes(color = NULL), 
+        aes(x = time + 0.5, color = NULL), 
         linetype = 2
         ) + 
     geom_step() +
@@ -2114,7 +2190,7 @@ anova(prostate_cox_age, prostate_cox_int) |>
 
 Today, estrogen treatment of prostate cancer has largely been replaced 
 by better alternatives. Though it is documented to be effective against the cancer, a 
-serious known sideeffect is increased risk of cardiovascular disease. This 
+serious known side effect is increased risk of cardiovascular disease. This 
 knowledge is in line with our findings for this particular study. 
 
 ```{r}
@@ -2130,16 +2206,16 @@ coxph(
 
 We have in previous sections mostly considered survival distributions that 
 are continuous, that is, distributions on $[0, \infty)$ with a continuous 
-survival function $S$. It was typically even differentiable with 
+survival function $S.$ It was typically even differentiable with 
 $-S'$ the density of the distribution, in which case the hazard function 
-is well defined. In this chapter we will briefly touch on discrete 
+is well defined. In this section we will briefly touch on discrete 
 survival distributions, and almost exclusively on distributions with 
-point masses in the observations $T_1, \ldots, T_n$. We assume throughout
+point masses in the observations $T_1, \ldots, T_n.$ We assume throughout
 this section that there are no ties.
 
 ::: {#def-emp-like-surv}
 With observations $T_1, \ldots, T_n$ and $P$ a probability measure on $[0, \infty)$ 
-with survival function $S$, the empirical likelihood with right censoring is 
+with survival function $S,$ the empirical likelihood with right censoring is 
 $$
     L(P) = \prod_i P(T_i)^{\delta_i} S(T_i)^{1-\delta_i}.
 $$
@@ -2147,12 +2223,12 @@ $$
 
 The factors in the empirical likelihood are simply the probabilities
 $$
-    P(T_i)^{\delta_i} S(T_i)^{1-\delta_i} = \mathbf{P}(T^* = T_i, \delta = \delta_i) =
+    P(T_i)^{\delta_i} S(T_i)^{1-\delta_i} =
     \left\{ \begin{array}{ll} \mathbf{P}(T^* = T_i) & \quad \text{if } \delta_i = 1 \\
      \mathbf{P}(T^* > T_i) & \quad \text{if } \delta_i = 0 \end{array} \right.
 $$
 
-Recall also that for the discrete probability measure $P$, the survival function 
+Recall also that for the discrete probability measure $P,$ the survival function 
 is 
 $$
     S(t) = \mathbf{P}(T^* > t) = \sum_{i: T_i > t} P(T_i).
@@ -2168,7 +2244,7 @@ $$
     \lambda_i \coloneqq \frac{P(T_i)}{S(T_i-)} = \mathbf{P}(T^* = T_i \mid T^* \geq T_i).
 $$
 Note that the discrete hazards are probabilities and thus constrained to lie in the interval
-$[0,1]$.
+$[0,1].$
 
 ::: {#lem-dissurv}
 For a discrete probability measure with point masses in $T_1, \ldots, T_n$ and corresponding hazards
@@ -2180,7 +2256,7 @@ $$
 
 ::: {.proof}
 Note that $S(T_{(j)}-) = S(T_{(j-1)})$ for $j \geq 2$ and that it is sufficient to show the
-identity for $t = T_{(j)}$, $j = 1, \ldots, n$. 
+identity for $t = T_{(j)},$ $j = 1, \ldots, n.$ 
 
 The proof is by induction. For $T_{(1)}$ we have $S(T_{(1)}-) = 1$ and 
 $$
@@ -2206,7 +2282,7 @@ corollary we can express the empirical likelihood in terms of
 the discrete hazards.
 
 ::: {#cor-emp-like-surv-II} 
-With $Y_i = Y(T_i) = \sum_{j} 1(T_i \leq T_j)$ the number of individuals at risk at time $T_i$,
+With $Y_i = Y(T_i) = \sum_{j} 1(T_i \leq T_j)$ the number of individuals at risk at time $T_i,$
 the empirical likelihood equals
 $$
     L(P) = \prod_{i} \lambda_i^{\delta_i} (1 - \lambda_i)^{Y_i - \delta_i}.
@@ -2216,7 +2292,7 @@ $$ {#eq-emp-like-surv}
 ::: {.proof}
 From the definition of the hazards and @lem-dissurv 
 $$
-    P(T_i) = \lambda_i S(T_i-) = \prod_{j: T_j \leq T_i} (1 - \lambda_j).
+    P(T_i) = \lambda_i S(T_i-) = \lambda_i \prod_{j: T_j < T_i} (1 - \lambda_j).
 $$
 
 We then plug this expression into the empirical likelihood function and interchange 
@@ -2233,7 +2309,7 @@ $$
 ### Empirical likelihood estimators
 
 In terms of the empirical likelihood we define the nonparametric maximum-likelihood 
-estimator (NPMLE) of the survival distribution as the maximizer of $L$. To compute it we maximize 
+estimator (NPMLE) of the survival distribution as the maximizer of $L.$ To compute it we maximize 
 $L$ as a function of the discrete hazards. To this end we need the following lemma.
 
 ::: {#lem-surv-opt}
@@ -2241,7 +2317,7 @@ With $y \geq 1$  the function
 $$
     \lambda \mapsto \lambda (1 - \lambda)^{y - 1}
 $$
-attains a unique maximum over $[0, 1]$ in $1/y$. 
+attains a unique maximum over $[0, 1]$ in $1/y.$ 
 :::
 
 ::: {.proof}
@@ -2254,16 +2330,16 @@ $$
         & =  (1 - \lambda)^{y - 2} (1 - \lambda y).
     \end{align*}
 $$
-For $y = 1$, the function is the identity, which attains 
-its maximum in $1 = 1/y$. For $y > 1$ we have $f(\lambda) \geq 0$ for $\lambda \in [0,1]$, 
+For $y = 1,$ the function is the identity, which attains 
+its maximum in $1 = 1/y.$ For $y > 1$ we have $f(\lambda) \geq 0$ for $\lambda \in [0,1],$ 
 $f(0) = f(1) = 0$ and the function has a 
-unique stationary point in $(0, 1)$ in $1/y$ with $f(1/y) > 0$. 
-Thus $1/y$ is the unique maximizer in $[0,1]$ for $y \geq 1$. 
+unique stationary point in $(0, 1)$ at $1/y$ with $f(1/y) > 0.$ 
+Thus $1/y$ is the unique maximizer in $[0,1]$ for $y \geq 1.$ 
 :::
 
 ::: {#thm-npmle-surv}
-The NPMLE of the hazards -- the hazards for the
-  probability measure that maximizes the empirical likelihood -- is 
+The NPMLE of the hazards---the hazards for the
+  probability measure that maximizes the empirical likelihood---is 
 given by
 $$
     \hat{\lambda}_i = \frac{\delta_i}{Y_i}.
@@ -2279,9 +2355,9 @@ $$
     \lambda_i (1-\lambda_i)^{Y_i - 1} & \quad \text{if } \delta_i = 1 \\
     \end{array} \right.
 $$
-In the first case, when $\delta_i = 0$, the factor is maximized in
-$0$, and in the second case, when $\delta_i = 1$, the factor 
-is maximized in $1/Y_i$. 
+In the first case, when $\delta_i = 0,$ the factor is maximized in
+$0,$ and in the second case, when $\delta_i = 1,$ the factor 
+is maximized in $1/Y_i.$ 
 ::: 
 
 
@@ -2317,30 +2393,30 @@ The two main points from this section are:
 It is legitimate to consider the proportional hazards model
 for discrete probability distributions, and use the 
 empirical likelihood function $L$ for profiling. Contrary 
-to the derivations in @sec-pois-emp-like, that use the Poisson empirical likelihood, 
-the maximizer is not explicit. Moreover, the proportionality assumption for the 
+to the derivations in @sec-semipar-surv, the maximizer is then not explicit.
+Moreover, the proportionality assumption for the 
 discrete model does not really provide an approximation of the 
 proportionality assumption for the continuous model. 
 
 The appropriate generalization of the proportional hazards model 
 to the discrete case is actually the model
 $$
-\lambda_i = 1 - (1 - \lambda_{0,i})^{w_i}.
+\lambda_i = 1 - (1 - \lambda_{0,i})^{\psi_i}.
 $$ {#eq-disprop}
 
 The empirical likelihood becomes \index{empirical likelihood!discrete survival}
 $$
-    L = \prod_{i} ( 1 - (1 - \lambda_{0,i})^{w_i})^{\delta_i} (1 -
-    \lambda_{0,i})^{W_i - w_i \delta_i},
+    L = \prod_{i} ( 1 - (1 - \lambda_{0,i})^{\psi_i})^{\delta_i} (1 -
+    \lambda_{0,i})^{\Psi_i - \psi_i \delta_i},
 $$
 and similar arguments as in the proof of @thm-npmle-surv will
-show that the NPMLE of $\lambda_{0,i}$ for given weights is 
+show that the NPMLE of $\lambda_{0,i}$ for given relative risks is 
 $$
-    \hat{\lambda}_{0,i} = \delta_i\left(1 - \left(1 - \frac{w_i}{W_i}\right)^{1/w_i}\right).
+    \hat{\lambda}_{0,i} = \delta_i\left(1 - \left(1 - \frac{\psi_i}{\Psi_i}\right)^{1/\psi_i}\right).
 $$
 The corresponding profile likelihood is 
 $$
-    \prod_{i: \delta_i = 1} \frac{w_i}{W_i}  \left(1 - \frac{w_i}{W_i}\right)^{W_i/w_i - \delta_i}.
+    \prod_{i: \delta_i = 1} \frac{\psi_i}{\Psi_i}  \left(1 - \frac{\psi_i}{\Psi_i}\right)^{\Psi_i/\psi_i - \delta_i}.
 $$ {#eq-npprof}
 
 The discrete proportional hazards model ([-@eq-disprop]) is arguably
@@ -2350,7 +2426,7 @@ the profile likelihood ([-@eq-npprof]). The resulting profile likelihood is not 
 likelihood, but it is for most practical purposes very close. In the
 literature, Cox's partial likelihood has caught on as the default
 choice for semiparametric estimation of parameters that enter the
-weights. 
+relative risks. 
 
 ## Exercises {.unnumbered}
 
@@ -2359,7 +2435,7 @@ Show that if $T$ has a log-logistic distribution with density $f = f_0$ then
 $$
     e^{\eta} T
 $$ 
-has density $f_{\eta}$. Show that if $T$ has a log-logistic distribution with density
+has density $f_{\eta}.$ Show that if $T$ has a log-logistic distribution with density
 $f_{\eta}$ then 
 $$
     \log T - \eta
@@ -2368,7 +2444,7 @@ has a logistic distribution.
 ::: 
 
 ::: {#exr-empsurv}
-Show that without censoring then the Kaplan-Meier estimator 
+Show that without censoring the Kaplan-Meier estimator 
 equals the empirical survival function \index{empirical survival function}
 $$
     \hat{S}(t) = \frac{1}{n} \sum_{i=1}^n 1(T^*_i > t).
@@ -2401,9 +2477,9 @@ treated vs. untreated patients.
 
 In this exercise it is assumed that $T_i^*$ follows a Weibull
 distribution with shape parameter $\gamma > 0$ and scale parameter
-$\alpha_{x_i}$, that is, the hazard rate is 
+$\alpha_{X_i},$ that is, the hazard rate is 
 $$
-    \lambda_i(t) = \alpha_{x_i} \gamma t^{\gamma-1}.
+    \lambda_i(t) = \alpha_{X_i} \gamma t^{\gamma-1}.
 $$
 
 1. Show that 
@@ -2413,12 +2489,12 @@ $$
     in terms of the Weibull parameters.
 
 2. Show that the Weibull model can be formulated as a proportional
-    hazard model in terms of the linear predictor 
+    hazards model in terms of the linear predictor 
     $$
         \eta_i = \beta_0 + \beta_1 X_i
     $$
     and relate the parameters $\beta_0$ and $\beta_1$ to $\alpha_0$ and
-    $\alpha_1$. Express $\rho$ in terms of the $\beta_0$ and $\beta_1$ parameters.
+    $\alpha_1.$ Express $\rho$ in terms of the $\beta_0$ and $\beta_1$ parameters.
 
 In the remaining part of this exercise we will study
 two different estimators of $\rho$ on simulated data. To this end introduce
@@ -2429,23 +2505,23 @@ $$
 $$
 
 The data set `testWei` available from the R package RwR is a simulated data
-set with $n = 200$, $X_1 = \ldots = X_{100} = 0$ and $X_{101} = \ldots = X_{200} = 1$, 
-with $\gamma = 2$, $\beta_0 = 0$ and $\beta_1 = -1$ (so that $\rho \approx 1.649$). 
-The censoring times are uniformly distributed on $[0, 4]$. The `time` column
-contains the $T_i$-s and the `status` column is the indicator
-  of censoring ($1$ is uncensored, $0$ is censored). 
+set with $n = 200,$ $X_1 = \ldots = X_{100} = 0$ and $X_{101} = \ldots = X_{200} = 1,$ 
+with $\gamma = 2,$ $\beta_0 = 0$ and $\beta_1 = -1$ (so that $\rho \approx 1.649$). 
+The censoring times are uniformly distributed on $[0, 4].$ The `time` column
+contains the $T_i$-s and the `status` column is the status indicator
+  ($1$ is uncensored, $0$ is censored). 
 
 3. Compute and plot the Kaplan-Meier estimates of the survival
     function within each of the two treatment groups for the simulated `testWei` data set.
 
 4. Use the Weibull model with fixed $\gamma = 2$ to estimate $\beta_0$
-    and $\beta_1$. Compare the resulting estimated survival functions from
+    and $\beta_1.$ Compare the resulting estimated survival functions from
     the Weibull model with the Kaplan-Meier estimates.
 
 5. Compute the MLE $\hat{\rho}_{\mathrm{MLE}}$ of $\rho$ based on the Weibull model
     (with fixed $\gamma = 2$) and compute a 95\% confidence interval for
-    $\rho$. Compute also, based on the Kaplan-Meier estimates, a direct
-    estimate, $\hat{\rho}_{\mathrm{KM}}$, of $\rho$. 
+    $\rho.$ Compute also, based on the Kaplan-Meier estimates, a direct
+    estimate, $\hat{\rho}_{\mathrm{KM}},$ of $\rho.$ 
 
 6. Write an R program that simulates a data set (including the censoring) using the same 
     setup as for the `testWei` data set described above. Simulate $B = 200$
@@ -2467,12 +2543,12 @@ available from the R package RwR. It contains four variables:
 | sex      | male = 1, female = 2             |
 
 1. Plot the Kaplan-Meier estimates of the survival functions for males and females separately.
-2. Use the Cox proportional hazard model to investigate if the survival time depends upon age. 
-3. Check if the Cox proportional hazard model fits the data. 
+2. Use the Cox proportional hazards model to investigate if the survival time depends upon age. 
+3. Check if the Cox proportional hazards model fits the data. 
 ::: 
 
 ::: {#exr-prop-haz}
-This exercise is about the proportional hazard model with cumulative hazard function 
+This exercise is about the proportional hazards model with cumulative hazard function 
 $$
     \Lambda_i(t) = e^{\eta_i} \Lambda_0(t)
 $$
@@ -2482,13 +2558,13 @@ $$
 $$
 Thus the two predictor variables are the age and sex of the individual. 
 
-You will need that data set `simSurv` from the R package RwR that contains 
+You will need the data set `simSurv` from the R package RwR that contains 
 the four variables, `surv`, `status`, `age` and `sex` being the censored survival times, the
-censoring indicator, the age and the indicator of gender (1 is male), respectively, of the
+status indicator, the age and the indicator of gender (1 is male), respectively, of the
 individuals. There is a total of 200 individuals.
 
-1. Estimate, using Cox's proportional hazard model, the parameters $\beta_{\texttt{age}}$
-    and $\beta_{\texttt{sex}}$. Compute a 95\% confidence interval for $\beta_{\texttt{sex}}$ and determine 
+1. Estimate, using Cox's proportional hazards model, the parameters $\beta_{\texttt{age}}$
+    and $\beta_{\texttt{sex}}.$ Compute a 95\% confidence interval for $\beta_{\texttt{sex}}$ and determine 
     whether males have a higher risk of dying than females. 
 
 For the remaining questions the baseline cumulative hazard function is assumed to be
@@ -2501,7 +2577,7 @@ $$
 $$
 
 We assume that we have independent censored observations $(T_1, \delta_1), \ldots, (T_n, \delta_n)$ with 
-$T_i \geq 0$ the $i$-th censored survival time and $\delta_i$ the indicator of whether the $i$-th observation is censored.
+$T_i \geq 0$ the $i$-th censored survival time and $\delta_i$ the indicator of whether the $i$-th observation is uncensored.
 
 2. Compute the baseline hazard rate $\lambda_0(t)$ and show that the log-likelihood function is 
 $$
@@ -2509,13 +2585,13 @@ $$
     \delta_i \log \frac{\gamma e^{\gamma T_i}}{e^{\gamma T_i} - 1}.
 $$
 
-3. Plot the profile log-likelihood for the $\gamma$-parameter. Compute the MLE of $\gamma$, $\beta_0$,
-  $\beta_{\texttt{age}}$ and $\beta_{\texttt{sex}}$. 
+3. Plot the profile log-likelihood for the $\gamma$-parameter. Compute the MLE of $\gamma,$ $\beta_0,$
+  $\beta_{\texttt{age}}$ and $\beta_{\texttt{sex}}.$ 
 
-*Hint: Identify the first two terms of the log-likelihood as the log-likelihood for a Poisson generalized linear model. Use the `glm()`-function for the profiling.*
+*Hint: Identify the first three terms of the log-likelihood as the log-likelihood for a Poisson generalized linear model. Use the `glm()`-function for the profiling.*
 
 4. Use the glm framework to compute a 95\% confidence interval for $\beta_{\texttt{sex}}$ by plugging in the MLE,
-    $\hat{\gamma}$, of $\gamma$ and pretending that it is fixed and known. Compute next a 95\% confidence interval using non-parametric bootstrapping. Compare the results. 
+    $\hat{\gamma},$ of $\gamma$ and pretending that it is fixed and known. Compute next a 95\% confidence interval using non-parametric bootstrapping. Compare the results. 
 ::: 
 
 ::: {#exr-cox-alg}
@@ -2523,11 +2599,11 @@ This exercise deals with the numerical algorithms associated with the optimizati
 Consider censored survival data $(T_i, \delta_i, X_i)$ for $i = 1, \ldots, n$ 
 with $T_i$ the possibly censored survival time, $\delta_i$ the indicator of whether
 $T_i$ is uncensored, and $X_i \in \mathbb{R}$ a univariate real valued
-predictor. The proportional hazard model is given by the individual weights 
+predictor. The proportional hazards model is given by the individual relative risks 
 $$
-    w_i = e^{\beta X_i}
+    \psi_i = e^{\beta X_i}
 $$
-for an unknown parameter $\beta$. In the following we will make the assumption that the survival 
+for an unknown parameter $\beta.$ In the following we will make the assumption that the survival 
 times are ordered and with no ties, that is
 $$
     T_1 < T_2 < \ldots < T_n.
@@ -2537,67 +2613,67 @@ $$
     $$
         \ell(\beta) = \sum_{i: \delta_i = 1} \beta X_i - \log \left(\sum_{j \geq i} e^{\beta X_j} \right),
     $$
-    and compute the first and second derivative of $\ell$ w.r.t. $\beta$.
+    and compute the first and second derivative of $\ell$ w.r.t. $\beta.$
 
 The estimator $\hat{\beta}$ is the maximizer of $\ell$ provided that $\ell$ attains a maximum. It then solves the equation
 $$
     \ell'(\beta) = 0.
 $$
 
-2. Show that $\ell$ is concave. Find a condition on the $X_i$-s that ensure that $\ell$ has a unique maximum. 
+2. Show that $\ell$ is concave. Find a condition on the $X_i$-s that ensures that $\ell$ has a unique maximum. 
 
 For the remaining part of this problem you first need to 
 simulate a data set from the model above. You may experiment 
-with different choices of $\beta$, but try also $\beta = 0$. 
+with different choices of $\beta,$ but try also $\beta = 0.$ 
 
-3. Implement Newton's algorithm for computing $\hat{\beta}$.
+3. Implement Newton's algorithm for computing $\hat{\beta}.$
     Apply the algorithm with start value $\beta_{1} = 0$ to the simulated
-    data set and investigate the values of $\beta_m$, $\ell(\beta_m)$,
+    data set and investigate the values of $\beta_m,$ $\ell(\beta_m),$
     $\ell'(\beta_m)$ and $\ell''(\beta_m)$ in the iterations of the algorithm.
 
-[A naive implementation of the computation of e.g. $\ell$ scales like $n^2$. 
- Make sure that your implementation scales like $n$.]{.aside}
+[A naive implementation of the computation of e.g. $\ell$ scales like $n^2.$ 
+ Make sure that your implementation scales like $n.$]{.aside}
 
 4. Compute and plot an estimate of the baseline cumulative hazard function.
 
 5. Compute $\hat{\beta}$ using the `coxph()` function in R. Compute also a standard 95\% confidence interval for
-    $\beta$. Compare this interval with a (partial) likelihood interval based on $\ell$. 
+    $\beta.$ Compare this interval with a (partial) likelihood interval based on $\ell.$ 
 :::
 
 ::: {#exr-mg-res}
 This exercise is on theoretical properties of the survival analysis martingale
-residuals. Let $T^*$ and $C$ be independent random variables on $[0,\infty)$, whose
-distributions have continuous densities $f$ and $g$, respectively. The
-corresponding survival functions are denoted $S$ and $H$. Note that $f
-= - S'$ and $g = - H'$. Then $T = \min\{T^*, C\}$ denotes the observed
+residuals. Let $T^*$ and $C$ be independent random variables on $[0,\infty),$ whose
+distributions have continuous densities $f$ and $h,$ respectively. The
+corresponding survival functions are denoted $S$ and $H.$ Note that $f
+= - S'$ and $h = - H'.$ Then $T = \min\{T^*, C\}$ denotes the observed
 (censored) survival time and $\delta = 1(T^* \leq C)$ is the status
 indicator. 
 
-1. Show that for any function $K: [0,\infty) \times \{0,1\} \to \mathbb{R}$, continuously
+1. Show that for any function $K: [0,\infty) \times \{0,1\} \to \mathbb{R},$ continuously
     differentiable in the first variable, it holds that 
     $$
         \begin{align*}
         \mathbf{E}( K(T, \delta)) & = \int_0^\infty \Big(K(0,1) + (K(s, 0) -  K(s,1)) S(s) \\
-        & \quad + \int_0^s \partial_tK(t, 1) S(t) \mathrm{d} t \Big) g(s) \mathrm{d} s
+        & \quad + \int_0^s \partial_tK(t, 1) S(t) \mathrm{d} t \Big) h(s) \mathrm{d} s
         \end{align*}
     $$
     provided that the expectation is well defined. Use this to show that[^known] 
     $$
         \mathbf{E} (\delta - \Lambda(T)) = 0 \qquad \text{and} \qquad \mathbf{V}(\delta - \Lambda(T)) = \mathbf{E}(\Lambda(T))
     $$
-    where $\Lambda$ denotes the cumulative hazard function for the distribution given by $f$. 
+    where $\Lambda$ denotes the cumulative hazard function for the distribution given by $f.$ 
 
-[^known]: That the expectation is $0$ is derived in the main text, but a slightly different derivation is provided here. The variance formula is new.
+[^known]: That the expectation is $0$ is derived in the main text, but a slightly different derivation is provided here. The variance formula is used in @sec-res-surv to justify the squared-martingale residuals.
 
-Recall that for the proportional hazard model, the $i$-th
-individual has cumulative hazard function $w_i \Lambda_0$ where $w_i$
-is an individual weight and $\Lambda_0$ is the baseline hazard. 
+Recall that for the proportional hazards model, the $i$-th
+individual has cumulative hazard function $\psi_i \Lambda_0$ where $\psi_i$
+is the individual relative risk and $\Lambda_0$ is the baseline cumulative hazard function. 
 
 Assume
-that $\hat{w}_i$ is the estimate of the $i$-th weight and that
+that $\hat{\psi}_i$ is the estimate of the $i$-th relative risk and that
 $\hat{\Lambda}_0$ is the estimate of the baseline. With
-$\hat{\Lambda}_i = \hat{w}_i \hat{\Lambda}_0(T_i)$ the fitted
-cumulative hazard function for the $i$-th individual evaluated in $T_i$, 
+$\hat{\Lambda}_i = \hat{\psi}_i \hat{\Lambda}_0(T_i)$ the fitted
+cumulative hazard function for the $i$-th individual evaluated in $T_i,$ 
 $$
     \hat{r}_i = \delta_i - \hat{\Lambda}_i
 $$
@@ -2615,8 +2691,8 @@ is the $i$-th martingale residual. Let $\hat{d}_i$ denote the $i$-th deviance re
     $$
         \hat{d}_i \approx \tilde{r}_i
     $$
-    is as a function of $\hat{\Lambda}_i$ when $\delta_i = 1$. Does a similar approximation hold if $\delta_i = 0$?
+    is as a function of $\hat{\Lambda}_i$ when $\delta_i = 1.$ Does a similar approximation hold if $\delta_i = 0$?
 
 [^dev-res]: The deviance residuals are sometimes regarded as distribution stabilized transforms of the martingale residuals. This
-exercise gives some insight on this perspective. 
+exercise gives some insight into this perspective. 
 ::: 

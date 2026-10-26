@@ -39,7 +39,7 @@ and corresponding estimators are treated in @sec-err-est, where we
 also return to the bike renting example. The different estimators of 
 prediction error are compared in a simulation study in @sec-data-split-comp, 
 and the chapter concludes with some specific results 
-for binary responses. 
+for binary outcomes. 
 
 The chapter primarily relies on the following R packages. 
 
@@ -89,7 +89,7 @@ ggplot(bike, aes(Temperature, Count)) + geom_point(pch = 1)
 
 @fig-bike shows a scatter plot of the data. We will build a sequence of 
 predictive models of `Count` using `Temperature` as the predictor. That 
-is, the response variable $Y$ is the number of bikes rented and $X$ 
+is, the outcome variable $Y$ is the number of bikes rented and $X$ 
 is the temperature. All the models are of the form 
 $$
     m(x) = \mathbf{E}(Y \mid X = x) = \beta_0 + \sum_{d = 1}^{\mathrm{df}} \beta_d h_d(x)
@@ -554,17 +554,22 @@ From @exm-bindev it follows that the deviance for the Bernoulli distribution is
 $$
     d(y, p) = 2y \log \Big(\frac{y}{p}\Big) + 2(1-y) \log \Big(\frac{1-y}{1-p}\Big)
 $$ 
-for $y \in [0, 1]$ and $p \in (0,1).$
+for $y \in [0, 1]$ and $p \in (0,1).$ For $y \in \{0, 1\}$ the deviance simplifies 
+as 
+$$
+    d(y, p) = - 2 y \log(p) - 2 (1 - y) \log(1 - p).
+$$
 [Though a Bernoulli variable will only take the values $0$ or $1,$ 
-the deviance is defined for $y$ in the closed interval $[0,1].$]{.aside}
+the deviance is defined for $y$ in the closed interval $[0,1],$ 
+and the convention is that $0 \log(0) = 0$]{.aside}
 
 If $\mathbf{P}(Y = 1) = p^0$ we get that 
 $$
-    \mathrm{Risk}(p) = - 2 p^0 \log p - 2 (1-p^0) \log (1-p).
+    \mathrm{Risk}(p) = - 2 p^0 \log p - 2 (1-p^0) \log (1-p) = \mathbf{E}(d(Y, p)).
 $$
 The entropy is 
 $$
-    H(p^0) = p^0 \log p^0 + (1-p^0) \log (1-p^0),
+    H(p^0) = - p^0 \log p^0 - (1-p^0) \log (1-p^0),
 $$
 and the Kullback-Leibler divergence is given by
 $$   
@@ -627,7 +632,7 @@ $$
 that gives a model of the conditional distribution of $Y$ given $X = x.$ 
 
 With $v$ predictors $X_1, \ldots, X_v$ and
-the conditional risk for the $i$-th response denoted
+the conditional risk for the $i$-th outcome denoted
 $\mathrm{Risk}_i(P_{X_i}),$ we can summarize the conditional risks
 as the average risk
 $$
@@ -930,7 +935,7 @@ the squared error loss and for linear models that can be specified via a formula
 #| code-fold: show
 cv <- function(form, data, K = 10, M = 20) {
     n <- nrow(data)
-    response <- all.vars(form)[1]
+    outcome <- all.vars(form)[1]
     loss <- vector("list", M)
     mu_hat <- numeric(n)
     for(b in 1:M) {
@@ -940,7 +945,7 @@ cv <- function(form, data, K = 10, M = 20) {
             model <- lm(form, data = data[group != i, ])
             mu_hat[group == i] <- predict(model, newdata = data[group == i, ])
         }
-    loss[[b]] <- (data[, response] - mu_hat)^2
+    loss[[b]] <- (data[, outcome] - mu_hat)^2
     }
     unlist(loss) |> mean()
 }
@@ -1008,7 +1013,7 @@ rather than $\mathrm{Err}(n).$
 If $v < n$ and the error curve is steep around $v,$ $\widehat{\mathrm{Err}}$ will overestimate
 $\mathrm{Err}(n).$ 
 
-[^learning]: A close relative to the *learning curve*, which is given by $c - \mathrm{Err}(n)$ for some suitable constant $c.$
+[^learning]: The erro curve is a close relative to the *learning curve*, which is given by $c - \mathrm{Err}(n)$ for some suitable constant $c.$
 [^not-boot]: For subsampling and cross-validation but not bootstrapping.
 
 For subsampling it follows directly that 
@@ -1051,7 +1056,7 @@ The special case of $n$-fold cross-validation is also known as leave-one-out cro
 rounds of model fitting to $n-1$ data points and loss computation for the last 
 omitted data point. The computation time scales in principle linearly with the size of
 the dataset, which makes it computationally intractable for large datasets. However, for a class of 
-estimators that are linear in the response there exists an analytic shortcut, which 
+estimators that are linear in the outcome there exists an analytic shortcut, which 
 allows for the computation of leave-one-out estimate of $\widehat{\mathrm{Err}}$ directly
 from the original model fit. In this case leave-one-out cross-validation can be a 
 computationally cheap alternative to the other data splitting procedures. 
@@ -1094,7 +1099,7 @@ or using independent $X_i^{\mathrm{new}}$-s for the prediction.]{.aside}
 ::: 
 
 The general definition above of the in-sample error is based on 
-Assumption A5 of conditional independence of the response variables 
+Assumption A5 of conditional independence of the outcome variables 
 given the predictors, which is weaker than Assumption A6. 
 This is sensible as the in-sample error fixes the predictors to be 
 the observed predictions, and it is therefore also a weaker quantification 
@@ -1165,7 +1170,7 @@ $$
 quite interpretable. Clearly, $\mathrm{err}$ is an unbiased estimate of $\mathbf{E}(\mathrm{err} \mid \mathbf{X}),$
 but ([-@eq-insampleformula]) shows that it is biased as an estimate of the in-sample error.
 The bias is expressed in terms of the covariances between $g(\hat{\mu}_i)$ and $Y_i,$ 
-which makes good sense. A large positive correlation between the response $Y_i$ and the 
+which makes good sense. A large positive correlation between the outcome $Y_i$ and the 
 value $g(\hat{\mu}_i)$ for $i = 1, \ldots, n$ indicates that the $\hat{\mu}_i$-s will be somewhat worse 
 at predicting independent $Y_i^{\mathrm{new}}$-s than $\mathrm{err}$ suggests. 
 
@@ -1324,7 +1329,7 @@ $$
 $$
 since $\mu = g^{-1}.$ As in @exm-trace we conclude that 
 $$
-    \sum_{i=1}^n \mathrm{cov}(\hat{\mu}_i, Y_i \mid \mathbf{X})  = \varphi \mathrm{trace}(\mathbf{S}).
+    \sum_{i=1}^n \mathrm{cov}(g(\hat{\mu}_i), Y_i \mid \mathbf{X})  = \varphi \mathrm{trace}(\mathbf{S}).
 $$
 Now 
 $$
@@ -1413,9 +1418,9 @@ train_err <- function(form, data) {
 }
 
 val_err <- function(form, data, newdata) { 
-  response <- all.vars(form)[1]
+  outcome <- all.vars(form)[1]
   model <- lm(form, data = data)
-  (newdata[, response] - predict(model, newdata = newdata))^2 |> unlist() |> mean()  
+  (newdata[, outcome] - predict(model, newdata = newdata))^2 |> unlist() |> mean()  
 }
 ```
 
@@ -1427,14 +1432,14 @@ The two functions implemented below compute estimates of expected generalization
 #| code-fold: show
 subsamp <- function(form, data, B = 200, q = 0.9) {
     n <- nrow(data)
-    response <- all.vars(form)[1]
+    outcome <- all.vars(form)[1]
     loss <- vector("list", B)
     for(b in 1:B) {
         # Subsampling a data set of size q * n 
         i <- sample(n, floor(q * n))  
         model <- lm(form, data = data[i, ])
         mu_hat <- predict(model, newdata = data[- i, ])
-        loss[[b]] <- (data[-i, response] - mu_hat)^2
+        loss[[b]] <- (data[-i, outcome] - mu_hat)^2
     }
     unlist(loss) |> mean()
 }
@@ -1445,13 +1450,13 @@ subsamp <- function(form, data, B = 200, q = 0.9) {
 #| code-fold: show
 boot <- function(form, data, B = 200) {
     n <- nrow(data)
-    response <- all.vars(form)[1]
+    outcome <- all.vars(form)[1]
     loss <- vector("list", B)
     for(b in 1:B) {
         i <- sample(n, n, replace = TRUE)
         model <- lm(form, data = data[i, ])
         mu_hat <- predict(model, newdata = data[- i, ])
-        loss[[b]] <- (data[-i, response] - mu_hat)^2
+        loss[[b]] <- (data[-i, outcome] - mu_hat)^2
     }
     unlist(loss) |> mean()
 }
@@ -1460,7 +1465,7 @@ boot <- function(form, data, B = 200) {
 ### Simulation study
 
 First we apply the different functions on a single data set for a simple linear regression model
-with $p_0$ predictors. None of the predictors are related to the normally distributed response, whence
+with $p_0$ predictors. None of the predictors are related to the normally distributed outcome, whence
 we simulate from the model with
 $$
     Y \mid X \sim \mathcal{N}(0, \sigma^2).
@@ -1661,7 +1666,7 @@ err_hat |> group_by(Method) |>
 
 The framework of risk, generalization error, in-sample error etc. was introduced
 for a general loss function in the previous sections. The deviance loss---or negative log-likelihood 
-loss---was treated in detail. With a binary response variable there are alternative
+loss---was treated in detail. With a binary outcome variable there are alternative
 and widely used methods for assessing the predictive strength of a regression model. This
 section treats some of the most important ones.
 
@@ -1673,7 +1678,7 @@ predictor,
 $$
     p(x) = \mathbf{P}(Y = 1 \mid X= x) = \mathbf{E}(Y \mid X = x).
 $$
-This is simply the regression function for a binary response.  
+This is simply the regression function for a binary outcome.  
 
 To give a prediction in the sample space $\{0,1\}$ we can,
 for instance, choose a threshold like $0.5$ and predict that $Y = 1$ if $p(X) > 0.5.$ It is,
@@ -1806,7 +1811,7 @@ $$
     \hat{\boldsymbol{\mu}} = \mathbf{S} \mathbf{Y}
 $$
 for an $\mathbf{X}$-dependent matrix $\mathbf{S}.$ Here $\boldsymbol{\mu} = \mathbf{E}(\mathbf{Y} \mid \mathbf{X}) \in \mathbb{R}^n$ 
-is the vector of conditional expectations of the response given the predictors.
+is the vector of conditional expectations of the outcome given the predictors.
 
 1. Show that the penalized and weighted least squares estimator, solving the normal equation in @thm-normal, 
     is linear and identify the matrix $\mathbf{S}.$ 

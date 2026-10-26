@@ -4,7 +4,7 @@
 source("_common.R")
 ```
 
-# Advertising – a case study {#sec-advertising}
+# Advertising---a case study {#sec-advertising}
 
 ::: {.callout-warning}
 This chapter is still a draft and minor changes are made without notice.
@@ -14,7 +14,7 @@ In this chapter we consider data extracted from a large database from a
 major supermarket chain. The primary goal of the supermarket is
 to predict the number of items sold in specific stores in those weeks where the chain runs an advertising campaign,
 which consists of a combination of advertisements and discounts. A 
-secondary goal is to assess the effect of the discout and the advertising 
+secondary goal is to assess the effect of the discount and the advertising 
 campaign. 
 
 In this chapter we consider the sales of one particular item: frozen vegetables. 
@@ -55,7 +55,7 @@ data(vegetables, package = "RwR")
 The 7 variables and their encoding in the vegetables data set:
 
 -  `sale`: Total number of sold items.
--  `normalsale`: A proxy of the normal sale in the same week.
+-  `normalSale`: A proxy of the normal sale in the same week.
 -  `store`:  The id-number of the store.
 -  `ad`:  Advertising (0 = no advertising, 1 = advertising).
 -  `discount`: Discount in percent.
@@ -198,7 +198,7 @@ GGally::ggpairs(
 ```
 
 The scatter plot matrix, @fig-scatter-plot-matrix-add, shows that 
-`normalsale` and `sale` 
+`normalSale` and `sale` 
 are quite strongly correlated. As one should expect, 
 `discount` and `discountSEK`
 are also extremely correlated and close to being collinear. It should
@@ -292,7 +292,7 @@ based on the store's normal sale in the week in combination with campaign
 variables. All observations are from weeks with a discount on the item, but the discounts 
 differ between the weeks.
 
-The response variable $Y$ is the number of sold items in a given week and in a given store.
+The outcome variable $Y$ is the number of sold items in a given week and in a given store.
 The proxy variable `normalSale` is based on historical data and provides, for the
 given store and week, an estimate of the expected number of sold items without taking
 advertising campaigns into account. We let $N$ denote the normal sale. The normal sale is
@@ -307,7 +307,7 @@ $$ {#eq-veg-mean-model}
 where $X$ is the vector of additional predictors besides the normal sale. This
 is a log-linear model, that is, a model with an exponential mean value function 
 (a logarithmic link function). This is the default (and canonical) link function
-for the Poisson response distribution when using the `glm()` function \index{log-linear!Poisson example}
+for the Poisson outcome distribution when using the `glm()` function \index{log-linear!Poisson example}
 in R. Since `sale` is an integer count, 
 it may also be plausible that we can model it with a Poisson distribution. 
 
@@ -371,7 +371,7 @@ The next thing we consider is a main effects model including the
 four predictors linearly and additively. We should remember that
 `discount` and `discountSEK` are highly correlated, and
 we should expect the collinearity phenomenon that neither of them are
-significantly related to the response when the other is included.
+significantly related to the outcome when the other is included.
 
 [A main effects model. We could, of course, in this and in subsequent models 
 let `log(normalSale)` enter with a coefficient that is estimated. Potential 
@@ -389,8 +389,8 @@ vegetables_glm <- glm(
 
 
 We do not want to consider all the estimated parameters for the individual
-stores -- only the parameters for the other variables.  @tbl-regModelAd1
-shows that in this model the relations between `sale` ad all three variables `ad`, `discount`
+stores---only the parameters for the other variables.  @tbl-regModelAd1
+shows that in this model the relations between `sale` and all three variables `ad`, `discount`
 and `discountSEK` appear to be significant, but somewhat surprisingly, the
 estimated coefficient of `discount` is negative. This counter intuitive
 result makes us suspicious about the model. The collinearity might explain a negative
@@ -439,13 +439,13 @@ unobserved heterogeneity or clustering, see @exr-over-dispersion.
 
 It is possible to adjust the statistical analysis for overdispersion 
 via the quasi Poisson family. The quasi Poisson family does not correspond to an
-actual exponential dispersion model on the integers -- there is
+actual exponential dispersion model on the integers---there is
 no exponential dispersion model on the integers with mean $\mu$ and variance $\varphi \mu$ 
 for all dispersion parameters $\varphi > 0$, see @exr-poisson-disp. The quasi family is
 just a way to specify a mean-variance relation that allows for a dispersion
 parameter. We fit the same main effects Poisson regression model as above, 
 but using the quasi Poisson family. We then extract the estimated dispersion 
-parameter via the `summary()` function -- an estimate that is identical to the 
+parameter via the `summary()` function---an estimate that is identical to the 
 one we computed above via the Pearson residuals. 
 
 ```{r}
@@ -462,7 +462,7 @@ summary(vegetables_quasi_glm)$dispersion
 @tbl-quasi-poisson-coef shows the parameter estimates using the quasi Poisson 
 model for the same three parameters as in @tbl-regModelAd1. We note that 
 the actual estimates are identical[^unsurprise], but standard errors
-and $p$-values are larger -- reflecting that 
+and $p$-values are larger---reflecting that 
 the estimated dispersion parameter is greater than $1$. In fact, the 
 `discount` and `discountSEK` parameters no longer appear to be 
 significantly different from $0$. This aligns with our previous 
@@ -473,7 +473,7 @@ not affect the score equation for generalized linear models.
 
 ```{r}
 #| label: tbl-quasi-poisson-coef
-#| tbl-cap: "xxx"
+#| tbl-cap: "Quasi Poisson estimates and $p$-values."
 tidy(vegetables_quasi_glm) |> tail(3) |> knitr::kable()
 ```
 
@@ -514,7 +514,7 @@ it is known as the *link scale*. If we need the fitted mean values we
 can either transform the fitted values from the link scale by the mean 
 value function. In this example by the exponential function. We can 
 alternatively set argument `type.predict = "response"` in `augment()`, 
-which will give the fitted values on the *response scale*. For 
+which will give the fitted values on the *outcome scale*. For 
 making residual plots it is typically best to use the link scale. 
 
 The residuals plot above were based on the Pearson residuals. We 
@@ -570,7 +570,7 @@ vegetables_gamma_glm_spline <- glm(
 ```
 
 @fig-gamma-diag shows several diagnostic plots. It is clear from these
-plots that both $\Gamma$-models fit the data well -- also in terms of 
+plots that both $\Gamma$-models fit the data well---also in terms of 
 the mean-variance relation. The figure additionally shows the fitted values from the 
 two models plotted against each other. The points all fall very close to the 
 diagonal, which shows that the two models are almost identical in terms of 
@@ -763,12 +763,12 @@ This exercise is on the relation between mean and variance for counts of small w
 \index{Polychaeta} The dataset `polychaeta` from the R package RwR contains counts from samples taken at different 
 stations in Odense Fjord.
 
-The data set contains the integer response variable `Count` (which is, 
+The data set contains the integer outcome variable `Count` (which is, 
 in fact, inferred from the weight of the total number of organisms) and the 
 variable `Station` (numbered 1 to 45, and with between 7 and 48 observations 
 per station). 
 
-It can be assumed throughout that the response is given as 
+It can be assumed throughout that the outcome is given as 
 $$
   Y_i = \mu_i  + \varepsilon_i
 $$
@@ -776,9 +776,9 @@ with $\mathbf{E}(\varepsilon_i) = 0$, $\mathbf{V}(\varepsilon_i) = \varphi \math
 $$
   \mu_i = \beta_{\mathrm{Station}_i}
 $$ 
-being a station specific mean value. Note that even if the response is 
+being a station specific mean value. Note that even if the outcome is 
 integer valued, the observed counts are relatively large, hence
-it does make sense to use, e.g., a normal distribution as response distribution.  
+it does make sense to use, e.g., a normal distribution as outcome distribution.  
 
 1. Estimate the station specific mean values and investigate if the variance can be 
     assumed constant. That is, investigate if the variance function can be assumed 
@@ -814,7 +814,7 @@ To this end introduce $\xi_i = \mathbf{E}(\varepsilon_i^2)$.
     $$
       \hat{\varepsilon}_i^2 = (Y_i - \hat{\mu}_i)^2
     $$
-    as responses. Check if Taylor's law holds for the Polychaeta counts and compute a 95\% confidence interval for $b$. 
+    as outcomes. Check if Taylor's law holds for the Polychaeta counts and compute a 95\% confidence interval for $b$. 
 [The residuals are used as approximations of the $\varepsilon_i$-s since the latter are not observed.]{.aside}
 ::: 
 
